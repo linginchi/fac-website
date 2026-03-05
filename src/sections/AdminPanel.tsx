@@ -4,8 +4,98 @@ import { useTeamMembers, type TeamMember } from '../hooks/useTeamMembers';
 import { useSiteConfig } from '../hooks/useSiteConfig';
 import { 
   Users, Settings, FileText, LogOut, Plus, Edit2, Trash2, Save, Upload, 
-  ChevronDown, ChevronUp, Globe, Mail, RefreshCw 
+  ChevronDown, ChevronUp, Globe, Mail, RefreshCw, BarChart3,
+  TrendingUp, Coins, UserCheck, ArrowUpRight
 } from 'lucide-react';
+import {
+  AreaChart, Area, LineChart, Line, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+
+const subscriptionGrowthData = [
+  { month: '1月', 免費會員: 42, 標準訂閱: 12, 企業版: 3 },
+  { month: '2月', 免費會員: 58, 標準訂閱: 18, 企業版: 4 },
+  { month: '3月', 免費會員: 71, 標準訂閱: 24, 企業版: 5 },
+  { month: '4月', 免費會員: 89, 標準訂閱: 31, 企業版: 7 },
+  { month: '5月', 免費會員: 112, 標準訂閱: 40, 企業版: 9 },
+  { month: '6月', 免費會員: 134, 標準訂閱: 52, 企業版: 11 },
+  { month: '7月', 免費會員: 156, 標準訂閱: 67, 企業版: 14 },
+  { month: '8月', 免費會員: 183, 標準訂閱: 81, 企業版: 16 },
+];
+
+const tokenFlowData = [
+  { week: 'W1', 解碼消耗: 1240, 貢獻獎勵: 680, 淨流通: 560 },
+  { week: 'W2', 解碼消耗: 1890, 貢獻獎勵: 920, 淨流通: 970 },
+  { week: 'W3', 解碼消耗: 2340, 貢獻獎勵: 1100, 淨流通: 1240 },
+  { week: 'W4', 解碼消耗: 1780, 貢獻獎勵: 840, 淨流通: 940 },
+  { week: 'W5', 解碼消耗: 2910, 貢獻獎勵: 1350, 淨流通: 1560 },
+  { week: 'W6', 解碼消耗: 3420, 貢獻獎勵: 1680, 淨流通: 1740 },
+  { week: 'W7', 解碼消耗: 3890, 貢獻獎勵: 1920, 淨流通: 1970 },
+  { week: 'W8', 解碼消耗: 4210, 貢獻獎勵: 2100, 淨流通: 2110 },
+];
+
+const pillarsActivity = [
+  { name: '跨境貿易', 配對次數: 38 },
+  { name: '高級零售', 配對次數: 29 },
+  { name: '家族財富', 配對次數: 45 },
+  { name: '精密製造', 配對次數: 22 },
+  { name: '企業融資', 配對次數: 51 },
+  { name: '工程基建', 配對次數: 17 },
+  { name: '教育傳承', 配對次數: 34 },
+  { name: 'RO合規', 配對次數: 41 },
+];
+
+const CHART_COLORS = {
+  gold: '#C9A96E',
+  goldLight: '#e0c28a',
+  goldDim: 'rgba(201,169,110,0.35)',
+  blue: '#4A90C4',
+  green: '#4CAF7D',
+  gridLine: 'rgba(255,255,255,0.06)',
+  text: 'rgba(237,232,223,0.5)',
+};
+
+const tooltipStyle = {
+  backgroundColor: 'rgba(10,22,40,0.96)',
+  border: '1px solid rgba(201,169,110,0.25)',
+  borderRadius: '10px',
+  color: '#EDE8DF',
+  fontSize: '12px',
+};
+
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+function StatCard({
+  icon: Icon, label, value, sub, trend
+}: {
+  icon: React.ElementType; label: string; value: string; sub: string; trend?: string;
+}) {
+  return (
+    <div
+      className="rounded-2xl p-5"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,169,110,0.12)' }}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center"
+          style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.2)' }}
+        >
+          <Icon className="w-4 h-4" style={{ color: '#C9A96E' }} />
+        </div>
+        {trend && (
+          <span className="flex items-center gap-0.5 text-xs" style={{ color: '#4CAF7D' }}>
+            <ArrowUpRight className="w-3 h-3" />
+            {trend}
+          </span>
+        )}
+      </div>
+      <div className="text-2xl font-bold text-white mb-1">{value}</div>
+      <div className="text-sm font-medium" style={{ color: '#C9A96E' }}>{label}</div>
+      <div className="text-xs mt-1" style={{ color: 'rgba(237,232,223,0.4)' }}>{sub}</div>
+    </div>
+  );
+}
 
 interface MemberFormData {
   name: string;
@@ -38,7 +128,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const { members, addMember, updateMember, deleteMember, reorderMembers, resetToDefault: resetTeam } = useTeamMembers();
   const { config, updateConfig, resetToDefault: resetConfig } = useSiteConfig();
   
-  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings'>('team');
+  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats'>('team');
   
   // Team management state
   const [isEditingMember, setIsEditingMember] = useState(false);
@@ -210,6 +300,18 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               >
                 <Settings className="w-5 h-5" />
                 <span>网站设置</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                  activeTab === 'stats' 
+                    ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span>數據儀表板</span>
               </button>
             </nav>
           </div>
@@ -852,6 +954,150 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 </div>
               </div>
             )}
+            {/* Stats / Dashboard Tab */}
+            {activeTab === 'stats' && (
+              <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-white">數據儀表板</h2>
+                  <span className="text-xs px-3 py-1 rounded-full" style={{ background: 'rgba(201,169,110,0.1)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.2)' }}>
+                    模擬數據 · Demo
+                  </span>
+                </div>
+
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatCard icon={UserCheck} label="總訂閱用戶" value="716" sub="較上月 +83" trend="+13%" />
+                  <StatCard icon={TrendingUp} label="企業版客戶" value="16" sub="本月新增 2 家" trend="+14%" />
+                  <StatCard icon={Coins} label="$FAC 流通量" value="24,860" sub="本週淨增 2,110" trend="+9%" />
+                  <StatCard icon={BarChart3} label="本月配對次數" value="277" sub="8大支柱累計" trend="+22%" />
+                </div>
+
+                {/* Subscription Growth Chart */}
+                <div
+                  className="rounded-2xl p-6"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,169,110,0.12)' }}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-base font-semibold text-white">用戶訂閱統計</h3>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(237,232,223,0.45)' }}>
+                        各訂閱層級月度增長趨勢（2025年）
+                      </p>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <AreaChart data={subscriptionGrowthData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="freeGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={CHART_COLORS.gold} stopOpacity={0.18} />
+                          <stop offset="95%" stopColor={CHART_COLORS.gold} stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="stdGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={CHART_COLORS.blue} stopOpacity={0.2} />
+                          <stop offset="95%" stopColor={CHART_COLORS.blue} stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="entGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={CHART_COLORS.green} stopOpacity={0.2} />
+                          <stop offset="95%" stopColor={CHART_COLORS.green} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} />
+                      <XAxis dataKey="month" tick={{ fill: CHART_COLORS.text, fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: CHART_COLORS.text, fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: 'rgba(201,169,110,0.15)' }} />
+                      <Legend
+                        wrapperStyle={{ color: 'rgba(237,232,223,0.6)', fontSize: '11px', paddingTop: '12px' }}
+                      />
+                      <Area type="monotone" dataKey="免費會員" stroke={CHART_COLORS.gold} strokeWidth={2} fill="url(#freeGrad)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.gold }} />
+                      <Area type="monotone" dataKey="標準訂閱" stroke={CHART_COLORS.blue} strokeWidth={2} fill="url(#stdGrad)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.blue }} />
+                      <Area type="monotone" dataKey="企業版" stroke={CHART_COLORS.green} strokeWidth={2} fill="url(#entGrad)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.green }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Token Flow + Pillars side by side */}
+                <div className="grid lg:grid-cols-5 gap-6">
+
+                  {/* $FAC Token Flow — span 3 */}
+                  <div
+                    className="lg:col-span-3 rounded-2xl p-6"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,169,110,0.12)' }}
+                  >
+                    <div className="mb-6">
+                      <h3 className="text-base font-semibold text-white">$FAC Token 流轉監測</h3>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(237,232,223,0.45)' }}>
+                        周度解碼消耗 vs 貢獻獎勵（近 8 週）
+                      </p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <LineChart data={tokenFlowData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} />
+                        <XAxis dataKey="week" tick={{ fill: CHART_COLORS.text, fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: CHART_COLORS.text, fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: 'rgba(201,169,110,0.15)' }} />
+                        <Legend wrapperStyle={{ color: 'rgba(237,232,223,0.6)', fontSize: '11px', paddingTop: '12px' }} />
+                        <Line type="monotone" dataKey="解碼消耗" stroke={CHART_COLORS.gold} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                        <Line type="monotone" dataKey="貢獻獎勵" stroke={CHART_COLORS.blue} strokeWidth={2} dot={false} activeDot={{ r: 4 }} strokeDasharray="5 3" />
+                        <Line type="monotone" dataKey="淨流通" stroke={CHART_COLORS.green} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Pillar Activity — span 2 */}
+                  <div
+                    className="lg:col-span-2 rounded-2xl p-6"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,169,110,0.12)' }}
+                  >
+                    <div className="mb-6">
+                      <h3 className="text-base font-semibold text-white">八大支柱配對活躍度</h3>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(237,232,223,0.45)' }}>
+                        本月累計配對次數
+                      </p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart
+                        data={pillarsActivity}
+                        layout="vertical"
+                        margin={{ top: 0, right: 8, left: 0, bottom: 0 }}
+                        barSize={8}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} horizontal={false} />
+                        <XAxis type="number" tick={{ fill: CHART_COLORS.text, fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <YAxis dataKey="name" type="category" tick={{ fill: CHART_COLORS.text, fontSize: 10 }} axisLine={false} tickLine={false} width={58} />
+                        <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(201,169,110,0.04)' }} />
+                        <Bar dataKey="配對次數" fill={CHART_COLORS.gold} radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Token economy summary */}
+                <div
+                  className="rounded-2xl p-5"
+                  style={{ background: 'rgba(201,169,110,0.04)', border: '1px solid rgba(201,169,110,0.15)' }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Coins className="w-4 h-4" style={{ color: '#C9A96E' }} />
+                    <span className="text-sm font-semibold" style={{ color: '#C9A96E' }}>$FAC 代幣經濟說明</span>
+                  </div>
+                  <div className="grid sm:grid-cols-3 gap-4 text-xs" style={{ color: 'rgba(237,232,223,0.6)' }}>
+                    <div>
+                      <div className="font-medium text-white mb-1">Token to Decode</div>
+                      需求方消耗 $FAC 進行智慧對接與資訊解碼，每次配對按複雜度計費。
+                    </div>
+                    <div>
+                      <div className="font-medium text-white mb-1">Proof of Contribution</div>
+                      導師提供有效建議、反饋市場動態，系統自動記錄並分發 $FAC 獎勵。
+                    </div>
+                    <div>
+                      <div className="font-medium text-white mb-1">訂閱獎勵</div>
+                      用戶完成註冊、續費訂閱、完善隱私資料，均可獲得 $FAC 參與獎勵。
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </div>

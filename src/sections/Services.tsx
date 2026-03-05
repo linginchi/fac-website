@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { ArrowRight, Globe2, ShoppingBag, Landmark, Wrench, TrendingUp } from 'lucide-react';
+import { ArrowRight, Globe2, ShoppingBag, Landmark, Wrench, TrendingUp, HardHat, GraduationCap, Scale } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const expertiseDomains = [
+const wisdomPillars = [
   {
     id: 'trade',
     icon: Globe2,
@@ -17,8 +17,8 @@ const expertiseDomains = [
     id: 'retail',
     icon: ShoppingBag,
     title: '高級零售與品牌管理',
-    description: '從服務哲學到庫存美學，從品牌定位到團隊激勵——真正懂零售的人，知道一個眼神能改變顧客體驗。',
-    tags: ['#客戶服務哲學', '#庫存美學', '#團隊激勵']
+    description: '從奢侈品牌哲學到庫存美學，從品牌定位到團隊激勵——真正懂零售的人，知道一個眼神能改變顧客體驗。',
+    tags: ['#奢侈品牌哲學', '#庫存美學', '#品牌定位']
   },
   {
     id: 'wealth',
@@ -32,14 +32,35 @@ const expertiseDomains = [
     icon: Wrench,
     title: '精密製造與工藝傳承',
     description: '老師傅的那雙手，藏著任何 AI 都無法複製的精密。帶徒心法、技術相容之道，讓工藝在時代洪流中不失根。',
-    tags: ['#老師傅手勢', '#帶徒心法', '#技術相容']
+    tags: ['#老師傅帶徒', '#產線相容', '#帶徒心法']
   },
   {
     id: 'finance',
     icon: TrendingUp,
     title: '企業融資與現金流管理',
     description: '銀行談判桌上的底氣從何而來？風險控制的直覺如何培養？債務重組的時機怎樣判斷？問老江湖。',
-    tags: ['#銀行談判策略', '#風險控制', '#債務重組']
+    tags: ['#銀行借貸談判', '#現金流', '#債務重組']
+  },
+  {
+    id: 'engineering',
+    icon: HardHat,
+    title: '工程基建與監理',
+    description: '工程師實戰排難、基建項目監管、工地安全管理。幾十年基建經驗，讓每一個項目按時、按預算、按質落地。',
+    tags: ['#工程師實戰排難', '#基建項目監管', '#工地監理']
+  },
+  {
+    id: 'education',
+    icon: GraduationCap,
+    title: '教育專業傳承',
+    description: '香港 DSE 課程邏輯、中學教育心法、名校升學策略。教育老前輩的心血，是下一代最值得擁有的傳承。',
+    tags: ['#DSE課程邏輯', '#中學教育心法', '#升學策略']
+  },
+  {
+    id: 'compliance',
+    icon: Scale,
+    title: '金融監管合規（RO）',
+    description: 'SFC 1–6、9 號牌持牌實務、RO 風險管理、合規框架設計。監管迷宮中，唯有老行尊才識得最短路。',
+    tags: ['#SFC持牌實務', '#RO風險管理', '#合規框架']
   }
 ];
 
@@ -52,10 +73,7 @@ export default function Services() {
         '.services-title',
         { y: 40, opacity: 0 },
         {
-          y: 0,
-          opacity: 1,
-          duration: 0.7,
-          ease: 'expo.out',
+          y: 0, opacity: 1, duration: 0.7, ease: 'expo.out',
           scrollTrigger: {
             trigger: sectionRef.current,
             start: 'top 70%',
@@ -65,16 +83,12 @@ export default function Services() {
       );
 
       gsap.fromTo(
-        '.expertise-card-item',
+        '.pillar-card-item',
         { y: 50, opacity: 0 },
         {
-          y: 0,
-          opacity: 1,
-          duration: 0.6,
-          stagger: 0.1,
-          ease: 'expo.out',
+          y: 0, opacity: 1, duration: 0.6, stagger: 0.08, ease: 'expo.out',
           scrollTrigger: {
-            trigger: '.expertise-grid',
+            trigger: '.pillars-grid',
             start: 'top 75%',
             toggleActions: 'play none none reverse'
           }
@@ -86,10 +100,8 @@ export default function Services() {
   }, []);
 
   const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    const el = document.querySelector(href);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -103,10 +115,8 @@ export default function Services() {
       <div
         className="absolute pointer-events-none"
         style={{
-          top: '20%',
-          left: '0',
-          width: '400px',
-          height: '400px',
+          top: '20%', left: '0',
+          width: '400px', height: '400px',
           background: 'radial-gradient(circle, rgba(201,169,110,0.05) 0%, transparent 70%)',
           filter: 'blur(60px)'
         }}
@@ -114,20 +124,19 @@ export default function Services() {
       <div
         className="absolute pointer-events-none"
         style={{
-          bottom: '10%',
-          right: '5%',
-          width: '300px',
-          height: '300px',
+          bottom: '10%', right: '5%',
+          width: '320px', height: '320px',
           background: 'radial-gradient(circle, rgba(201,169,110,0.04) 0%, transparent 70%)',
           filter: 'blur(50px)'
         }}
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12">
+
         {/* Header */}
         <div className="text-center mb-16">
           <span className="services-title section-tag opacity-0 block mb-4">
-            五大專業領域
+            八大智慧支柱
           </span>
           <h2
             className="services-title font-bold opacity-0"
@@ -143,70 +152,82 @@ export default function Services() {
           </h2>
           <p
             className="services-title mt-4 max-w-2xl mx-auto opacity-0"
-            style={{
-              color: 'rgba(237,232,223,0.6)',
-              fontSize: '1rem',
-              lineHeight: '1.8'
-            }}
+            style={{ color: 'rgba(237,232,223,0.6)', fontSize: '1rem', lineHeight: '1.8' }}
           >
-            港匠匯的導師群，每位均擁有最少二十年實戰經歷。
-            他們的知識，來自市場的第一線，而非書本或課室。
+            FAC 平台八大智慧支柱，涵蓋香港核心行業精英。
+            每位顧問均擁有最少二十年實戰經歷，所有知識來自市場第一線。
           </p>
+
+          {/* Pillar index dots */}
+          <div className="flex items-center justify-center gap-1.5 mt-6">
+            {wisdomPillars.map((_, i) => (
+              <div
+                key={i}
+                className="rounded-full transition-all duration-300"
+                style={{
+                  width: i < 4 ? '20px' : '6px',
+                  height: '6px',
+                  background: i < 4 ? 'var(--champagne)' : 'rgba(201,169,110,0.25)'
+                }}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Expertise Card Grid — 2 columns + 1 full-width on lg */}
-        <div className="expertise-grid grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {expertiseDomains.map((domain, index) => {
-            const Icon = domain.icon;
-            const isLast = index === expertiseDomains.length - 1;
-
+        {/* 8-pillar grid — 4 columns on lg, 2 on md, 1 on sm */}
+        <div className="pillars-grid grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {wisdomPillars.map((pillar, index) => {
+            const Icon = pillar.icon;
             return (
               <div
-                key={domain.id}
-                className={`expertise-card-item expertise-card opacity-0 flex flex-col ${
-                  isLast ? 'sm:col-span-2 lg:col-span-1' : ''
-                }`}
+                key={pillar.id}
+                className="pillar-card-item expertise-card opacity-0 flex flex-col group"
               >
-                {/* Icon */}
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 flex-shrink-0"
-                  style={{
-                    backgroundColor: 'rgba(201,169,110,0.12)',
-                    border: '1px solid rgba(201,169,110,0.2)'
-                  }}
-                >
-                  <Icon className="w-6 h-6" style={{ color: 'var(--champagne)' }} />
+                {/* Pillar number */}
+                <div className="flex items-start justify-between mb-4">
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{
+                      backgroundColor: 'rgba(201,169,110,0.1)',
+                      border: '1px solid rgba(201,169,110,0.2)'
+                    }}
+                  >
+                    <Icon className="w-5 h-5" style={{ color: 'var(--champagne)' }} />
+                  </div>
+                  <span
+                    className="text-xs font-mono mt-1"
+                    style={{ color: 'rgba(201,169,110,0.3)' }}
+                  >
+                    0{index + 1}
+                  </span>
                 </div>
 
                 {/* Title */}
                 <h3
                   className="font-bold mb-3"
                   style={{
-                    fontSize: '1.1rem',
+                    fontSize: '0.95rem',
                     color: 'var(--off-white)',
                     lineHeight: '1.5',
                     letterSpacing: '0.02em',
                     fontFamily: "'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif"
                   }}
                 >
-                  {domain.title}
+                  {pillar.title}
                 </h3>
 
                 {/* Description */}
                 <p
-                  className="text-sm flex-1 mb-5"
-                  style={{
-                    color: 'rgba(237,232,223,0.65)',
-                    lineHeight: '1.85'
-                  }}
+                  className="text-sm flex-1 mb-4"
+                  style={{ color: 'rgba(237,232,223,0.6)', lineHeight: '1.8' }}
                 >
-                  {domain.description}
+                  {pillar.description}
                 </p>
 
                 {/* Tags */}
-                <div className="flex flex-wrap mt-auto">
-                  {domain.tags.map((tag) => (
-                    <span key={tag} className="tag-pill">
+                <div className="flex flex-wrap mt-auto gap-1">
+                  {pillar.tags.map((tag) => (
+                    <span key={tag} className="tag-pill text-xs">
                       {tag}
                     </span>
                   ))}
@@ -220,15 +241,15 @@ export default function Services() {
         <div className="text-center mt-16">
           <p
             className="mb-6 text-sm"
-            style={{ color: 'rgba(237,232,223,0.55)', lineHeight: '1.8' }}
+            style={{ color: 'rgba(237,232,223,0.5)', lineHeight: '1.8' }}
           >
-            找不到你需要的專業？告訴我們，我們的網絡比你想像的更廣。
+            找不到你需要的專業？AI Agent 會幫你解碼需求，配對最合適的智慧顧問。
           </p>
           <button
             onClick={() => scrollToSection('#contact')}
             className="btn-gold inline-flex items-center gap-2 group"
           >
-            預約免費諮詢
+            立即發起諮詢
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </button>
         </div>

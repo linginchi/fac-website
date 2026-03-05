@@ -1,14 +1,24 @@
-import { useEffect, useRef } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, Mic, Paperclip, ArrowRight, Sparkles } from 'lucide-react';
 import gsap from 'gsap';
+
+const suggestions = [
+  '幫我找跨境貿易合規專家',
+  '家族信託架構如何設計？',
+  '尋找 SFC 持牌 RO 顧問',
+  '企業融資談判老江湖',
+];
 
 export default function Hero() {
   const heroRef = useRef<HTMLDivElement>(null);
   const tagRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
+  const commandRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const decorRef = useRef<HTMLDivElement>(null);
+
+  const [commandValue, setCommandValue] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -33,250 +43,308 @@ export default function Hero() {
         });
       }
 
-      tl.fromTo(
-        subtitleRef.current,
-        { y: 40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8 },
-        1.1
-      );
-
-      tl.fromTo(
-        ctaRef.current,
-        { scale: 0.85, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.7 },
-        1.4
-      );
-
-      tl.fromTo(
-        decorRef.current,
-        { x: 60, opacity: 0 },
-        { x: 0, opacity: 1, duration: 1.2 },
-        0.5
-      );
+      tl.fromTo(subtitleRef.current, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8 }, 1.1);
+      tl.fromTo(commandRef.current, { y: 44, scale: 0.97, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 1 }, 1.35);
+      tl.fromTo(ctaRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 1.8);
     }, heroRef);
 
     return () => ctx.revert();
   }, []);
 
   const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    const el = document.querySelector(href);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
     <section
       id="hero"
       ref={heroRef}
-      className="relative min-h-screen flex items-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
       style={{ backgroundColor: 'var(--midnight)' }}
     >
-      {/* Background — layered midnight blue gradients */}
+      {/* Layered background */}
       <div
         className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(135deg, #0A1628 0%, #0D1F3C 50%, #0A1628 100%)'
-        }}
+        style={{ background: 'linear-gradient(135deg, #0A1628 0%, #0D1F3C 50%, #0A1628 100%)' }}
       />
 
-      {/* Champagne glow orbs */}
+      {/* Glow orbs */}
       <div
         className="absolute pointer-events-none"
         style={{
-          top: '15%',
-          right: '10%',
-          width: '480px',
-          height: '480px',
-          borderRadius: '50%',
+          top: '10%', right: '8%',
+          width: '520px', height: '520px', borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(201,169,110,0.07) 0%, transparent 70%)',
-          filter: 'blur(40px)'
+          filter: 'blur(50px)'
         }}
       />
       <div
         className="absolute pointer-events-none"
         style={{
-          bottom: '20%',
-          left: '5%',
-          width: '320px',
-          height: '320px',
-          borderRadius: '50%',
+          bottom: '15%', left: '3%',
+          width: '380px', height: '380px', borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(201,169,110,0.05) 0%, transparent 70%)',
           filter: 'blur(60px)'
         }}
       />
 
-      {/* Subtle grid pattern */}
+      {/* Command-box focus glow */}
+      <div
+        className="absolute pointer-events-none transition-opacity duration-700"
+        style={{
+          top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          width: '900px', height: '280px', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(201,169,110,0.07) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+          opacity: isFocused ? 1 : 0
+        }}
+      />
+
+      {/* Grid pattern */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: 'linear-gradient(rgba(201,169,110,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,169,110,0.04) 1px, transparent 1px)',
+          backgroundImage:
+            'linear-gradient(rgba(201,169,110,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(201,169,110,0.035) 1px, transparent 1px)',
           backgroundSize: '60px 60px'
         }}
       />
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-12 py-32">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 lg:px-12 py-32 text-center">
 
-          {/* Left Content */}
-          <div className="space-y-8">
+        {/* Section tag */}
+        <span
+          ref={tagRef}
+          className="section-tag opacity-0 inline-flex items-center gap-2 mb-8"
+        >
+          <Sparkles className="w-3 h-3" />
+          FAC &nbsp;·&nbsp; Web3 去中心化智慧對接平台
+        </span>
 
-            {/* Section Tag */}
-            <span
-              ref={tagRef}
-              className="section-tag opacity-0 block"
-            >
-              FAC &nbsp;·&nbsp; 港匠匯
-            </span>
-
-            {/* Hero Title */}
-            <div ref={titleRef} className="space-y-1" style={{ perspective: '1000px' }}>
-              <h1
-                className="title-line font-bold leading-tight opacity-0"
-                style={{
-                  fontSize: 'clamp(2.4rem, 5vw, 4rem)',
-                  color: 'var(--off-white)',
-                  fontFamily: "'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif",
-                  letterSpacing: '0.04em'
-                }}
-              >
-                智慧沉澱，
-              </h1>
-              <h1
-                className="title-line font-bold leading-tight opacity-0 text-gold-gradient"
-                style={{
-                  fontSize: 'clamp(2.4rem, 5vw, 4rem)',
-                  fontFamily: "'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif",
-                  letterSpacing: '0.04em'
-                }}
-              >
-                在此相遇。
-              </h1>
-            </div>
-
-            {/* Subtitle */}
-            <div className="space-y-3">
-              <p
-                ref={subtitleRef}
-                className="opacity-0"
-                style={{
-                  color: 'rgba(237,232,223,0.78)',
-                  fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
-                  lineHeight: '1.9',
-                  maxWidth: '520px'
-                }}
-              >
-                香港首個退休精英智慧共享平台。
-                <br className="hidden sm:block" />
-                <span style={{ color: 'rgba(237,232,223,0.6)', fontStyle: 'italic' }}>
-                  致企業：有些答案，不在數據庫，在老江湖的眉頭一皺。
-                </span>
-              </p>
-            </div>
-
-            {/* CTA Buttons */}
-            <div
-              ref={ctaRef}
-              className="opacity-0 flex flex-col sm:flex-row gap-4"
-            >
-              {/* 金邊透明底 */}
-              <button
-                onClick={() => scrollToSection('#contact')}
-                className="btn-outline text-center sm:text-left"
-                style={{ whiteSpace: 'nowrap' }}
-              >
-                成為導師：灌溉下一代
-              </button>
-
-              {/* 金底黑字 */}
-              <button
-                onClick={() => scrollToSection('#services')}
-                className="btn-gold text-center sm:text-left"
-                style={{ whiteSpace: 'nowrap' }}
-              >
-                尋求專家：與老江湖對話
-              </button>
-            </div>
-
-            {/* Trust line */}
-            <p
-              className="text-xs tracking-widest uppercase"
-              style={{ color: 'rgba(201,169,110,0.45)' }}
-            >
-              Facilitating Artisan Collective &nbsp;·&nbsp; Est. Hong Kong
-            </p>
-          </div>
-
-          {/* Right Content — decorative visual */}
-          <div
-            ref={decorRef}
-            className="hidden lg:flex justify-center items-center opacity-0"
+        {/* Title */}
+        <div ref={titleRef} className="space-y-1 mb-6" style={{ perspective: '1000px' }}>
+          <h1
+            className="title-line font-bold leading-tight opacity-0"
+            style={{
+              fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+              color: 'var(--off-white)',
+              fontFamily: "'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif",
+              letterSpacing: '0.04em'
+            }}
           >
-            <div className="relative w-80 h-80">
-              {/* Outer ring */}
-              <div
-                className="absolute inset-0 rounded-full"
+            智慧沈澱，
+          </h1>
+          <h1
+            className="title-line font-bold leading-tight opacity-0 text-gold-gradient"
+            style={{
+              fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+              fontFamily: "'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif",
+              letterSpacing: '0.04em'
+            }}
+          >
+            在此相遇。
+          </h1>
+        </div>
+
+        {/* Subtitle */}
+        <p
+          ref={subtitleRef}
+          className="opacity-0 mb-10 mx-auto"
+          style={{
+            color: 'rgba(237,232,223,0.7)',
+            fontSize: 'clamp(0.9rem, 2vw, 1.05rem)',
+            lineHeight: '1.9',
+            maxWidth: '560px'
+          }}
+        >
+          香港首個 Web3 去中心化對接平台。有些答案，不在數據庫，
+          <br className="hidden sm:block" />
+          <span style={{ color: 'rgba(201,169,110,0.9)', fontStyle: 'italic' }}>
+            在老江湖的腦袋中。
+          </span>
+        </p>
+
+        {/* ═══════════════════════════════════════════
+            萬能指揮框  Command Box
+        ════════════════════════════════════════════ */}
+        <div ref={commandRef} className="opacity-0 mb-8">
+          <div
+            className="relative mx-auto transition-all duration-500"
+            style={{
+              maxWidth: '740px',
+              borderRadius: '18px',
+              background: 'linear-gradient(135deg, rgba(13,31,60,0.96) 0%, rgba(10,22,40,0.99) 100%)',
+              border: isFocused
+                ? '1px solid rgba(201,169,110,0.55)'
+                : '1px solid rgba(201,169,110,0.2)',
+              boxShadow: isFocused
+                ? '0 0 48px rgba(201,169,110,0.13), 0 12px 40px rgba(0,0,0,0.45)'
+                : '0 6px 28px rgba(0,0,0,0.35)',
+              backdropFilter: 'blur(24px)'
+            }}
+          >
+            {/* $FAC badge */}
+            <div className="absolute -top-3.5 right-5">
+              <span
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
                 style={{
-                  border: '1px solid rgba(201,169,110,0.15)',
-                  animation: 'rotate-slow 40s linear infinite'
+                  background: 'linear-gradient(135deg, rgba(10,22,40,0.99) 0%, rgba(13,31,60,0.96) 100%)',
+                  border: '1px solid rgba(201,169,110,0.35)',
+                  color: 'var(--champagne)'
                 }}
-              />
-              {/* Middle ring */}
+              >
+                $FAC &nbsp;<span style={{ opacity: 0.55 }}>· Token to Decode</span>
+              </span>
+            </div>
+
+            {/* Input row */}
+            <div className="flex items-center px-5 py-4 gap-3">
+              {/* Artisan mark */}
               <div
-                className="absolute rounded-full"
+                className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center"
                 style={{
-                  inset: '30px',
-                  border: '1px solid rgba(201,169,110,0.25)',
-                  animation: 'rotate-slow 25s linear infinite reverse'
+                  background: 'linear-gradient(135deg, rgba(201,169,110,0.18) 0%, rgba(201,169,110,0.07) 100%)',
+                  border: '1px solid rgba(201,169,110,0.28)'
                 }}
-              />
-              {/* Inner ring */}
-              <div
-                className="absolute rounded-full"
-                style={{
-                  inset: '70px',
-                  border: '2px solid rgba(201,169,110,0.4)',
-                  boxShadow: '0 0 30px rgba(201,169,110,0.1)',
-                  animation: 'rotate-slow 15s linear infinite'
-                }}
-              />
-              {/* Center content */}
-              <div
-                className="absolute inset-0 flex flex-col items-center justify-center"
               >
                 <span
-                  className="text-4xl font-bold text-gold-gradient"
-                  style={{
-                    fontFamily: "'PingFang HK', 'Noto Sans TC', sans-serif",
-                    letterSpacing: '0.05em'
-                  }}
+                  className="text-xs font-bold"
+                  style={{ color: 'var(--champagne)', fontFamily: "'PingFang HK', sans-serif" }}
                 >
                   匠
                 </span>
-                <span
-                  className="mt-2 text-xs tracking-[0.3em] uppercase"
-                  style={{ color: 'rgba(201,169,110,0.6)' }}
-                >
-                  ARTISAN
-                </span>
               </div>
 
-              {/* Floating dots */}
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-2 h-2 rounded-full animate-float"
+              <input
+                type="text"
+                value={commandValue}
+                onChange={(e) => setCommandValue(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                onKeyDown={(e) => { if (e.key === 'Enter') scrollToSection('#services'); }}
+                placeholder="請描述您的需求，AI Agent 將為您配對最合適的智慧顧問..."
+                className="flex-1 bg-transparent outline-none text-sm lg:text-base min-w-0"
+                style={{
+                  color: 'var(--off-white)',
+                  caretColor: 'var(--champagne)'
+                }}
+              />
+
+              {/* Action icons */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {[
+                  { Icon: Mic, title: '語音輸入' },
+                  { Icon: Paperclip, title: '上傳文件' }
+                ].map(({ Icon, title }) => (
+                  <button
+                    key={title}
+                    title={title}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-white/10"
+                    style={{ color: 'rgba(201,169,110,0.45)' }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--champagne)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(201,169,110,0.45)'; }}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => scrollToSection('#services')}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-300 group"
                   style={{
-                    backgroundColor: 'rgba(201,169,110,0.5)',
-                    top: `${15 + i * 14}%`,
-                    left: `${8 + i * 16}%`,
-                    animationDelay: `${i * 0.6}s`
+                    background: 'linear-gradient(135deg, #C9A96E 0%, #a8883a 100%)',
+                    color: '#0A1628'
                   }}
-                />
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.04)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
+                >
+                  配對
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div
+              style={{
+                height: '1px',
+                background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.15), transparent)',
+                margin: '0 20px'
+              }}
+            />
+
+            {/* Suggestion chips */}
+            <div className="flex flex-wrap items-center gap-2 px-5 py-3">
+              <span
+                className="text-xs flex-shrink-0"
+                style={{ color: 'rgba(201,169,110,0.45)' }}
+              >
+                快速提問：
+              </span>
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setCommandValue(s)}
+                  className="text-xs px-3 py-1.5 rounded-full transition-all duration-200"
+                  style={{
+                    background: 'rgba(201,169,110,0.07)',
+                    border: '1px solid rgba(201,169,110,0.14)',
+                    color: 'rgba(237,232,223,0.65)'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.42)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--champagne)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.14)';
+                    (e.currentTarget as HTMLElement).style.color = 'rgba(237,232,223,0.65)';
+                  }}
+                >
+                  {s}
+                </button>
               ))}
             </div>
           </div>
+
+          {/* Supports line */}
+          <p
+            className="mt-3 text-xs text-center"
+            style={{ color: 'rgba(201,169,110,0.35)' }}
+          >
+            支持文字 · 語音 · 多模態文件上傳 &nbsp;|&nbsp; Powered by AI Agent (Sonnet 4.6)
+          </p>
         </div>
+
+        {/* CTA Buttons */}
+        <div
+          ref={ctaRef}
+          className="opacity-0 flex flex-col sm:flex-row gap-4 justify-center items-center"
+        >
+          <button
+            onClick={() => scrollToSection('#contact')}
+            className="btn-outline"
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            成為智慧導師
+          </button>
+          <button
+            onClick={() => scrollToSection('#about')}
+            className="btn-gold"
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            了解 FAC 平台
+          </button>
+        </div>
+
+        {/* Trust line */}
+        <p
+          className="mt-10 text-xs tracking-widest uppercase"
+          style={{ color: 'rgba(201,169,110,0.3)' }}
+        >
+          Facilitating Artisan Collective &nbsp;·&nbsp; Web3 · Decentralized · Est. Hong Kong
+        </p>
       </div>
 
       {/* Scroll Indicator */}
@@ -285,8 +353,8 @@ export default function Hero() {
           onClick={() => scrollToSection('#about')}
           className="flex flex-col items-center gap-2 transition-colors duration-300"
           style={{ color: 'rgba(201,169,110,0.5)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(201,169,110,0.5)')}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--champagne)')}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'rgba(201,169,110,0.5)')}
         >
           <span className="text-xs tracking-wider">向下滾動</span>
           <ChevronDown className="w-5 h-5 animate-bounce-gentle" />
