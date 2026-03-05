@@ -56,16 +56,32 @@ function StatItem({ number, label, desc, delay }: StatItemProps) {
   return (
     <div
       ref={itemRef}
-      className="text-center p-8 rounded-2xl bg-white/5 hover:bg-white/10 transition-all duration-500 group opacity-0"
+      className="text-center p-8 rounded-2xl transition-all duration-500 group opacity-0"
+      style={{
+        backgroundColor: 'var(--navy-card)',
+        border: '1px solid rgba(201,169,110,0.1)'
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.35)';
+        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--navy-hover)';
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.1)';
+        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--navy-card)';
+      }}
     >
-      <div className="text-5xl lg:text-6xl font-bold text-[#FFD700] mb-2 group-hover:scale-105 transition-transform duration-300">
+      <div
+        className="text-5xl lg:text-6xl font-bold mb-2 group-hover:scale-105 transition-transform duration-300 text-gold-gradient"
+      >
         {displayNumber}
       </div>
-      <div className="text-lg font-medium text-white mb-2">{label}</div>
-      <div className="text-sm text-white/50">{desc}</div>
-      
-      {/* Underline Effect */}
-      <div className="mt-4 h-0.5 bg-gradient-to-r from-transparent via-[#FFD700]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="text-lg font-medium mb-2" style={{ color: 'var(--off-white)' }}>{label}</div>
+      <div className="text-sm" style={{ color: 'rgba(237,232,223,0.5)' }}>{desc}</div>
+
+      <div
+        className="mt-4 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.5), transparent)' }}
+      />
     </div>
   );
 }
@@ -111,14 +127,17 @@ export default function Stats() {
   return (
     <section
       ref={sectionRef}
-      className="relative py-20 lg:py-28 bg-black overflow-hidden"
+      className="relative py-20 lg:py-28 overflow-hidden"
+      style={{ backgroundColor: 'var(--midnight)' }}
     >
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A] via-black to-[#0A0A0A]" />
-      
-      {/* Gold Line Accent */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD700]/30 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD700]/30 to-transparent" />
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.25), transparent)' }}
+      />
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.25), transparent)' }}
+      />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
