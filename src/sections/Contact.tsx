@@ -155,12 +155,29 @@ export default function Contact() {
     <section
       id="contact"
       ref={sectionRef}
-      className="relative py-24 lg:py-32 bg-black overflow-hidden"
+      className="relative py-24 lg:py-32 overflow-hidden"
+      style={{ backgroundColor: 'var(--navy)' }}
     >
       {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-[#FFD700]/3 rounded-full blur-[150px]" />
-        <div className="absolute top-0 right-1/4 w-64 h-64 bg-[#FFD700]/2 rounded-full blur-[100px]" />
+      <div className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute rounded-full"
+          style={{
+            bottom: 0, left: '25%',
+            width: '400px', height: '400px',
+            background: 'radial-gradient(circle, rgba(201,169,110,0.05) 0%, transparent 70%)',
+            filter: 'blur(60px)'
+          }}
+        />
+        <div
+          className="absolute rounded-full"
+          style={{
+            top: 0, right: '25%',
+            width: '280px', height: '280px',
+            background: 'radial-gradient(circle, rgba(201,169,110,0.04) 0%, transparent 70%)',
+            filter: 'blur(50px)'
+          }}
+        />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12">
@@ -169,7 +186,14 @@ export default function Contact() {
           <span className="contact-title section-tag opacity-0">
             {t('contact.sectionTag')}
           </span>
-          <h2 className="contact-title text-3xl lg:text-4xl font-bold text-white mt-4 opacity-0">
+          <h2
+            className="contact-title font-bold mt-4 opacity-0"
+            style={{
+              fontSize: 'clamp(1.6rem, 3vw, 2.4rem)',
+              color: 'var(--off-white)',
+              letterSpacing: '0.03em'
+            }}
+          >
             {t('contact.title')}
           </h2>
         </div>
@@ -181,24 +205,30 @@ export default function Contact() {
             <form
               ref={formRef}
               onSubmit={handleSubmit}
-              className="bg-white/5 rounded-2xl p-6 lg:p-8 opacity-0"
-              style={{ perspective: '1000px' }}
+              className="rounded-2xl p-6 lg:p-8 opacity-0"
+              style={{
+                backgroundColor: 'var(--navy-card)',
+                border: '1px solid rgba(201,169,110,0.12)',
+                perspective: '1000px'
+              }}
             >
               {isSubmitted ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#FFD700]/20 flex items-center justify-center mb-4">
-                    <CheckCircle className="w-8 h-8 text-[#FFD700]" />
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                    style={{ backgroundColor: 'rgba(201,169,110,0.15)' }}
+                  >
+                    <CheckCircle className="w-8 h-8" style={{ color: 'var(--champagne)' }} />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
+                  <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--off-white)' }}>
                     {t('contact.form.success')}
                   </h3>
                 </div>
               ) : (
                 <div className="space-y-6">
                   <div className="grid sm:grid-cols-2 gap-6">
-                    {/* Name */}
                     <div>
-                      <label className="block text-sm text-white/60 mb-2">
+                      <label className="block text-sm mb-2" style={{ color: 'rgba(237,232,223,0.6)' }}>
                         {t('contact.form.name')}
                       </label>
                       <input
@@ -208,13 +238,18 @@ export default function Contact() {
                         onChange={handleChange}
                         placeholder={t('contact.form.namePlaceholder')}
                         required
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-[#FFD700] focus:ring-2 focus:ring-[#FFD700]/20 transition-all duration-300 outline-none"
+                        className="w-full px-4 py-3 rounded-lg outline-none transition-all duration-300"
+                        style={{
+                          backgroundColor: 'rgba(201,169,110,0.05)',
+                          border: '1px solid rgba(201,169,110,0.15)',
+                          color: 'var(--off-white)'
+                        }}
+                        onFocus={(e) => (e.target.style.borderColor = 'rgba(201,169,110,0.5)')}
+                        onBlur={(e) => (e.target.style.borderColor = 'rgba(201,169,110,0.15)')}
                       />
                     </div>
-
-                    {/* Email */}
                     <div>
-                      <label className="block text-sm text-white/60 mb-2">
+                      <label className="block text-sm mb-2" style={{ color: 'rgba(237,232,223,0.6)' }}>
                         {t('contact.form.email')}
                       </label>
                       <input
@@ -224,14 +259,20 @@ export default function Contact() {
                         onChange={handleChange}
                         placeholder={t('contact.form.emailPlaceholder')}
                         required
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-[#FFD700] focus:ring-2 focus:ring-[#FFD700]/20 transition-all duration-300 outline-none"
+                        className="w-full px-4 py-3 rounded-lg outline-none transition-all duration-300"
+                        style={{
+                          backgroundColor: 'rgba(201,169,110,0.05)',
+                          border: '1px solid rgba(201,169,110,0.15)',
+                          color: 'var(--off-white)'
+                        }}
+                        onFocus={(e) => (e.target.style.borderColor = 'rgba(201,169,110,0.5)')}
+                        onBlur={(e) => (e.target.style.borderColor = 'rgba(201,169,110,0.15)')}
                       />
                     </div>
                   </div>
 
-                  {/* Subject */}
                   <div>
-                    <label className="block text-sm text-white/60 mb-2">
+                    <label className="block text-sm mb-2" style={{ color: 'rgba(237,232,223,0.6)' }}>
                       {t('contact.form.subject')}
                     </label>
                     <input
@@ -240,13 +281,19 @@ export default function Contact() {
                       value={formData.subject}
                       onChange={handleChange}
                       placeholder={t('contact.form.subjectPlaceholder')}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-[#FFD700] focus:ring-2 focus:ring-[#FFD700]/20 transition-all duration-300 outline-none"
+                      className="w-full px-4 py-3 rounded-lg outline-none transition-all duration-300"
+                      style={{
+                        backgroundColor: 'rgba(201,169,110,0.05)',
+                        border: '1px solid rgba(201,169,110,0.15)',
+                        color: 'var(--off-white)'
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = 'rgba(201,169,110,0.5)')}
+                      onBlur={(e) => (e.target.style.borderColor = 'rgba(201,169,110,0.15)')}
                     />
                   </div>
 
-                  {/* Message */}
                   <div>
-                    <label className="block text-sm text-white/60 mb-2">
+                    <label className="block text-sm mb-2" style={{ color: 'rgba(237,232,223,0.6)' }}>
                       {t('contact.form.message')}
                     </label>
                     <textarea
@@ -256,11 +303,17 @@ export default function Contact() {
                       placeholder={t('contact.form.messagePlaceholder')}
                       required
                       rows={5}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-[#FFD700] focus:ring-2 focus:ring-[#FFD700]/20 transition-all duration-300 outline-none resize-none"
+                      className="w-full px-4 py-3 rounded-lg outline-none transition-all duration-300 resize-none"
+                      style={{
+                        backgroundColor: 'rgba(201,169,110,0.05)',
+                        border: '1px solid rgba(201,169,110,0.15)',
+                        color: 'var(--off-white)'
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = 'rgba(201,169,110,0.5)')}
+                      onBlur={(e) => (e.target.style.borderColor = 'rgba(201,169,110,0.15)')}
                     />
                   </div>
 
-                  {/* Submit */}
                   <button
                     type="submit"
                     disabled={isSubmitting}
@@ -286,18 +339,27 @@ export default function Contact() {
           {/* Info */}
           <div className="lg:col-span-2 space-y-8">
             {/* Contact Info */}
-            <div className="contact-info bg-white/5 rounded-2xl p-6 lg:p-8 opacity-0">
+            <div
+              className="contact-info rounded-2xl p-6 lg:p-8 opacity-0"
+              style={{
+                backgroundColor: 'var(--navy-card)',
+                border: '1px solid rgba(201,169,110,0.12)'
+              }}
+            >
               <div className="space-y-6">
                 {contactInfo.map((item, index) => {
                   const Icon = item.icon;
                   return (
                     <div key={index} className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-[#FFD700]" />
+                      <div
+                        className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: 'rgba(201,169,110,0.1)' }}
+                      >
+                        <Icon className="w-5 h-5" style={{ color: 'var(--champagne)' }} />
                       </div>
                       <div>
-                        <p className="text-sm text-white/50 mb-1">{item.label}</p>
-                        <p className="text-white">{item.value}</p>
+                        <p className="text-sm mb-1" style={{ color: 'rgba(237,232,223,0.5)' }}>{item.label}</p>
+                        <p style={{ color: 'var(--off-white)' }}>{item.value}</p>
                       </div>
                     </div>
                   );
@@ -306,8 +368,14 @@ export default function Contact() {
             </div>
 
             {/* Social Links */}
-            <div className="contact-info bg-white/5 rounded-2xl p-6 lg:p-8 opacity-0">
-              <p className="text-white/60 mb-4">{t('contact.social')}</p>
+            <div
+              className="contact-info rounded-2xl p-6 lg:p-8 opacity-0"
+              style={{
+                backgroundColor: 'var(--navy-card)',
+                border: '1px solid rgba(201,169,110,0.12)'
+              }}
+            >
+              <p className="mb-4" style={{ color: 'rgba(237,232,223,0.6)' }}>{t('contact.social')}</p>
               <div className="flex gap-4">
                 {socialLinks.map((link, index) => {
                   const Icon = link.icon;
@@ -315,10 +383,20 @@ export default function Contact() {
                     <a
                       key={index}
                       href={link.href}
-                      className="social-icon w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#FFD700]/20 transition-all duration-300 group"
+                      className="social-icon w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-300"
+                      style={{
+                        backgroundColor: 'rgba(201,169,110,0.08)',
+                        border: '1px solid rgba(201,169,110,0.15)'
+                      }}
                       aria-label={link.label}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(201,169,110,0.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(201,169,110,0.08)';
+                      }}
                     >
-                      <Icon className="w-5 h-5 text-white/60 group-hover:text-[#FFD700] transition-colors duration-300" />
+                      <Icon className="w-5 h-5 transition-colors duration-300" style={{ color: 'rgba(201,169,110,0.65)' }} />
                     </a>
                   );
                 })}

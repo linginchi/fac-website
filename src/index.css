@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Noto+Sans:wght@300;400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Sans:wght@300;400;500;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,36 +6,42 @@
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 51 100% 50%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 51 100% 50%;
-    --accent-foreground: 0 0% 0%;
+    /* Midnight Blue Palette */
+    --background: 214 60% 11%;
+    --foreground: 40 25% 92%;
+    --card: 216 55% 14%;
+    --card-foreground: 40 25% 92%;
+    --popover: 216 55% 14%;
+    --popover-foreground: 40 25% 92%;
+
+    /* Champagne Gold */
+    --primary: 38 55% 60%;
+    --primary-foreground: 214 60% 8%;
+
+    --secondary: 214 45% 18%;
+    --secondary-foreground: 40 25% 92%;
+    --muted: 214 40% 20%;
+    --muted-foreground: 220 15% 60%;
+    --accent: 38 55% 60%;
+    --accent-foreground: 214 60% 8%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
-    --ring: 51 100% 50%;
+    --border: 214 35% 22%;
+    --input: 214 40% 18%;
+    --ring: 38 55% 60%;
     --radius: 0.5rem;
-    
-    /* Custom Colors */
-    --gold: #FFD700;
-    --gold-dark: #B8860B;
-    --gold-light: #FFE55C;
-    --black: #000000;
-    --dark-gray: #1A1A1A;
-    --gray: #808080;
-    --light-gray: #D3D3D3;
-    
+
+    /* Custom Colors — FAC 港匠匯 Brand */
+    --midnight: #0A1628;
+    --navy: #0D1F3C;
+    --navy-card: #112240;
+    --navy-hover: #163058;
+    --champagne: #C9A96E;
+    --champagne-light: #E8CC8B;
+    --champagne-dark: #A07840;
+    --off-white: #EDE8DF;
+    --text-muted: #8A9AB8;
+
     /* Animation Easings */
     --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-expo-in: cubic-bezier(0.7, 0, 0.84, 0);
@@ -56,96 +62,183 @@
   }
   
   body {
-    @apply bg-black text-white antialiased;
-    font-family: 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background-color: var(--midnight);
+    color: var(--off-white);
+    @apply antialiased;
+    font-family: 'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', 'Noto Sans SC', sans-serif;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
   }
 }
 
 @layer components {
-  /* Gold Gradient Text */
+  /* Champagne Gold Gradient Text */
   .text-gold-gradient {
-    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    background: linear-gradient(135deg, var(--champagne-dark) 0%, var(--champagne) 40%, var(--champagne-light) 70%, var(--champagne) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
-  /* Gold Button */
+
+  /* Gold Filled Button — 金底黑字 */
   .btn-gold {
-    @apply px-6 py-3 bg-[#FFD700] text-black font-semibold rounded transition-all duration-300;
+    @apply px-6 py-3 font-semibold rounded transition-all duration-300;
+    background-color: var(--champagne);
+    color: var(--midnight);
+    letter-spacing: 0.03em;
   }
-  
+
   .btn-gold:hover {
-    @apply shadow-[0_0_20px_rgba(255,215,0,0.4)] scale-105;
+    background-color: var(--champagne-light);
+    box-shadow: 0 0 24px rgba(201, 169, 110, 0.45);
+    transform: translateY(-1px) scale(1.02);
   }
-  
-  /* Outline Button */
+
+  /* Outline Button — 金邊透明底 */
   .btn-outline {
-    @apply px-6 py-3 border-2 border-[#FFD700] text-[#FFD700] font-semibold rounded transition-all duration-300;
+    @apply px-6 py-3 font-semibold rounded transition-all duration-300;
+    border: 2px solid var(--champagne);
+    color: var(--champagne);
+    background: transparent;
+    letter-spacing: 0.03em;
   }
-  
+
   .btn-outline:hover {
-    @apply bg-[#FFD700] text-black;
+    background-color: var(--champagne);
+    color: var(--midnight);
+    box-shadow: 0 0 24px rgba(201, 169, 110, 0.35);
+    transform: translateY(-1px);
   }
-  
-  /* Glass Effect */
+
+  /* Glass Effect — navy tinted */
   .glass {
-    @apply backdrop-blur-xl bg-black/80;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background-color: rgba(10, 22, 40, 0.88);
+    border-bottom: 1px solid rgba(201, 169, 110, 0.12);
   }
-  
+
   /* Section Tag */
   .section-tag {
-    @apply text-[#FFD700] text-sm font-medium tracking-[3px] uppercase;
+    color: var(--champagne);
+    @apply text-sm font-medium tracking-[3px] uppercase;
   }
-  
+
+  /* Expertise Card */
+  .expertise-card {
+    background-color: var(--navy-card);
+    border: 1px solid rgba(201, 169, 110, 0.12);
+    @apply rounded-xl p-6 transition-all duration-300;
+  }
+
+  .expertise-card:hover {
+    border-color: rgba(201, 169, 110, 0.4);
+    background-color: var(--navy-hover);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(201, 169, 110, 0.08);
+  }
+
   /* Card 3D Effect */
   .card-3d {
     transform-style: preserve-3d;
     perspective: 1000px;
   }
-  
-  /* Gold Glow */
+
+  /* Champagne Glow */
   .gold-glow {
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 30px rgba(201, 169, 110, 0.3);
   }
-  
+
   /* Animated Underline */
   .animated-underline {
     @apply relative;
   }
-  
+
   .animated-underline::after {
     content: '';
-    @apply absolute bottom-0 left-1/2 w-0 h-0.5 bg-[#FFD700] transition-all duration-300;
+    @apply absolute bottom-0 left-1/2 w-0 h-0.5 transition-all duration-300;
+    background-color: var(--champagne);
     transform: translateX(-50%);
   }
-  
+
   .animated-underline:hover::after {
     @apply w-full;
+  }
+
+  /* Tag pill — hashtag style */
+  .tag-pill {
+    @apply inline-block text-xs px-2 py-0.5 rounded-full mr-1 mb-1;
+    background-color: rgba(201, 169, 110, 0.12);
+    color: var(--champagne);
+    border: 1px solid rgba(201, 169, 110, 0.2);
+    letter-spacing: 0.02em;
+  }
+
+  /* Divider line */
+  .gold-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--champagne), transparent);
+    opacity: 0.3;
+  }
+
+  /* Security badge */
+  .security-badge {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold;
+    background-color: rgba(201, 169, 110, 0.1);
+    border: 1px solid rgba(201, 169, 110, 0.3);
+    color: var(--champagne-light);
   }
 }
 
 @layer utilities {
-  /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
-  /* Text balance */
+
   .text-balance {
     text-wrap: balance;
   }
-  
-  /* GPU Acceleration */
+
   .gpu-accelerate {
     transform: translateZ(0);
     backface-visibility: hidden;
     will-change: transform, opacity;
+  }
+
+  .text-champagne {
+    color: var(--champagne);
+  }
+
+  .text-champagne-light {
+    color: var(--champagne-light);
+  }
+
+  .bg-midnight {
+    background-color: var(--midnight);
+  }
+
+  .bg-navy {
+    background-color: var(--navy);
+  }
+
+  .bg-navy-card {
+    background-color: var(--navy-card);
+  }
+
+  .border-champagne {
+    border-color: var(--champagne);
   }
 }
 
@@ -161,10 +254,10 @@
 
 @keyframes pulse-gold {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 20px rgba(201, 169, 110, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+    box-shadow: 0 0 40px rgba(201, 169, 110, 0.6);
   }
 }
 
@@ -213,6 +306,17 @@
   }
 }
 
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
@@ -222,7 +326,7 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201, 169, 110, 0.2), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }

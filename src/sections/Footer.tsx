@@ -1,13 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Linkedin, Twitter, Facebook, MessageCircle } from 'lucide-react';
+import { Linkedin, MessageCircle, Facebook } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Footer() {
-  const { t } = useTranslation();
   const footerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,7 +21,7 @@ export default function Footer() {
           ease: 'expo.out',
           scrollTrigger: {
             trigger: footerRef.current,
-            start: 'top 80%',
+            start: 'top 85%',
             toggleActions: 'play none none reverse'
           }
         }
@@ -34,12 +32,11 @@ export default function Footer() {
         { opacity: 0 },
         {
           opacity: 1,
-          duration: 0.4,
-          delay: 0.6,
-          ease: 'smooth',
+          duration: 0.5,
+          delay: 0.5,
           scrollTrigger: {
             trigger: footerRef.current,
-            start: 'top 80%',
+            start: 'top 85%',
             toggleActions: 'play none none reverse'
           }
         }
@@ -50,24 +47,24 @@ export default function Footer() {
   }, []);
 
   const quickLinks = [
-    { key: 'home', href: '#hero' },
-    { key: 'about', href: '#about' },
-    { key: 'services', href: '#services' },
-    { key: 'team', href: '#team' },
-    { key: 'contact', href: '#contact' }
+    { label: '首頁', href: '#hero' },
+    { label: '關於我們', href: '#about' },
+    { label: '五大領域', href: '#services' },
+    { label: '導師團隊', href: '#team' },
+    { label: '聯絡我們', href: '#contact' }
   ];
 
-  const services = [
-    { key: 'consulting', label: t('services.tabs.0.label') },
-    { key: 'incubation', label: t('services.tabs.1.label') },
-    { key: 'technology', label: t('services.tabs.2.label') },
-    { key: 'investment', label: t('services.tabs.3.label') }
+  const expertiseLinks = [
+    '跨境貿易與國際合規',
+    '高級零售與品牌管理',
+    '家族財富與企業傳承',
+    '精密製造與工藝傳承',
+    '企業融資與現金流管理'
   ];
 
   const socialLinks = [
     { icon: Linkedin, href: '#', label: 'LinkedIn' },
-    { icon: MessageCircle, href: '#', label: 'WeChat' },
-    { icon: Twitter, href: '#', label: 'Twitter' },
+    { icon: MessageCircle, href: '#', label: 'WhatsApp' },
     { icon: Facebook, href: '#', label: 'Facebook' }
   ];
 
@@ -81,34 +78,78 @@ export default function Footer() {
   return (
     <footer
       ref={footerRef}
-      className="relative bg-black border-t border-white/10"
+      className="relative"
+      style={{
+        backgroundColor: '#060F1E',
+        borderTop: '1px solid rgba(201,169,110,0.12)'
+      }}
     >
-      {/* Gold Line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD700]/30 to-transparent" />
+      {/* Gold top line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.4), transparent)'
+        }}
+      />
 
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-20">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-          {/* Logo & About */}
+
+          {/* Brand Column */}
           <div className="footer-col opacity-0">
-            <a href="#hero" className="inline-block mb-6">
-              <span className="text-3xl font-bold text-white">
-                F<span className="text-[#FFD700]">A</span>C
+            <a href="#hero" className="inline-block mb-2">
+              <span
+                className="text-2xl font-bold tracking-wide"
+                style={{ color: 'var(--off-white)' }}
+              >
+                F<span style={{ color: 'var(--champagne)' }}>A</span>C
+              </span>
+              <span
+                className="ml-2 text-base font-medium"
+                style={{ color: 'var(--champagne)' }}
+              >
+                港匠匯
               </span>
             </a>
-            <p className="text-white/60 text-sm leading-relaxed mb-6">
-              {t('footer.about')}
+            <p
+              className="text-xs mb-1 tracking-widest uppercase"
+              style={{ color: 'rgba(201,169,110,0.45)' }}
+            >
+              Facilitating Artisan Collective
             </p>
-            <div className="flex gap-3">
-              {socialLinks.map((link, index) => {
+            <p
+              className="text-sm mt-5 leading-relaxed"
+              style={{ color: 'rgba(237,232,223,0.5)' }}
+            >
+              香港首個退休精英智慧共享平台。
+              連結企業與業界老江湖，讓數十年的商業智慧，滋養香港的下一代。
+            </p>
+            <div className="flex gap-3 mt-6">
+              {socialLinks.map((link, i) => {
                 const Icon = link.icon;
                 return (
                   <a
-                    key={index}
+                    key={i}
                     href={link.href}
-                    className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#FFD700]/20 transition-all duration-300 group"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300"
+                    style={{
+                      backgroundColor: 'rgba(201,169,110,0.08)',
+                      border: '1px solid rgba(201,169,110,0.15)'
+                    }}
                     aria-label={link.label}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(201,169,110,0.2)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(201,169,110,0.08)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.15)';
+                    }}
                   >
-                    <Icon className="w-4 h-4 text-white/60 group-hover:text-[#FFD700] transition-colors duration-300" />
+                    <Icon
+                      className="w-4 h-4 transition-colors duration-300"
+                      style={{ color: 'rgba(201,169,110,0.6)' }}
+                    />
                   </a>
                 );
               })}
@@ -117,44 +158,68 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div className="footer-col opacity-0">
-            <h4 className="text-white font-semibold mb-6">
-              {t('footer.quickLinks')}
+            <h4
+              className="font-semibold mb-6 text-sm tracking-wider uppercase"
+              style={{ color: 'var(--off-white)' }}
+            >
+              快速連結
             </h4>
             <ul className="space-y-3">
-              {quickLinks.map((link) => (
-                <li key={link.key}>
+              {quickLinks.map((link, i) => (
+                <li key={i}>
                   <a
                     href={link.href}
                     onClick={(e) => {
                       e.preventDefault();
                       scrollToSection(link.href);
                     }}
-                    className="text-white/60 hover:text-[#FFD700] hover:translate-x-1 transition-all duration-300 inline-block text-sm"
+                    className="text-sm transition-all duration-300 inline-block"
+                    style={{ color: 'rgba(237,232,223,0.55)' }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.color = 'var(--champagne)';
+                      (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.color = 'rgba(237,232,223,0.55)';
+                      (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
+                    }}
                   >
-                    {t(`nav.${link.key}`)}
+                    {link.label}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Expertise */}
           <div className="footer-col opacity-0">
-            <h4 className="text-white font-semibold mb-6">
-              {t('footer.services')}
+            <h4
+              className="font-semibold mb-6 text-sm tracking-wider uppercase"
+              style={{ color: 'var(--off-white)' }}
+            >
+              專業領域
             </h4>
             <ul className="space-y-3">
-              {services.map((service) => (
-                <li key={service.key}>
+              {expertiseLinks.map((label, i) => (
+                <li key={i}>
                   <a
                     href="#services"
                     onClick={(e) => {
                       e.preventDefault();
                       scrollToSection('#services');
                     }}
-                    className="text-white/60 hover:text-[#FFD700] hover:translate-x-1 transition-all duration-300 inline-block text-sm"
+                    className="text-sm transition-all duration-300 inline-block"
+                    style={{ color: 'rgba(237,232,223,0.55)' }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.color = 'var(--champagne)';
+                      (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.color = 'rgba(237,232,223,0.55)';
+                      (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
+                    }}
                   >
-                    {service.label}
+                    {label}
                   </a>
                 </li>
               ))}
@@ -163,39 +228,74 @@ export default function Footer() {
 
           {/* Contact */}
           <div className="footer-col opacity-0">
-            <h4 className="text-white font-semibold mb-6">
-              {t('footer.contact')}
+            <h4
+              className="font-semibold mb-6 text-sm tracking-wider uppercase"
+              style={{ color: 'var(--off-white)' }}
+            >
+              聯絡資訊
             </h4>
-            <ul className="space-y-3 text-sm">
-              <li className="text-white/60">
-                {t('contact.info.addressValue')}
+            <ul className="space-y-4 text-sm">
+              <li style={{ color: 'rgba(237,232,223,0.55)', lineHeight: '1.7' }}>
+                香港九龍尖沙咀梳士巴利道18號
               </li>
               <li>
-                <a href={`tel:${t('contact.info.phoneValue')}`} className="text-white/60 hover:text-[#FFD700] transition-colors duration-300">
-                  {t('contact.info.phoneValue')}
+                <a
+                  href="tel:+85212345678"
+                  className="transition-colors duration-300"
+                  style={{ color: 'rgba(237,232,223,0.55)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.55)')}
+                >
+                  +852 1234 5678
                 </a>
               </li>
               <li>
-                <a href={`mailto:${t('contact.info.emailValue')}`} className="text-white/60 hover:text-[#FFD700] transition-colors duration-300">
-                  {t('contact.info.emailValue')}
+                <a
+                  href="mailto:info@hkfac.com"
+                  className="transition-colors duration-300"
+                  style={{ color: 'rgba(237,232,223,0.55)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.55)')}
+                >
+                  info@hkfac.com
                 </a>
+              </li>
+              <li style={{ color: 'rgba(237,232,223,0.4)', fontSize: '0.8rem' }}>
+                週一至週五 &nbsp;9:00 – 18:00
               </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="footer-bottom mt-16 pt-8 border-t border-white/10 opacity-0">
+        <div
+          className="footer-bottom mt-16 pt-8 opacity-0"
+          style={{ borderTop: '1px solid rgba(201,169,110,0.1)' }}
+        >
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-white/40 text-sm">
-              {t('footer.copyright')}
-            </p>
+            <div className="text-center sm:text-left">
+              <p className="text-sm" style={{ color: 'rgba(237,232,223,0.35)' }}>
+                © 2025 FAC | 港匠匯 · Facilitating Artisan Collective. 版權所有。
+              </p>
+            </div>
             <div className="flex gap-6">
-              <a href="#" className="text-white/40 hover:text-[#FFD700] text-sm transition-colors duration-300">
-                {t('footer.privacy')}
+              <a
+                href="#"
+                className="text-sm transition-colors duration-300"
+                style={{ color: 'rgba(237,232,223,0.35)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.35)')}
+              >
+                隱私政策
               </a>
-              <a href="#" className="text-white/40 hover:text-[#FFD700] text-sm transition-colors duration-300">
-                {t('footer.terms')}
+              <a
+                href="#"
+                className="text-sm transition-colors duration-300"
+                style={{ color: 'rgba(237,232,223,0.35)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.35)')}
+              >
+                使用條款
               </a>
             </div>
           </div>

@@ -1,68 +1,57 @@
 import { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import gsap from 'gsap';
-import { useSiteConfig } from '../hooks/useSiteConfig';
 
 export default function Hero() {
-  const { i18n } = useTranslation();
-  const { config } = useSiteConfig();
   const heroRef = useRef<HTMLDivElement>(null);
+  const tagRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const cubeRef = useRef<HTMLDivElement>(null);
-  const tagRef = useRef<HTMLSpanElement>(null);
-
-  const isEnglish = i18n.language === 'en';
+  const decorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
 
-      // Tag animation
       tl.fromTo(
         tagRef.current,
         { clipPath: 'inset(0 100% 0 0)', opacity: 0 },
-        { clipPath: 'inset(0 0% 0 0)', opacity: 1, duration: 0.6 },
+        { clipPath: 'inset(0 0% 0 0)', opacity: 1, duration: 0.7 },
         0.3
       );
 
-      // Title lines animation
       const titleLines = titleRef.current?.querySelectorAll('.title-line');
       if (titleLines) {
-        titleLines.forEach((line, index) => {
+        titleLines.forEach((line, i) => {
           tl.fromTo(
             line,
-            { rotateX: -90, y: 50, opacity: 0 },
-            { rotateX: 0, y: 0, opacity: 1, duration: 0.8 },
-            0.5 + index * 0.15
+            { rotateX: -90, y: 60, opacity: 0 },
+            { rotateX: 0, y: 0, opacity: 1, duration: 0.9 },
+            0.6 + i * 0.18
           );
         });
       }
 
-      // Subtitle animation
       tl.fromTo(
         subtitleRef.current,
         { y: 40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7 },
-        1
+        { y: 0, opacity: 1, duration: 0.8 },
+        1.1
       );
 
-      // CTA buttons animation
       tl.fromTo(
         ctaRef.current,
-        { scale: 0.8, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.6 },
-        1.2
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.7 },
+        1.4
       );
 
-      // 3D Cube animation
       tl.fromTo(
-        cubeRef.current,
-        { rotateY: 180, rotateX: 45, scale: 0.5, opacity: 0 },
-        { rotateY: 0, rotateX: 0, scale: 1, opacity: 1, duration: 1.4 },
-        0.4
+        decorRef.current,
+        { x: 60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 1.2 },
+        0.5
       );
     }, heroRef);
 
@@ -80,93 +69,211 @@ export default function Hero() {
     <section
       id="hero"
       ref={heroRef}
-      className="relative min-h-screen flex items-center overflow-hidden bg-black"
+      className="relative min-h-screen flex items-center overflow-hidden"
+      style={{ backgroundColor: 'var(--midnight)' }}
     >
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0A0A0A] to-[#1A1A1A]" />
-      
-      {/* Gold Accent Glow */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#FFD700]/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-[#FFD700]/3 rounded-full blur-[100px]" />
+      {/* Background — layered midnight blue gradients */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, #0A1628 0%, #0D1F3C 50%, #0A1628 100%)'
+        }}
+      />
+
+      {/* Champagne glow orbs */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: '15%',
+          right: '10%',
+          width: '480px',
+          height: '480px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(201,169,110,0.07) 0%, transparent 70%)',
+          filter: 'blur(40px)'
+        }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          bottom: '20%',
+          left: '5%',
+          width: '320px',
+          height: '320px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(201,169,110,0.05) 0%, transparent 70%)',
+          filter: 'blur(60px)'
+        }}
+      />
+
+      {/* Subtle grid pattern */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(201,169,110,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,169,110,0.04) 1px, transparent 1px)',
+          backgroundSize: '60px 60px'
+        }}
+      />
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-12 py-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
           {/* Left Content */}
           <div className="space-y-8">
-            {/* Tagline */}
+
+            {/* Section Tag */}
             <span
               ref={tagRef}
-              className="section-tag opacity-0"
+              className="section-tag opacity-0 block"
             >
-              {isEnglish ? config.hero.taglineEn : config.hero.tagline}
+              FAC &nbsp;·&nbsp; 港匠匯
             </span>
 
-            {/* Title */}
-            <div ref={titleRef} className="space-y-2" style={{ perspective: '1000px' }}>
-              <h1 className="title-line text-4xl sm:text-5xl lg:text-6xl font-bold text-white opacity-0">
-                {isEnglish ? config.hero.title1En : config.hero.title1}
+            {/* Hero Title */}
+            <div ref={titleRef} className="space-y-1" style={{ perspective: '1000px' }}>
+              <h1
+                className="title-line font-bold leading-tight opacity-0"
+                style={{
+                  fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+                  color: 'var(--off-white)',
+                  fontFamily: "'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif",
+                  letterSpacing: '0.04em'
+                }}
+              >
+                智慧沉澱，
               </h1>
-              <h1 className="title-line text-4xl sm:text-5xl lg:text-6xl font-bold text-gold-gradient opacity-0">
-                {isEnglish ? config.hero.title2En : config.hero.title2}
+              <h1
+                className="title-line font-bold leading-tight opacity-0 text-gold-gradient"
+                style={{
+                  fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+                  fontFamily: "'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif",
+                  letterSpacing: '0.04em'
+                }}
+              >
+                在此相遇。
               </h1>
             </div>
 
             {/* Subtitle */}
-            <p
-              ref={subtitleRef}
-              className="text-lg text-white/70 max-w-xl leading-relaxed opacity-0"
-            >
-              {isEnglish ? config.hero.subtitleEn : config.hero.subtitle}
-            </p>
+            <div className="space-y-3">
+              <p
+                ref={subtitleRef}
+                className="opacity-0"
+                style={{
+                  color: 'rgba(237,232,223,0.78)',
+                  fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
+                  lineHeight: '1.9',
+                  maxWidth: '520px'
+                }}
+              >
+                香港首個退休精英智慧共享平台。
+                <br className="hidden sm:block" />
+                <span style={{ color: 'rgba(237,232,223,0.6)', fontStyle: 'italic' }}>
+                  致企業：有些答案，不在數據庫，在老江湖的眉頭一皺。
+                </span>
+              </p>
+            </div>
 
             {/* CTA Buttons */}
-            <div ref={ctaRef} className="flex flex-wrap gap-4 opacity-0">
-              <button
-                onClick={() => scrollToSection('#services')}
-                className="btn-gold flex items-center gap-2 group"
-              >
-                {isEnglish ? config.hero.cta1En : config.hero.cta1}
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </button>
+            <div
+              ref={ctaRef}
+              className="opacity-0 flex flex-col sm:flex-row gap-4"
+            >
+              {/* 金邊透明底 */}
               <button
                 onClick={() => scrollToSection('#contact')}
-                className="btn-outline"
+                className="btn-outline text-center sm:text-left"
+                style={{ whiteSpace: 'nowrap' }}
               >
-                {isEnglish ? config.hero.cta2En : config.hero.cta2}
+                成為導師：灌溉下一代
+              </button>
+
+              {/* 金底黑字 */}
+              <button
+                onClick={() => scrollToSection('#services')}
+                className="btn-gold text-center sm:text-left"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                尋求專家：與老江湖對話
               </button>
             </div>
+
+            {/* Trust line */}
+            <p
+              className="text-xs tracking-widest uppercase"
+              style={{ color: 'rgba(201,169,110,0.45)' }}
+            >
+              Facilitating Artisan Collective &nbsp;·&nbsp; Est. Hong Kong
+            </p>
           </div>
 
-          {/* Right Content - 3D Cube */}
-          <div className="hidden lg:flex justify-center items-center">
-            <div
-              ref={cubeRef}
-              className="relative w-80 h-80 opacity-0"
-              style={{
-                transformStyle: 'preserve-3d',
-                perspective: '1200px'
-              }}
-            >
-              <img
-                src="/hero-cube.png"
-                alt="3D Cube"
-                className="w-full h-full object-contain animate-rotate-slow"
+          {/* Right Content — decorative visual */}
+          <div
+            ref={decorRef}
+            className="hidden lg:flex justify-center items-center opacity-0"
+          >
+            <div className="relative w-80 h-80">
+              {/* Outer ring */}
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  border: '1px solid rgba(201,169,110,0.15)',
+                  animation: 'rotate-slow 40s linear infinite'
+                }}
               />
-              
-              {/* Floating Particles */}
-              <div className="absolute inset-0 pointer-events-none">
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-2 h-2 bg-[#FFD700]/40 rounded-full animate-float"
-                    style={{
-                      top: `${20 + i * 15}%`,
-                      left: `${10 + i * 15}%`,
-                      animationDelay: `${i * 0.5}s`
-                    }}
-                  />
-                ))}
+              {/* Middle ring */}
+              <div
+                className="absolute rounded-full"
+                style={{
+                  inset: '30px',
+                  border: '1px solid rgba(201,169,110,0.25)',
+                  animation: 'rotate-slow 25s linear infinite reverse'
+                }}
+              />
+              {/* Inner ring */}
+              <div
+                className="absolute rounded-full"
+                style={{
+                  inset: '70px',
+                  border: '2px solid rgba(201,169,110,0.4)',
+                  boxShadow: '0 0 30px rgba(201,169,110,0.1)',
+                  animation: 'rotate-slow 15s linear infinite'
+                }}
+              />
+              {/* Center content */}
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center"
+              >
+                <span
+                  className="text-4xl font-bold text-gold-gradient"
+                  style={{
+                    fontFamily: "'PingFang HK', 'Noto Sans TC', sans-serif",
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  匠
+                </span>
+                <span
+                  className="mt-2 text-xs tracking-[0.3em] uppercase"
+                  style={{ color: 'rgba(201,169,110,0.6)' }}
+                >
+                  ARTISAN
+                </span>
               </div>
+
+              {/* Floating dots */}
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full animate-float"
+                  style={{
+                    backgroundColor: 'rgba(201,169,110,0.5)',
+                    top: `${15 + i * 14}%`,
+                    left: `${8 + i * 16}%`,
+                    animationDelay: `${i * 0.6}s`
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -176,9 +283,12 @@ export default function Hero() {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
         <button
           onClick={() => scrollToSection('#about')}
-          className="flex flex-col items-center gap-2 text-white/50 hover:text-[#FFD700] transition-colors duration-300"
+          className="flex flex-col items-center gap-2 transition-colors duration-300"
+          style={{ color: 'rgba(201,169,110,0.5)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(201,169,110,0.5)')}
         >
-          <span className="text-xs tracking-wider">{isEnglish ? 'Scroll Down' : '向下滚动'}</span>
+          <span className="text-xs tracking-wider">向下滾動</span>
           <ChevronDown className="w-5 h-5 animate-bounce-gentle" />
         </button>
       </div>

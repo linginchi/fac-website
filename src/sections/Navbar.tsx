@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Menu, X, Globe } from 'lucide-react';
 
 const languages = [
-  { code: 'zh-CN', label: '简体' },
   { code: 'zh-HK', label: '繁體' },
+  { code: 'zh-CN', label: '简体' },
   { code: 'en', label: 'EN' }
 ];
 
@@ -54,7 +54,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between">
-          {/* Logo */}
+          {/* Logo — FAC | 港匠匯 */}
           <a
             href="#hero"
             onClick={(e) => {
@@ -63,8 +63,14 @@ export default function Navbar() {
             }}
             className="flex items-center gap-2 group"
           >
-            <span className="text-2xl font-bold text-white">
-              F<span className="text-[#FFD700]">A</span>C
+            <span className="text-xl lg:text-2xl font-bold tracking-wide" style={{ color: 'var(--off-white)' }}>
+              F<span style={{ color: 'var(--champagne)' }}>A</span>C
+            </span>
+            <span className="hidden sm:inline text-sm font-normal tracking-widest" style={{ color: 'rgba(201,169,110,0.6)' }}>
+              &nbsp;|&nbsp;
+            </span>
+            <span className="hidden sm:inline text-sm lg:text-base font-medium tracking-wider" style={{ color: 'var(--champagne)' }}>
+              港匠匯
             </span>
           </a>
 
@@ -78,7 +84,10 @@ export default function Navbar() {
                   e.preventDefault();
                   scrollToSection(link.href);
                 }}
-                className="text-sm text-white/80 hover:text-[#FFD700] transition-colors duration-300 animated-underline"
+                className="text-sm animated-underline transition-colors duration-300"
+                style={{ color: 'rgba(237,232,223,0.75)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.75)')}
               >
                 {t(`nav.${link.key}`)}
               </a>
@@ -91,25 +100,39 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                className="flex items-center gap-2 text-white/80 hover:text-[#FFD700] transition-colors duration-300"
+                className="flex items-center gap-2 transition-colors duration-300 text-sm"
+                style={{ color: 'rgba(237,232,223,0.7)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.7)')}
               >
                 <Globe className="w-4 h-4" />
-                <span className="text-sm">
+                <span>
                   {languages.find((l) => l.code === i18n.language)?.label || '繁體'}
                 </span>
               </button>
-              
+
               {isLangMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 py-2 bg-[#1A1A1A] border border-white/10 rounded-lg shadow-xl">
+                <div
+                  className="absolute top-full right-0 mt-2 py-2 rounded-lg shadow-xl border"
+                  style={{
+                    backgroundColor: 'var(--navy-card)',
+                    borderColor: 'rgba(201,169,110,0.2)'
+                  }}
+                >
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
                       onClick={() => changeLanguage(lang.code)}
-                      className={`block w-full px-4 py-2 text-sm text-left transition-colors duration-300 ${
-                        i18n.language === lang.code
-                          ? 'text-[#FFD700]'
-                          : 'text-white/80 hover:text-[#FFD700]'
-                      }`}
+                      className="block w-full px-4 py-2 text-sm text-left transition-colors duration-300"
+                      style={{
+                        color: i18n.language === lang.code ? 'var(--champagne)' : 'rgba(237,232,223,0.75)'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                      onMouseLeave={(e) => {
+                        if (i18n.language !== lang.code) {
+                          e.currentTarget.style.color = 'rgba(237,232,223,0.75)';
+                        }
+                      }}
                     >
                       {lang.label}
                     </button>
@@ -130,7 +153,8 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden text-white p-2"
+            className="lg:hidden p-2 transition-colors duration-300"
+            style={{ color: 'var(--off-white)' }}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -139,7 +163,10 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 glass border-t border-white/10">
+        <div
+          className="lg:hidden absolute top-full left-0 right-0 glass"
+          style={{ borderTop: '1px solid rgba(201,169,110,0.15)' }}
+        >
           <div className="px-6 py-6 space-y-4">
             {navLinks.map((link) => (
               <a
@@ -149,31 +176,31 @@ export default function Navbar() {
                   e.preventDefault();
                   scrollToSection(link.href);
                 }}
-                className="block text-white/80 hover:text-[#FFD700] transition-colors duration-300"
+                className="block transition-colors duration-300"
+                style={{ color: 'rgba(237,232,223,0.8)' }}
               >
                 {t(`nav.${link.key}`)}
               </a>
             ))}
-            
+
             {/* Mobile Language Selector */}
-            <div className="pt-4 border-t border-white/10">
+            <div className="pt-4" style={{ borderTop: '1px solid rgba(201,169,110,0.15)' }}>
               <div className="flex gap-4">
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
                     onClick={() => changeLanguage(lang.code)}
-                    className={`text-sm transition-colors duration-300 ${
-                      i18n.language === lang.code
-                        ? 'text-[#FFD700]'
-                        : 'text-white/60 hover:text-white'
-                    }`}
+                    className="text-sm transition-colors duration-300"
+                    style={{
+                      color: i18n.language === lang.code ? 'var(--champagne)' : 'rgba(237,232,223,0.55)'
+                    }}
                   >
                     {lang.label}
                   </button>
                 ))}
               </div>
             </div>
-            
+
             <button
               onClick={() => scrollToSection('#contact')}
               className="btn-gold w-full mt-4"
