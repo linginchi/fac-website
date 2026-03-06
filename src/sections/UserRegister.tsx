@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Linkedin, Mail, Coins, Lock, ArrowRight } from 'lucide-react';
+import { Linkedin, Mail, Coins, Lock } from 'lucide-react';
+import { useWallet } from '../context/WalletContext';
 
 interface UserRegisterProps {
   onBack?: () => void;
@@ -7,6 +8,7 @@ interface UserRegisterProps {
 
 export default function UserRegister({ onBack }: UserRegisterProps) {
   const [linkedInSynced, setLinkedInSynced] = useState(false);
+  const { addTransaction } = useWallet();
 
   const handleLinkedInLogin = () => {
     // 預留：實際接 LinkedIn OAuth
@@ -14,7 +16,10 @@ export default function UserRegister({ onBack }: UserRegisterProps) {
   };
 
   const handleSyncLinkedIn = () => {
-    // 預留：授權後將經歷、技能、職稱複製到個人智慧錢包
+    // 一鍵同步：更新全域錢包狀態，餘額即時跳動至 130 $FAC (80 + 50)
+    const now = new Date().toISOString().slice(0, 10);
+    addTransaction({ date: now, label: 'LinkedIn 註冊獎勵', amount: 80 });
+    addTransaction({ date: now, label: 'LinkedIn 數據同步', amount: 50 });
     setLinkedInSynced(true);
   };
 

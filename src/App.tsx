@@ -14,6 +14,7 @@ import Article from './sections/Article';
 import AdminLogin from './sections/AdminLogin';
 import AdminPanel from './sections/AdminPanel';
 import UserRegister from './sections/UserRegister';
+import WalletPage from './pages/WalletPage';
 import { useAuth } from './hooks/useAuth';
 import './i18n';
 
@@ -51,8 +52,12 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register'>(() => {
-    if (typeof window !== 'undefined' && (window.location.pathname === '/register' || window.location.pathname === '/login')) return 'register';
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet'>(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname;
+      if (p === '/register' || p === '/login') return 'register';
+      if (p === '/wallet') return 'wallet';
+    }
     return 'home';
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -66,11 +71,18 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check URL for admin access (/admin, /admin/tokens, or #admin)
+  // Check URL for admin / register / wallet
   useEffect(() => {
     const path = window.location.pathname;
     const hash = window.location.hash;
-    
+    if (path === '/wallet') {
+      setCurrentView('wallet');
+      return;
+    }
+    if (path === '/register' || path === '/login') {
+      setCurrentView('register');
+      return;
+    }
     if (path.startsWith('/admin') || path === '/admin' || hash === '#admin') {
       setCurrentView('admin');
       if (hash === '#admin' && path !== '/admin' && !path.startsWith('/admin/')) {
@@ -117,6 +129,18 @@ function App() {
   if (currentView === 'register' || window.location.pathname === '/register' || window.location.pathname === '/login') {
     return (
       <UserRegister
+        onBack={() => {
+          setCurrentView('home');
+          window.history.replaceState({}, '', '/');
+        }}
+      />
+    );
+  }
+
+  // Wallet 流水賬 (/wallet)
+  if (currentView === 'wallet' || window.location.pathname === '/wallet') {
+    return (
+      <WalletPage
         onBack={() => {
           setCurrentView('home');
           window.history.replaceState({}, '', '/');

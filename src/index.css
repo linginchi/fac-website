@@ -331,6 +331,15 @@
   animation: shimmer 2s infinite;
 }
 
+@keyframes wallet-glow {
+  0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(201, 169, 110, 0.25); }
+  50% { opacity: 0.92; text-shadow: 0 0 12px rgba(201, 169, 110, 0.4); }
+}
+.wallet-balance-shimmer {
+  color: var(--champagne);
+  animation: wallet-glow 2.5s ease-in-out infinite;
+}
+
 .animate-scroll-left {
   animation: scroll-left 30s linear infinite;
 }

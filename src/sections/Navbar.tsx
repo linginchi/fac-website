@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, Globe } from 'lucide-react';
+import { Menu, X, Globe, Coins } from 'lucide-react';
+import { useWallet } from '../context/WalletContext';
 
 const languages = [
   { code: 'zh-HK', label: '繁體' },
@@ -10,6 +11,7 @@ const languages = [
 
 export default function Navbar() {
   const { t, i18n } = useTranslation();
+  const { facBalance } = useWallet();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
@@ -142,6 +144,14 @@ export default function Navbar() {
               )}
             </div>
 
+            {/* 餘額：香檳金 + 細微閃爍，點擊進入 /wallet */}
+            <a
+              href="/wallet"
+              className="flex items-center gap-2 text-sm font-medium tabular-nums wallet-balance-shimmer"
+            >
+              <Coins className="w-4 h-4" />
+              <span>餘額: {facBalance} $FAC</span>
+            </a>
             <a
               href="/register"
               className="text-sm transition-colors duration-300"
@@ -211,6 +221,13 @@ export default function Navbar() {
               </div>
             </div>
 
+            <a
+              href="/wallet"
+              className="flex items-center justify-center gap-2 py-3 text-sm font-medium wallet-balance-shimmer"
+            >
+              <Coins className="w-4 h-4" />
+              餘額: {facBalance} $FAC
+            </a>
             <a
               href="/register"
               className="block text-center py-3 border rounded-lg transition-colors mt-4"
