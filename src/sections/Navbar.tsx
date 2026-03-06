@@ -26,6 +26,7 @@ export default function Navbar() {
     { key: 'home', href: '#hero' },
     { key: 'about', href: '#about' },
     { key: 'services', href: '#services' },
+    { key: 'token', href: '#token' },
     { key: 'team', href: '#team' },
     { key: 'partners', href: '#partners' },
     { key: 'contact', href: '#contact' }
@@ -141,6 +142,15 @@ export default function Navbar() {
               )}
             </div>
 
+            <a
+              href="/register"
+              className="text-sm transition-colors duration-300"
+              style={{ color: 'rgba(237,232,223,0.8)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
+            >
+              註冊 / 登入
+            </a>
             {/* CTA Button */}
             <button
               onClick={() => scrollToSection('#contact')}
@@ -201,6 +211,13 @@ export default function Navbar() {
               </div>
             </div>
 
+            <a
+              href="/register"
+              className="block text-center py-3 border rounded-lg transition-colors mt-4"
+              style={{ borderColor: 'rgba(201,169,110,0.35)', color: 'var(--champagne)' }}
+            >
+              註冊 / 登入
+            </a>
             <button
               onClick={() => scrollToSection('#contact')}
               className="btn-gold w-full mt-4"

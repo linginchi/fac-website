@@ -1,6 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Mic, Paperclip, ArrowRight, Sparkles } from 'lucide-react';
+import { ChevronDown, Mic, Paperclip, ArrowRight, Sparkles, Coins, X } from 'lucide-react';
 import gsap from 'gsap';
+
+const FAC_BALANCE_KEY = 'fac_user_fac_balance';
+const DECODE_COST_BASIC = 10; // 基礎行情解碼 10 $FAC/次
+const DEFAULT_BALANCE = 500;
+
+function getStoredBalance(): number {
+  try {
+    const v = localStorage.getItem(FAC_BALANCE_KEY);
+    if (v != null) {
+      const n = parseInt(v, 10);
+      if (!Number.isNaN(n) && n >= 0) return n;
+    }
+  } catch (_) {}
+  return DEFAULT_BALANCE;
+}
 
 const suggestions = [
   '幫我找跨境貿易合規專家',
@@ -19,6 +34,12 @@ export default function Hero() {
 
   const [commandValue, setCommandValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [facBalance, setFacBalance] = useState(getStoredBalance);
+  const [showDecodeConfirm, setShowDecodeConfirm] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(FAC_BALANCE_KEY, String(facBalance));
+  }, [facBalance]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -54,6 +75,20 @@ export default function Hero() {
   const scrollToSection = (href: string) => {
     const el = document.querySelector(href);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleDecodeClick = () => {
+    if (facBalance < DECODE_COST_BASIC) {
+      alert(`$FAC 餘額不足。本次解碼需 ${DECODE_COST_BASIC} $FAC，當前餘額 ${facBalance} $FAC。`);
+      return;
+    }
+    setShowDecodeConfirm(true);
+  };
+
+  const confirmDecode = () => {
+    setFacBalance((b) => b - DECODE_COST_BASIC);
+    setShowDecodeConfirm(false);
+    scrollToSection('#services');
   };
 
   return (
@@ -167,11 +202,11 @@ export default function Hero() {
         </p>
 
         {/* ═══════════════════════════════════════════
-            萬能指揮框  Command Box
+            萬能指揮框  Command Box + $FAC 餘額
         ════════════════════════════════════════════ */}
-        <div ref={commandRef} className="opacity-0 mb-8">
+        <div ref={commandRef} className="opacity-0 mb-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5">
           <div
-            className="relative mx-auto transition-all duration-500"
+            className="relative w-full transition-all duration-500"
             style={{
               maxWidth: '740px',
               borderRadius: '18px',
@@ -251,7 +286,7 @@ export default function Hero() {
                 ))}
 
                 <button
-                  onClick={() => scrollToSection('#services')}
+                  onClick={handleDecodeClick}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-300 group"
                   style={{
                     background: 'linear-gradient(135deg, #C9A96E 0%, #a8883a 100%)',
@@ -306,16 +341,89 @@ export default function Hero() {
                 </button>
               ))}
             </div>
+
+            {/* Supports line */}
+            <p
+              className="mt-3 text-xs text-center pb-1"
+              style={{ color: 'rgba(201,169,110,0.35)' }}
+            >
+              支持文字 · 語音 · 多模態文件上傳 &nbsp;|&nbsp; Powered by AI Agent (Sonnet 4.6)
+            </p>
           </div>
 
-          {/* Supports line */}
-          <p
-            className="mt-3 text-xs text-center"
-            style={{ color: 'rgba(201,169,110,0.35)' }}
+          {/* $FAC 餘額（萬能框右側） */}
+          <div
+            className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl"
+            style={{
+              background: 'linear-gradient(135deg, rgba(13,31,60,0.95) 0%, rgba(10,22,40,0.98) 100%)',
+              border: '1px solid rgba(201,169,110,0.25)',
+              color: 'var(--champagne)'
+            }}
+            title="當前 $FAC 餘額"
           >
-            支持文字 · 語音 · 多模態文件上傳 &nbsp;|&nbsp; Powered by AI Agent (Sonnet 4.6)
-          </p>
+            <Coins className="w-4 h-4" />
+            <span className="font-semibold tabular-nums">{facBalance}</span>
+            <span className="text-xs opacity-80">$FAC</span>
+          </div>
         </div>
+
+        <p
+          className="text-xs text-center mt-4"
+          style={{ color: 'rgba(201,169,110,0.45)' }}
+        >
+          已有 500+ 位資深工程師、SFC RO 透過 LinkedIn 加入。
+        </p>
+
+        {/* 解碼確認彈窗 */}
+        {showDecodeConfirm && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setShowDecodeConfirm(false)}
+          >
+            <div
+              className="rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+              style={{
+                background: 'linear-gradient(145deg, var(--navy) 0%, #0A1628 100%)',
+                border: '1px solid rgba(201,169,110,0.3)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-semibold text-white">確認解碼</span>
+                <button
+                  onClick={() => setShowDecodeConfirm(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-white/10"
+                  style={{ color: 'rgba(237,232,223,0.7)' }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm mb-2" style={{ color: 'rgba(237,232,223,0.85)', lineHeight: 1.7 }}>
+                本次解碼將消耗 <strong style={{ color: 'var(--champagne)' }}>{DECODE_COST_BASIC} $FAC</strong>（基礎行情解碼）。
+              </p>
+              <p className="text-xs mb-6" style={{ color: 'rgba(237,232,223,0.5)' }}>
+                確認後將跳轉至八大智慧支柱，查看專家分佈與資歷標籤。
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDecodeConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                  style={{ border: '1px solid rgba(201,169,110,0.4)', color: 'var(--champagne)' }}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={confirmDecode}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                  style={{ background: 'linear-gradient(135deg, #C9A96E 0%, #a8883a 100%)', color: '#0A1628' }}
+                >
+                  確認解碼
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CTA Buttons */}
         <div

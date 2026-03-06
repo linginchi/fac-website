@@ -8,10 +8,12 @@ import Services from './sections/Services';
 import Team from './sections/Team';
 import Partners from './sections/Partners';
 import Contact from './sections/Contact';
+import Token from './sections/Token';
 import Footer from './sections/Footer';
 import Article from './sections/Article';
 import AdminLogin from './sections/AdminLogin';
 import AdminPanel from './sections/AdminPanel';
+import UserRegister from './sections/UserRegister';
 import { useAuth } from './hooks/useAuth';
 import './i18n';
 
@@ -49,7 +51,10 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register'>(() => {
+    if (typeof window !== 'undefined' && (window.location.pathname === '/register' || window.location.pathname === '/login')) return 'register';
+    return 'home';
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -61,15 +66,14 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check URL for admin access
+  // Check URL for admin access (/admin, /admin/tokens, or #admin)
   useEffect(() => {
     const path = window.location.pathname;
     const hash = window.location.hash;
     
-    if (path === '/admin' || hash === '#admin') {
+    if (path.startsWith('/admin') || path === '/admin' || hash === '#admin') {
       setCurrentView('admin');
-      // Update URL to /admin if using hash
-      if (hash === '#admin' && path !== '/admin') {
+      if (hash === '#admin' && path !== '/admin' && !path.startsWith('/admin/')) {
         window.history.replaceState({}, '', '/admin');
       }
     }
@@ -101,12 +105,24 @@ function App() {
     );
   }
 
-  // Admin route
-  if (currentView === 'admin' || window.location.pathname === '/admin') {
+  // Admin route (/admin or /admin/tokens)
+  if (currentView === 'admin' || window.location.pathname.startsWith('/admin')) {
     if (!auth.isAuthenticated) {
       return <AdminLogin onLogin={() => {}} />;
     }
     return <AdminPanel onLogout={() => setCurrentView('home')} />;
+  }
+
+  // User register / login (/register, /login)
+  if (currentView === 'register' || window.location.pathname === '/register' || window.location.pathname === '/login') {
+    return (
+      <UserRegister
+        onBack={() => {
+          setCurrentView('home');
+          window.history.replaceState({}, '', '/');
+        }}
+      />
+    );
   }
 
   if (currentView === 'article') {
@@ -130,6 +146,7 @@ function App() {
         <About />
         <Stats />
         <Services />
+        <Token />
         <Team />
         <Partners />
         <Contact />
