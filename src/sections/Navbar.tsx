@@ -76,44 +76,43 @@ export default function Navbar() {
               &nbsp;|&nbsp;
             </span>
 
-            {/* Brand name + CAS attribution */}
-            <div className="hidden sm:flex flex-col leading-none gap-[3px]">
-              {/* Line 1: 港匠匯 + full English name */}
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-semibold" style={{
-                  fontSize: 'clamp(0.82rem, 1.3vw, 0.95rem)',
+            {/* Brand name + CAS attribution — full i18n */}
+            <div className="hidden sm:flex flex-col leading-tight gap-[3px] min-w-0 max-w-[min(42vw,280px)]">
+              <span
+                className="font-semibold break-words"
+                style={{
+                  fontSize: i18n.language === 'en' ? 'clamp(0.7rem, 1.1vw, 0.82rem)' : 'clamp(0.82rem, 1.3vw, 0.95rem)',
                   color: 'var(--champagne)',
                   fontFamily: "'PingFang HK','Noto Sans TC',sans-serif",
-                  letterSpacing: '0.05em'
-                }}>
-                  FAC 港匠匯
-                </span>
-                <span className="hidden lg:inline font-light" style={{
-                  fontSize: '0.68rem',
-                  color: 'rgba(201,169,110,0.55)',
-                  letterSpacing: '0.02em'
-                }}>
-                  Facilitating Artisan Collective
-                </span>
-              </div>
-              {/* Line 2: Operated by CAS Laboratory · 香港註冊非盈利機構 */}
-              <span style={{
-                fontSize: '0.58rem',
-                color: 'rgba(201,169,110,0.38)',
-                letterSpacing: '0.04em',
-                fontFamily: "'PingFang HK','Noto Sans TC',sans-serif"
-              }}>
-                Operated by CAS Laboratory (國科綠色發展國際實驗室) · 香港註冊非盈利機構
+                  letterSpacing: '0.04em'
+                }}
+              >
+                {t('brand.title')}
+              </span>
+              <span
+                className="break-words"
+                style={{
+                  fontSize: '0.58rem',
+                  color: 'rgba(201,169,110,0.5)',
+                  letterSpacing: '0.04em',
+                  fontFamily: "'PingFang HK','Noto Sans TC',sans-serif"
+                }}
+              >
+                {t('brand.subtitle')}
               </span>
             </div>
 
-            {/* Mobile-only short label */}
-            <span className="sm:hidden text-sm font-semibold" style={{
-              color: 'var(--champagne)',
-              fontFamily: "'PingFang HK',sans-serif",
-              letterSpacing: '0.04em'
-            }}>
-              FAC 港匠匯
+            {/* Mobile: localized title only, wrap if EN */}
+            <span
+              className="sm:hidden font-semibold break-words max-w-[55vw]"
+              style={{
+                fontSize: i18n.language === 'en' ? '0.7rem' : '0.9rem',
+                color: 'var(--champagne)',
+                fontFamily: "'PingFang HK','Noto Sans TC',sans-serif",
+                letterSpacing: '0.04em'
+              }}
+            >
+              {t('brand.title')}
             </span>
           </a>
 

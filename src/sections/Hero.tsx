@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useWallet } from '../context/WalletContext';
+import { useTranslation } from 'react-i18next';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const DECODE_COST = 10;
@@ -105,6 +106,7 @@ export default function Hero() {
   const waveformCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { facBalance, addTransaction } = useWallet();
+  const { t } = useTranslation();
 
   const [commandValue, setCommandValue]     = useState('');
   const [isFocused, setIsFocused]           = useState(false);
@@ -595,9 +597,6 @@ export default function Hero() {
                       >
                         使用 LinkedIn 註冊即領 80 $FAC
                       </a>
-                      <p className="text-xs" style={{ color: 'rgba(201,169,110,0.5)' }}>
-                                        無論您是退休專家、還是尋求智慧的雇主，動口不手動 · 輸入需求或點擊麥克風即可繼續
-                      </p>
                     </>
                   )}
 
@@ -821,7 +820,7 @@ export default function Hero() {
           </a>
         </div>
 
-        {/* ── 萬能框下方引導語 ─────────────────────────────────────── */}
+        {/* ── 萬能框下方引導語（全語系）──────────────────────────────────── */}
         <div
           className="mt-5 px-4 text-center transition-all duration-500"
           style={{ opacity: isFocused ? 0.35 : 1, transform: isFocused ? 'translateY(4px)' : 'translateY(0)' }}
@@ -835,14 +834,10 @@ export default function Hero() {
               letterSpacing: '0.03em',
             }}
           >
-            閣下想分享專業，抑或尋求專家？
-            <br className="sm:hidden" />
-            請即口述、傳訊或上傳圖檔，
-            <strong style={{ color: 'rgba(201,169,110,0.92)', fontWeight: 600 }}>FAC 港匠匯</strong>
-            &thinsp;為您效勞。
+            {t('hero.commandGuidance')}
           </p>
           <p className="mt-2 text-xs" style={{ color: 'rgba(201,169,110,0.28)', letterSpacing: '0.06em' }}>
-            CAS Laboratory · 香港非盈利 · 數據主權歸用戶
+            {t('hero.commandSubline')}
           </p>
         </div>
 

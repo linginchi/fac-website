@@ -4,6 +4,10 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 // 简体中文 — FAC | 港匠汇
 const zhCN = {
+  brand: {
+    title: '港匠汇',
+    subtitle: '由 国科绿色发展国际实验室 营运 · 香港注册非营利机构'
+  },
   nav: {
     home: '首页',
     about: '关于我们',
@@ -15,6 +19,8 @@ const zhCN = {
     cta: '立即预约'
   },
   hero: {
+    commandGuidance: '阁下想分享专业，抑或寻求专家？请即口述、传讯或上传图档，FAC 港匠汇 为您效劳。',
+    commandSubline: 'CAS Laboratory · 香港非营利 · 数据主权归用户',
     tagline: 'FAC · 港匠汇',
     title1: '智慧沉淀，',
     title2: '在此相遇。',
@@ -140,6 +146,10 @@ const zhCN = {
 
 // 繁體中文（香港）— FAC | 港匠匯
 const zhHK = {
+  brand: {
+    title: '港匠匯',
+    subtitle: '由 國科綠色發展國際實驗室 營運 · 香港註冊非盈利機構'
+  },
   nav: {
     home: '首頁',
     about: '關於我們',
@@ -151,6 +161,8 @@ const zhHK = {
     cta: '立即預約'
   },
   hero: {
+    commandGuidance: '閣下想分享專業，抑或尋求專家？請即口述、傳訊或上傳圖檔，FAC 港匠匯 為您效勞。',
+    commandSubline: 'CAS Laboratory · 香港非盈利 · 數據主權歸用戶',
     tagline: 'FAC · 港匠匯',
     title1: '智慧沉澱，',
     title2: '在此相遇。',
@@ -276,6 +288,10 @@ const zhHK = {
 
 // English — FAC | Facilitating Artisan Collective
 const en = {
+  brand: {
+    title: 'Facilitating Artisan Collective',
+    subtitle: 'Operated by CAS Laboratory · HK Registered Non-profit Organization'
+  },
   nav: {
     home: 'Home',
     about: 'About',
@@ -287,6 +303,8 @@ const en = {
     cta: 'Book a Session'
   },
   hero: {
+    commandGuidance: 'Share your expertise or find an expert? Speak, type or upload — FAC is at your service.',
+    commandSubline: 'CAS Laboratory · Non-profit · Your data, your sovereignty',
     tagline: 'FAC · Facilitating Artisan Collective',
     title1: 'Wisdom Distilled,',
     title2: 'Meeting Here.',
