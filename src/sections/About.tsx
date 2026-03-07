@@ -9,7 +9,7 @@ const pillars = [
   {
     Icon: Lock,
     title: '銀行級隱私保護',
-    desc: '如私人保險箱般密封。所有智慧顧問資料與諮詢內容，未經授權絕不公開——這是 FAC 對每一位老江湖的承諾。'
+    desc: '如私人保險箱／個人智慧錢包般密封。所有智慧顧問資料與諮詢內容，未經授權絕不公開——這是 FAC 對每一位老江湖的承諾。'
   },
   {
     Icon: Coins,
@@ -168,7 +168,7 @@ export default function About() {
                     className="mt-1 text-xs tracking-widest"
                     style={{ color: 'rgba(237,232,223,0.3)' }}
                   >
-                    銀行級智慧保險箱
+                    個人智慧錢包
                   </div>
                 </div>
 
@@ -229,7 +229,7 @@ export default function About() {
                 fontFamily: "'PingFang HK', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif"
               }}
             >
-              「銀行私人保險箱」級別的<br />
+              「銀行私人保險箱／個人智慧錢包」級別的<br />
               <span className="text-gold-gradient">隱私保護與價值密度。</span>
             </h2>
 

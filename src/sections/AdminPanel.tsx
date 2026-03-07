@@ -1,11 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useTeamMembers, type TeamMember } from '../hooks/useTeamMembers';
 import { useSiteConfig } from '../hooks/useSiteConfig';
 import { 
   Users, Settings, FileText, LogOut, Plus, Edit2, Trash2, Save, Upload, 
   ChevronDown, ChevronUp, Globe, Mail, RefreshCw, BarChart3,
-  TrendingUp, Coins, UserCheck, ArrowUpRight
+  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin
 } from 'lucide-react';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
@@ -123,12 +123,65 @@ interface AdminPanelProps {
   onLogout: () => void;
 }
 
+const STORAGE_KEY_PENDING_REWARDS = 'fac_pending_suggestion_rewards';
+
+interface PendingSuggestionReward {
+  id: string;
+  userEmail: string;
+  suggestionText: string;
+  suggestedAmount: number;
+  submittedAt: string;
+}
+
+const defaultPendingRewards: PendingSuggestionReward[] = [
+  { id: '1', userEmail: 'user_a@example.com', suggestionText: '建議在匹配邏輯中增加「行業年資」權重', suggestedAmount: 80, submittedAt: '2025-03-01T10:00:00Z' },
+  { id: '2', userEmail: 'consultant_b@example.com', suggestionText: '跨境貿易標籤可細化為大灣區/東盟/歐美', suggestedAmount: 120, submittedAt: '2025-03-03T14:30:00Z' },
+  { id: '3', userEmail: 'expert_c@example.com', suggestionText: 'RO 合規支柱可增加「合規審計」子標籤', suggestedAmount: 150, submittedAt: '2025-03-04T09:15:00Z' },
+];
+
+function loadPendingRewards(): PendingSuggestionReward[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PENDING_REWARDS);
+    if (raw) {
+      const parsed = JSON.parse(raw) as PendingSuggestionReward[];
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return [...defaultPendingRewards];
+}
+
+function savePendingRewards(list: PendingSuggestionReward[]) {
+  localStorage.setItem(STORAGE_KEY_PENDING_REWARDS, JSON.stringify(list));
+}
+
 export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const { auth, logout } = useAuth();
   const { members, addMember, updateMember, deleteMember, reorderMembers, resetToDefault: resetTeam } = useTeamMembers();
   const { config, updateConfig, resetToDefault: resetConfig } = useSiteConfig();
   
-  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats'>('team');
+  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens'>('team');
+  const [pendingRewards, setPendingRewards] = useState<PendingSuggestionReward[]>(loadPendingRewards);
+  
+  useEffect(() => {
+    if (window.location.pathname === '/admin/tokens') setActiveTab('tokens');
+  }, []);
+
+  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens') => {
+    setActiveTab(tab);
+    if (tab === 'tokens') window.history.replaceState({}, '', '/admin/tokens');
+  };
+
+  const handleDisburseReward = (id: string) => {
+    const next = pendingRewards.filter((r) => r.id !== id);
+    setPendingRewards(next);
+    savePendingRewards(next);
+  };
+
+  const handleDisburseAll = () => {
+    if (!confirm('確定一鍵審核並發放全部待審建議獎勵？')) return;
+    setPendingRewards([]);
+    savePendingRewards([]);
+  };
   
   // Team management state
   const [isEditingMember, setIsEditingMember] = useState(false);
@@ -312,6 +365,18 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               >
                 <BarChart3 className="w-5 h-5" />
                 <span>數據儀表板</span>
+              </button>
+
+              <button
+                onClick={() => switchToTab('tokens')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                  activeTab === 'tokens' 
+                    ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Gift className="w-5 h-5" />
+                <span>獎勵撥發</span>
               </button>
             </nav>
           </div>
@@ -965,8 +1030,9 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                   <StatCard icon={UserCheck} label="總訂閱用戶" value="716" sub="較上月 +83" trend="+13%" />
+                  <StatCard icon={Linkedin} label="LinkedIn 註冊佔比" value="68%" sub="佔總註冊用戶" trend="+5%" />
                   <StatCard icon={TrendingUp} label="企業版客戶" value="16" sub="本月新增 2 家" trend="+14%" />
                   <StatCard icon={Coins} label="$FAC 流通量" value="24,860" sub="本週淨增 2,110" trend="+9%" />
                   <StatCard icon={BarChart3} label="本月配對次數" value="277" sub="8大支柱累計" trend="+22%" />
@@ -1071,29 +1137,105 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                   </div>
                 </div>
 
-                {/* Token economy summary */}
+                {/* Token 獎勵與解碼規則（完整版） */}
                 <div
                   className="rounded-2xl p-5"
                   style={{ background: 'rgba(201,169,110,0.04)', border: '1px solid rgba(201,169,110,0.15)' }}
                 >
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-4">
                     <Coins className="w-4 h-4" style={{ color: '#C9A96E' }} />
-                    <span className="text-sm font-semibold" style={{ color: '#C9A96E' }}>$FAC 代幣經濟說明</span>
+                    <span className="text-sm font-semibold" style={{ color: '#C9A96E' }}>$FAC 獎勵與解碼規則</span>
                   </div>
-                  <div className="grid sm:grid-cols-3 gap-4 text-xs" style={{ color: 'rgba(237,232,223,0.6)' }}>
+                  <div className="grid md:grid-cols-2 gap-6 text-xs" style={{ color: 'rgba(237,232,223,0.65)' }}>
                     <div>
-                      <div className="font-medium text-white mb-1">Token to Decode</div>
-                      需求方消耗 $FAC 進行智慧對接與資訊解碼，每次配對按複雜度計費。
+                      <div className="font-semibold text-white mb-2">基礎建設獎</div>
+                      <ul className="space-y-1 list-disc list-inside">
+                        <li>LinkedIn 註冊：80 $FAC；LinkedIn 數據同步：50 $FAC</li>
+                        <li>每增加一個專業標籤：20 $FAC；上傳實戰案例：100 $FAC</li>
+                        <li>白銀/黃金/鑽石訂閱月返：50 / 150 / 500 $FAC</li>
+                      </ul>
                     </div>
                     <div>
-                      <div className="font-medium text-white mb-1">Proof of Contribution</div>
-                      導師提供有效建議、反饋市場動態，系統自動記錄並分發 $FAC 獎勵。
+                      <div className="font-semibold text-white mb-2">貢獻價值獎</div>
+                      <ul className="space-y-1 list-disc list-inside">
+                        <li>有效建議（經後台採納）：50－200 $FAC</li>
+                        <li>市場情報反饋：30 $FAC</li>
+                        <li>結案獎勵：專家 5%、需求方 2% $FAC</li>
+                      </ul>
                     </div>
                     <div>
-                      <div className="font-medium text-white mb-1">訂閱獎勵</div>
-                      用戶完成註冊、續費訂閱、完善隱私資料，均可獲得 $FAC 參與獎勵。
+                      <div className="font-semibold text-white mb-2">消耗與解碼</div>
+                      <ul className="space-y-1 list-disc list-inside">
+                        <li>基礎行情解碼：10 $FAC/次</li>
+                        <li>深度資訊解碼：50 $FAC/次</li>
+                        <li>開啟私密對話：100 $FAC/次</li>
+                        <li>優先處理權：20 $FAC/日</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-white mb-2">防禦機制</div>
+                      <ul className="space-y-1 list-disc list-inside">
+                        <li>鎖定期：註冊獎勵須活躍 30 天或完成一次解碼後激活</li>
+                        <li>品質門檻：完善資料獎勵須通過 Agent 邏輯檢查</li>
+                        <li>回購與銷毀：每月 20% 訂閱收入回購 $FAC 並銷毀</li>
+                      </ul>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* 獎勵撥發 Tab — /admin/tokens */}
+            {activeTab === 'tokens' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-white">獎勵撥發 · 建議獎勵審核</h2>
+                  {pendingRewards.length > 0 && (
+                    <button
+                      onClick={handleDisburseAll}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+                      style={{ background: 'rgba(201,169,110,0.2)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.4)' }}
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      一鍵審核並發放全部
+                    </button>
+                  )}
+                </div>
+                <p className="text-sm" style={{ color: 'rgba(237,232,223,0.5)' }}>
+                  審核用戶提交的有效建議，通過後一鍵發放對應 $FAC 獎勵（50－200，依貢獻度）。
+                </p>
+                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.18)', background: 'rgba(255,255,255,0.03)' }}>
+                  {pendingRewards.length === 0 ? (
+                    <div className="p-12 text-center" style={{ color: 'rgba(237,232,223,0.4)' }}>
+                      <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>目前沒有待審核的建議獎勵。</p>
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-white/10">
+                      {pendingRewards.map((r) => (
+                        <li key={r.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-5">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs mb-1" style={{ color: 'rgba(201,169,110,0.7)' }}>{r.userEmail}</div>
+                            <p className="text-sm text-white/90">{r.suggestionText}</p>
+                            <div className="text-xs mt-1" style={{ color: 'rgba(237,232,223,0.45)' }}>
+                              {new Date(r.submittedAt).toLocaleString('zh-HK', { dateStyle: 'short', timeStyle: 'short' })}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <span className="font-semibold" style={{ color: '#C9A96E' }}>{r.suggestedAmount} $FAC</span>
+                            <button
+                              onClick={() => handleDisburseReward(r.id)}
+                              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                              style={{ background: 'linear-gradient(135deg, #C9A96E 0%, #a8883a 100%)', color: '#0A1628' }}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              審核並發放
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             )}

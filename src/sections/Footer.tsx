@@ -49,7 +49,8 @@ export default function Footer() {
   const quickLinks = [
     { label: '首頁', href: '#hero' },
     { label: '關於我們', href: '#about' },
-    { label: '五大領域', href: '#services' },
+    { label: '八大支柱', href: '#services' },
+    { label: '代幣經濟', href: '#token' },
     { label: '導師團隊', href: '#team' },
     { label: '聯絡我們', href: '#contact' }
   ];
