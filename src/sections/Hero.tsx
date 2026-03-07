@@ -38,6 +38,34 @@ const SUPPLY_KEYWORDS = ['我是專家', '想接 Job', '過兩招', '接 job', '
 /** 匹配專家用 */
 const KEYWORDS = ['SFC', 'RO', '工程', '貿易', '老師', '專家', '信託', '融資', '製造', '合規', '律師', '銀行', '教育'];
 
+/** ─── 智慧過濾協議 (System Prompt Guardrails) ───────────────────────────────── */
+const STORAGE_AI_FILTERED = 'fac_ai_filtered';
+const FILTER_REJECT_MESSAGE = '閣下好，身為 FAC 港匠匯，我致力於提供專業智慧對接與合規諮詢。閣下的查詢似乎超出了本平台的專業服務範疇，請專注於專業與智慧的分享。';
+/** 核心業務相關（至少需沾邊其一，否則視為閒聊） */
+const ALLOWED_SCOPE_KEYWORDS = ['專業', '對接', '專家', '諮詢', '合規', '章程', 'Web3', '錢包', '退休', '顧問', '匹配', 'SFC', 'RO', '雇主', '智慧', '傳承', '保險箱', '解碼', 'FAC', '合夥', '邀請', '註冊', 'LinkedIn', '導師', '領域', '支柱', '平台', '服務', '項目', '搵人', '找', '聘', '接案', '融資', '信託', '貿易', '工程', '律師', '銀行', '教育', '製造'];
+/** 超出範疇：政治、非法、廣告騷擾、無關閒聊 */
+const DISALLOWED_KEYWORDS = ['政治', '選舉', '投票', '政黨', '非法', '毒品', '槍械', '廣告', '推銷', '騷擾', '今天天氣', '你好嗎', '在嗎', '無關', '閒聊', '隨便', '測試'];
+
+function isQueryInScope(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t) return true;
+  const hasDisallowed = DISALLOWED_KEYWORDS.some((k) => t.includes(k.toLowerCase()));
+  if (hasDisallowed) return false;
+  const hasAllowed = ALLOWED_SCOPE_KEYWORDS.some((k) => t.includes(k.toLowerCase()));
+  if (t.length >= 4 && !hasAllowed) return false;
+  return true;
+}
+
+function recordFiltered(query: string): void {
+  try {
+    const raw = localStorage.getItem(STORAGE_AI_FILTERED);
+    const list: Array<{ text: string; at: string }> = raw ? JSON.parse(raw) : [];
+    list.unshift({ text: query.trim().slice(0, 200), at: new Date().toISOString() });
+    if (list.length > 500) list.length = 500;
+    localStorage.setItem(STORAGE_AI_FILTERED, JSON.stringify(list));
+  } catch (_) {}
+}
+
 const MOCK_EXPERTS = [
   { id: 'A', anon: '專家 A', credential: '前美資銀行 MD，擁有 SFC 1、4、9 號牌 RO 實務經驗，主導過逾 30 宗跨境融資案。' },
   { id: 'B', anon: '專家 B', credential: '前港府工務局高級工程師，基建監理資歷 28 年，主責大型公共工程項目驗收。' },
@@ -53,7 +81,7 @@ const THINKING_STEPS = [
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type AgentPhase = 'idle' | 'new_user_greeting' | 'login_prompt' | 'partner_welcome' | 'thinking' | 'draft_confirm' | 'matched' | 'decoded' | 'action';
+type AgentPhase = 'idle' | 'new_user_greeting' | 'login_prompt' | 'partner_welcome' | 'thinking' | 'draft_confirm' | 'matched' | 'decoded' | 'action' | 'filtered';
 type UserMode = 'employer' | 'expert' | null;
 
 // ─── Success beep (語音確認成功回饋) ───────────────────────────────────────────
@@ -249,6 +277,13 @@ export default function Hero() {
       return;
     }
     if (!commandValue.trim()) return;
+    if (!isQueryInScope(commandValue)) {
+      recordFiltered(commandValue);
+      setDecodeError('');
+      setJobOfferSent(false);
+      setAgentPhase('filtered');
+      return;
+    }
     setDecodeError('');
     setJobOfferSent(false);
     setUserMode(classifyIntent(commandValue));
@@ -597,6 +632,23 @@ export default function Hero() {
                       >
                         使用 LinkedIn 註冊即領 80 $FAC
                       </a>
+                    </>
+                  )}
+
+                  {/* ─ AI 已過濾：超出專業範疇之優雅拒絕 ─ */}
+                  {agentPhase === 'filtered' && (
+                    <>
+                      <p className="text-sm leading-relaxed" style={{ color: 'rgba(237,232,223,0.9)', lineHeight: 1.85 }}>
+                        {FILTER_REJECT_MESSAGE}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={resetAgent}
+                        className="mt-4 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                        style={{ border: '1px solid rgba(201,169,110,0.45)', color: 'var(--champagne)' }}
+                      >
+                        重新輸入
+                      </button>
                     </>
                   )}
 

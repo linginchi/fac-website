@@ -246,7 +246,7 @@ export default function Services() {
             找不到你需要的專業？FAC 港匠匯智慧管家會為您解碼需求，配對最合適的行業顧問。
           </p>
           <button
-            onClick={() => scrollToSection('#contact')}
+            onClick={() => scrollToSection('#hero')}
             className="btn-gold inline-flex items-center gap-2 group"
           >
             立即發起諮詢

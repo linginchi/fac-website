@@ -31,7 +31,7 @@ export default function Navbar() {
     { key: 'token', href: '#token' },
     { key: 'team', href: '#team' },
     { key: 'partners', href: '#partners' },
-    { key: 'contact', href: '#contact' }
+    { key: 'contact', href: '#hero' }
   ];
 
   const changeLanguage = (code: string) => {
@@ -212,7 +212,7 @@ export default function Navbar() {
             </a>
             {/* CTA Button */}
             <button
-              onClick={() => scrollToSection('#contact')}
+              onClick={() => scrollToSection('#hero')}
               className="btn-gold text-sm"
             >
               {t('nav.cta')}
@@ -293,7 +293,7 @@ export default function Navbar() {
               註冊 / 登入
             </a>
             <button
-              onClick={() => scrollToSection('#contact')}
+              onClick={() => scrollToSection('#hero')}
               className="btn-gold w-full mt-4"
             >
               {t('nav.cta')}

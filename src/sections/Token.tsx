@@ -177,7 +177,7 @@ export default function Token() {
         </div>
 
         <div className="text-center mt-12">
-          <button onClick={() => scrollToSection('#contact')} className="btn-gold inline-flex items-center gap-2 group">
+          <button onClick={() => scrollToSection('#hero')} className="btn-gold inline-flex items-center gap-2 group">
             聯絡我們 · 了解 $FAC
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </button>

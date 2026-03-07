@@ -5,7 +5,7 @@ import { useSiteConfig } from '../hooks/useSiteConfig';
 import { 
   Users, Settings, FileText, LogOut, Plus, Edit2, Trash2, Save, Upload, 
   ChevronDown, ChevronUp, Globe, Mail, RefreshCw, BarChart3,
-  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin, DollarSign, Star, Network
+  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin, DollarSign, Star, Network, ShieldAlert
 } from 'lucide-react';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
@@ -193,7 +193,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const { members, addMember, updateMember, deleteMember, reorderMembers, resetToDefault: resetTeam } = useTeamMembers();
   const { config, updateConfig, resetToDefault: resetConfig } = useSiteConfig();
   
-  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner'>('team');
+  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner' | 'filtered'>('team');
   const [pendingRewards, setPendingRewards] = useState<PendingSuggestionReward[]>(loadPendingRewards);
   const [pricingTiers, setPricingTiers] = useState<PricingTiers>(loadPricing);
   
@@ -203,11 +203,28 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     if (window.location.pathname === '/admin/partner') setActiveTab('partner');
   }, []);
 
-  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner') => {
+  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner' | 'filtered') => {
     setActiveTab(tab);
     if (tab === 'tokens') window.history.replaceState({}, '', '/admin/tokens');
     if (tab === 'pricing') window.history.replaceState({}, '', '/admin/pricing');
     if (tab === 'partner') window.history.replaceState({}, '', '/admin/partner');
+  };
+
+  const STORAGE_AI_FILTERED = 'fac_ai_filtered';
+  const [filteredList, setFilteredList] = useState<Array<{ text: string; at: string }>>([]);
+  const loadFilteredList = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_AI_FILTERED);
+      setFilteredList(raw ? JSON.parse(raw) : []);
+    } catch {
+      setFilteredList([]);
+    }
+  };
+  useEffect(() => { if (activeTab === 'filtered') loadFilteredList(); }, [activeTab]);
+  const clearFilteredList = () => {
+    if (!confirm('確定清空「AI 已過濾」紀錄？此操作僅影響本機，供管理員抽查優化過濾精準度。')) return;
+    localStorage.removeItem(STORAGE_AI_FILTERED);
+    setFilteredList([]);
   };
 
   const handleDisburseReward = (id: string) => {
@@ -440,6 +457,18 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               >
                 <Star className="w-5 h-5" />
                 <span>合夥人看板</span>
+              </button>
+
+              <button
+                onClick={() => switchToTab('filtered')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                  activeTab === 'filtered' 
+                    ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <ShieldAlert className="w-5 h-5" />
+                <span>AI 已過濾</span>
               </button>
             </nav>
           </div>
@@ -1519,6 +1548,58 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 </div>
               );
             })()}
+
+            {/* AI 已過濾 — 管理員抽查，不顯示給用戶 */}
+            {activeTab === 'filtered' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-white">AI 已過濾</h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={loadFilteredList}
+                      className="flex items-center gap-2 px-4 py-2 text-white/60 hover:text-[#FFD700] transition-colors duration-300 text-sm"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      重新載入
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearFilteredList}
+                      className="px-4 py-2 text-sm rounded-lg transition-colors"
+                      style={{ border: '1px solid rgba(239,68,68,0.4)', color: 'rgba(239,68,68,0.9)' }}
+                    >
+                      清空紀錄
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm" style={{ color: 'rgba(237,232,223,0.5)' }}>
+                  以下為被智慧過濾協議拒絕的查詢（本機儲存），供管理員定期抽查以優化過濾精準度。不對用戶顯示。
+                </p>
+                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.18)', background: 'rgba(255,255,255,0.02)' }}>
+                  <div className="px-5 py-3 border-b grid grid-cols-12 text-xs font-medium" style={{ borderColor: 'rgba(201,169,110,0.12)', color: 'rgba(237,232,223,0.4)' }}>
+                    <span className="col-span-1">#</span>
+                    <span className="col-span-7">查詢內容</span>
+                    <span className="col-span-4 text-right">時間</span>
+                  </div>
+                  {filteredList.length === 0 ? (
+                    <div className="px-5 py-12 text-center" style={{ color: 'rgba(237,232,223,0.4)' }}>
+                      尚無被過濾紀錄
+                    </div>
+                  ) : (
+                    filteredList.map((item, i) => (
+                      <div key={`${item.at}-${i}`} className="px-5 py-4 border-b grid grid-cols-12 items-start gap-2" style={{ borderColor: 'rgba(201,169,110,0.08)' }}>
+                        <span className="col-span-1 text-xs" style={{ color: 'rgba(237,232,223,0.4)' }}>{i + 1}</span>
+                        <span className="col-span-7 text-sm break-words" style={{ color: 'rgba(237,232,223,0.85)' }}>{item.text || '—'}</span>
+                        <span className="col-span-4 text-right text-xs" style={{ color: 'rgba(237,232,223,0.45)' }}>
+                          {new Date(item.at).toLocaleString('zh-HK')}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
 
           </div>
         </div>

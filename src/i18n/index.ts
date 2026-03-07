@@ -99,6 +99,8 @@ const zhCN = {
   contact: {
     sectionTag: '联络我们',
     title: '智慧，从一次对话开始',
+    gatewayMessage: '所有沟通请经由 FAC 港匠汇 智慧咨询，由系统初步处理后转发后台。',
+    gatewayCta: '前往智慧咨询视窗',
     form: {
       name: '姓名',
       namePlaceholder: '请输入您的姓名',
@@ -241,6 +243,8 @@ const zhHK = {
   contact: {
     sectionTag: '聯絡我們',
     title: '智慧，從一次對話開始',
+    gatewayMessage: '所有溝通請經由 FAC 港匠匯 智慧諮詢，由系統初步處理後轉發後台。',
+    gatewayCta: '前往智慧諮詢視窗',
     form: {
       name: '姓名',
       namePlaceholder: '請輸入您的姓名',
@@ -383,6 +387,8 @@ const en = {
   contact: {
     sectionTag: 'Contact Us',
     title: 'Wisdom Begins with One Conversation',
+    gatewayMessage: 'All enquiries go through FAC consultation. The Agent will triage and forward to the team.',
+    gatewayCta: 'Open consultation window',
     form: {
       name: 'Name',
       namePlaceholder: 'Enter your name',

@@ -52,7 +52,7 @@ export default function Footer() {
     { label: '八大支柱', href: '#services' },
     { label: '代幣經濟', href: '#token' },
     { label: '導師團隊', href: '#team' },
-    { label: '聯絡我們', href: '#contact' }
+    { label: '聯絡我們', href: '#hero' }
   ];
 
   const expertiseLinks = [
@@ -227,44 +227,27 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* 聯絡入口：僅引導至萬能框，不展示實體聯絡方式 */}
           <div className="footer-col opacity-0">
             <h4
               className="font-semibold mb-6 text-sm tracking-wider uppercase"
               style={{ color: 'var(--off-white)' }}
             >
-              聯絡資訊
+              聯絡我們
             </h4>
-            <ul className="space-y-4 text-sm">
-              <li style={{ color: 'rgba(237,232,223,0.55)', lineHeight: '1.7' }}>
-                香港九龍尖沙咀梳士巴利道18號
-              </li>
-              <li>
-                <a
-                  href="tel:+85212345678"
-                  className="transition-colors duration-300"
-                  style={{ color: 'rgba(237,232,223,0.55)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.55)')}
-                >
-                  +852 1234 5678
-                </a>
-              </li>
-              <li>
-                <a
-                  href="mailto:info@hkfac.com"
-                  className="transition-colors duration-300"
-                  style={{ color: 'rgba(237,232,223,0.55)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.55)')}
-                >
-                  info@hkfac.com
-                </a>
-              </li>
-              <li style={{ color: 'rgba(237,232,223,0.4)', fontSize: '0.8rem' }}>
-                週一至週五 &nbsp;9:00 – 18:00
-              </li>
-            </ul>
+            <p className="text-sm mb-4" style={{ color: 'rgba(237,232,223,0.5)', lineHeight: 1.7 }}>
+              所有溝通請經由首頁萬能框，由 FAC 港匠匯 智慧諮詢處理。
+            </p>
+            <a
+              href="#hero"
+              onClick={(e) => { e.preventDefault(); scrollToSection('#hero'); }}
+              className="text-sm font-medium transition-colors duration-300 inline-block"
+              style={{ color: 'var(--champagne)' }}
+              onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.textDecoration = 'underline'}
+              onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.textDecoration = 'none'}
+            >
+              前往智慧諮詢視窗 →
+            </a>
           </div>
         </div>
 
