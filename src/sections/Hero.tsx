@@ -591,12 +591,15 @@ export default function Hero() {
                     </p>
                   )}
 
-                  {/* ─ 語音確認：Draft 摘要 + 係/正確/沒問題 (V1.9) ─ */}
+                  {/* ─ 語音確認：Draft 摘要 + 係/正確/沒問題 + 自動導出確認 (V2.0) ─ */}
                   {agentPhase === 'draft_confirm' && (
                     <>
                       <p className="text-xs font-semibold mb-1" style={{ color: 'rgba(201,169,110,0.9)' }}>結構化摘要</p>
                       <p className="text-sm mb-4 p-3 rounded-xl" style={{ background: 'rgba(201,169,110,0.06)', color: 'rgba(237,232,223,0.85)', lineHeight: 1.7, border: '1px solid rgba(201,169,110,0.15)' }}>
                         {draftSummary}
+                      </p>
+                      <p className="text-xs mb-3" style={{ color: 'rgba(201,169,110,0.6)' }}>
+                        語音或點擊確認後，將自動導出此摘要至您的個人智慧錢包（保險箱），並進入匹配流程。
                       </p>
                       <p className="text-sm mb-3" style={{ color: 'rgba(237,232,223,0.8)' }}>以上資訊是否正確？</p>
                       <p className="text-xs mb-2" style={{ color: 'rgba(201,169,110,0.55)' }}>支援語音感應確認</p>

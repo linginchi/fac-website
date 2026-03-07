@@ -5,7 +5,7 @@ import { useSiteConfig } from '../hooks/useSiteConfig';
 import { 
   Users, Settings, FileText, LogOut, Plus, Edit2, Trash2, Save, Upload, 
   ChevronDown, ChevronUp, Globe, Mail, RefreshCw, BarChart3,
-  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin
+  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin, DollarSign
 } from 'lucide-react';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
@@ -154,21 +154,56 @@ function savePendingRewards(list: PendingSuggestionReward[]) {
   localStorage.setItem(STORAGE_KEY_PENDING_REWARDS, JSON.stringify(list));
 }
 
+// ─── 定價管理 (V2.0) ───────────────────────────────────────────────────────
+const STORAGE_KEY_PRICING = 'fac_pricing_tiers';
+export interface PricingTierRow {
+  name: string;
+  nameEn?: string;
+  priceMonthly: string;
+  priceYearly: string;
+}
+export interface PricingTiers {
+  basic: PricingTierRow;
+  professional: PricingTierRow;
+  executive: PricingTierRow;
+}
+const defaultPricing: PricingTiers = {
+  basic: { name: 'Basic（基礎版）', nameEn: 'Basic', priceMonthly: '0', priceYearly: '0' },
+  professional: { name: 'Professional（專業版）', nameEn: 'Professional', priceMonthly: '99', priceYearly: '999' },
+  executive: { name: 'Executive（精英版）', nameEn: 'Executive', priceMonthly: '299', priceYearly: '2999' },
+};
+function loadPricing(): PricingTiers {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PRICING);
+    if (raw) {
+      const parsed = JSON.parse(raw) as PricingTiers;
+      if (parsed?.basic && parsed?.professional && parsed?.executive) return parsed;
+    }
+  } catch (_) {}
+  return { ...defaultPricing };
+}
+function savePricing(tiers: PricingTiers) {
+  localStorage.setItem(STORAGE_KEY_PRICING, JSON.stringify(tiers));
+}
+
 export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const { auth, logout } = useAuth();
   const { members, addMember, updateMember, deleteMember, reorderMembers, resetToDefault: resetTeam } = useTeamMembers();
   const { config, updateConfig, resetToDefault: resetConfig } = useSiteConfig();
   
-  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens'>('team');
+  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing'>('team');
   const [pendingRewards, setPendingRewards] = useState<PendingSuggestionReward[]>(loadPendingRewards);
+  const [pricingTiers, setPricingTiers] = useState<PricingTiers>(loadPricing);
   
   useEffect(() => {
     if (window.location.pathname === '/admin/tokens') setActiveTab('tokens');
+    if (window.location.pathname === '/admin/pricing') setActiveTab('pricing');
   }, []);
 
-  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens') => {
+  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing') => {
     setActiveTab(tab);
     if (tab === 'tokens') window.history.replaceState({}, '', '/admin/tokens');
+    if (tab === 'pricing') window.history.replaceState({}, '', '/admin/pricing');
   };
 
   const handleDisburseReward = (id: string) => {
@@ -377,6 +412,18 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               >
                 <Gift className="w-5 h-5" />
                 <span>獎勵撥發</span>
+              </button>
+
+              <button
+                onClick={() => switchToTab('pricing')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                  activeTab === 'pricing' 
+                    ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <DollarSign className="w-5 h-5" />
+                <span>定價管理</span>
               </button>
             </nav>
           </div>
@@ -1237,6 +1284,90 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                     </ul>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* 定價管理 Tab — /admin/pricing (V2.0) */}
+            {activeTab === 'pricing' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-white">定價管理 · Basic / Professional / Executive</h2>
+                  <button
+                    onClick={() => { setPricingTiers(loadPricing()); }}
+                    className="flex items-center gap-2 px-4 py-2 text-white/60 hover:text-[#FFD700] transition-colors text-sm"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    重新載入
+                  </button>
+                </div>
+                <p className="text-sm" style={{ color: 'rgba(237,232,223,0.5)' }}>
+                  設置三級會員名稱與價格（月費/年費）。修改後即時寫入本地，前台個人頁與保險箱邏輯會讀取此配置。
+                </p>
+                <div className="grid gap-6 md:grid-cols-3">
+                  {(['basic', 'professional', 'executive'] as const).map((key) => (
+                    <div
+                      key={key}
+                      className="rounded-2xl p-6 border"
+                      style={{ borderColor: 'rgba(201,169,110,0.25)', background: 'rgba(255,255,255,0.03)' }}
+                    >
+                      <div className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: '#C9A96E' }}>
+                        {key === 'basic' ? 'Basic' : key === 'professional' ? 'Professional' : 'Executive'}
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'rgba(237,232,223,0.5)' }}>顯示名稱</label>
+                          <input
+                            type="text"
+                            value={pricingTiers[key].name}
+                            onChange={(e) => setPricingTiers((prev) => ({
+                              ...prev,
+                              [key]: { ...prev[key], name: e.target.value }
+                            }))}
+                            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                            placeholder="e.g. Basic（基礎版）"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'rgba(237,232,223,0.5)' }}>月費（法幣/穩定幣）</label>
+                          <input
+                            type="text"
+                            value={pricingTiers[key].priceMonthly}
+                            onChange={(e) => setPricingTiers((prev) => ({
+                              ...prev,
+                              [key]: { ...prev[key], priceMonthly: e.target.value }
+                            }))}
+                            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                            placeholder="0 或 99"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'rgba(237,232,223,0.5)' }}>年費</label>
+                          <input
+                            type="text"
+                            value={pricingTiers[key].priceYearly}
+                            onChange={(e) => setPricingTiers((prev) => ({
+                              ...prev,
+                              [key]: { ...prev[key], priceYearly: e.target.value }
+                            }))}
+                            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                            placeholder="0 或 999"
+                          />
+                        </div>
+                        <button
+                          onClick={() => savePricing(pricingTiers)}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
+                          style={{ background: 'linear-gradient(135deg, #C9A96E 0%, #a8883a 100%)', color: '#0A1628' }}
+                        >
+                          <Save className="w-4 h-4" />
+                          儲存定價
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs" style={{ color: 'rgba(237,232,223,0.4)' }}>
+                  進入方式：登入後台 → 左側「定價管理」或直接訪問 <strong>/admin/pricing</strong>
+                </p>
               </div>
             )}
 

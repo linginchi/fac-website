@@ -24,6 +24,9 @@ export interface UserProfile {
   /** 錢包數據公開狀態：private | partial | public */
   vaultVisibility: 'private' | 'partial' | 'public';
 
+  /** 會員等級（V2.0 收費級別） */
+  membershipTier?: 'basic' | 'professional' | 'executive';
+
   /** ─── LinkedIn API 對接欄位 ─── */
   linkedinId?: string;
   linkedinProfileUrl?: string;

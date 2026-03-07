@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, Globe, Coins } from 'lucide-react';
+import { Menu, X, Globe, Coins, User } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 
 const languages = [
@@ -153,6 +153,16 @@ export default function Navbar() {
               <span>餘額: {facBalance} $FAC</span>
             </a>
             <a
+              href="/profile"
+              className="flex items-center gap-1.5 text-sm transition-colors duration-300"
+              style={{ color: 'rgba(237,232,223,0.8)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
+            >
+              <User className="w-4 h-4" />
+              個人中心
+            </a>
+            <a
               href="/register"
               className="text-sm transition-colors duration-300"
               style={{ color: 'rgba(237,232,223,0.8)' }}
@@ -227,6 +237,14 @@ export default function Navbar() {
             >
               <Coins className="w-4 h-4" />
               餘額: {facBalance} $FAC
+            </a>
+            <a
+              href="/profile"
+              className="flex items-center justify-center gap-2 py-3 text-sm"
+              style={{ color: 'rgba(237,232,223,0.8)' }}
+            >
+              <User className="w-4 h-4" />
+              個人中心
             </a>
             <a
               href="/register"

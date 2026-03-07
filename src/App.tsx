@@ -15,6 +15,7 @@ import AdminLogin from './sections/AdminLogin';
 import AdminPanel from './sections/AdminPanel';
 import UserRegister from './sections/UserRegister';
 import WalletPage from './pages/WalletPage';
+import ProfilePage from './pages/ProfilePage';
 import { useAuth } from './hooks/useAuth';
 import './i18n';
 
@@ -52,11 +53,12 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet'>(() => {
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile'>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
       if (p === '/register' || p === '/login') return 'register';
       if (p === '/wallet') return 'wallet';
+      if (p === '/profile') return 'profile';
     }
     return 'home';
   });
@@ -77,6 +79,10 @@ function App() {
     const hash = window.location.hash;
     if (path === '/wallet') {
       setCurrentView('wallet');
+      return;
+    }
+    if (path === '/profile') {
+      setCurrentView('profile');
       return;
     }
     if (path === '/register' || path === '/login') {
@@ -141,6 +147,17 @@ function App() {
   if (currentView === 'wallet' || window.location.pathname === '/wallet') {
     return (
       <WalletPage
+        onBack={() => {
+          setCurrentView('home');
+          window.history.replaceState({}, '', '/');
+        }}
+      />
+    );
+  }
+
+  if (currentView === 'profile' || window.location.pathname === '/profile') {
+    return (
+      <ProfilePage
         onBack={() => {
           setCurrentView('home');
           window.history.replaceState({}, '', '/');
