@@ -161,6 +161,8 @@ export interface PricingTierRow {
   nameEn?: string;
   priceMonthly: string;
   priceYearly: string;
+  /** Executive 專屬：智慧分紅比例 (%) */
+  dividendRate?: string;
 }
 export interface PricingTiers {
   basic: PricingTierRow;
@@ -170,7 +172,7 @@ export interface PricingTiers {
 const defaultPricing: PricingTiers = {
   basic: { name: 'Basic（基礎版）', nameEn: 'Basic', priceMonthly: '0', priceYearly: '0' },
   professional: { name: 'Professional（專業版）', nameEn: 'Professional', priceMonthly: '99', priceYearly: '999' },
-  executive: { name: 'Executive（精英版）', nameEn: 'Executive', priceMonthly: '299', priceYearly: '2999' },
+  executive: { name: 'Executive（精英版）', nameEn: 'Executive', priceMonthly: '299', priceYearly: '2999', dividendRate: '7' },
 };
 function loadPricing(): PricingTiers {
   try {
@@ -1367,6 +1369,32 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                             placeholder="0 或 999"
                           />
                         </div>
+                        {key === 'executive' && (
+                          <div>
+                            <label className="block text-xs mb-1" style={{ color: 'rgba(201,169,110,0.75)' }}>
+                              合夥人智慧分紅比例 (%)
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="1"
+                                max="30"
+                                value={pricingTiers.executive.dividendRate ?? '7'}
+                                onChange={(e) => setPricingTiers((prev) => ({
+                                  ...prev,
+                                  executive: { ...prev.executive, dividendRate: e.target.value }
+                                }))}
+                                className="w-full px-3 py-2 rounded-lg bg-white/5 border text-sm text-white pr-8"
+                                style={{ borderColor: 'rgba(201,169,110,0.4)' }}
+                                placeholder="7"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: 'rgba(201,169,110,0.65)' }}>%</span>
+                            </div>
+                            <p className="text-xs mt-1" style={{ color: 'rgba(237,232,223,0.35)' }}>
+                              每筆成功撮合手續費中撥給 Executive 合夥人的分紅比例（建議 5%–10%）
+                            </p>
+                          </div>
+                        )}
                         <button
                           onClick={() => savePricing(pricingTiers)}
                           className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
@@ -1463,11 +1491,12 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                   <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.18)', background: 'rgba(255,255,255,0.02)' }}>
                     <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'rgba(201,169,110,0.12)' }}>
                       <span className="text-sm font-semibold text-white">治理提案 · 董事會決議</span>
-                      <span className="text-xs" style={{ color: 'rgba(237,232,223,0.4)' }}>2 個進行中</span>
+                      <span className="text-xs" style={{ color: 'rgba(237,232,223,0.4)' }}>3 個進行中</span>
                     </div>
                     {[
                       { title: '開啟第九智慧支柱：新能源與 ESG', forPct: 76, against: 24, voters: 102 },
                       { title: '調整全平台最低基礎解碼費', forPct: 47, against: 53, voters: 116 },
+                      { title: '是否新增「生命科學與醫療合規」支柱？', forPct: 67, against: 33, voters: 67 },
                     ].map((q) => (
                       <div key={q.title} className="px-5 py-4 border-b" style={{ borderColor: 'rgba(201,169,110,0.08)' }}>
                         <div className="flex items-center justify-between mb-2">

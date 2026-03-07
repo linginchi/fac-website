@@ -64,14 +64,25 @@ const MOCK_PROPOSALS: GovernanceProposal[] = [
     votesA: 55,
     votesB: 61,
   },
+  {
+    id: 'p3',
+    title: '是否新增「生命科學與醫療合規」支柱？',
+    description: '提案新增第十智慧支柱，涵蓋藥事法規、醫療器械合規、生物科技 IPO 咨詢等領域，優先對接持牌醫療合規顧問。',
+    options: ['支持新增', '暫緩，待市場調研'],
+    endDate: '2025-09-01',
+    votesA: 45,
+    votesB: 22,
+  },
 ];
 
 // ─── Mock dividend history ────────────────────────────────────────────────────
 const MOCK_DIVIDENDS: DividendRecord[] = [
+  { id: 'd0', date: '2025-06-01', source: '來自受邀專家 A 的智慧撮合分紅', amountHKD: 300, amountFAC: 200, payoutType: 'FAC' },
   { id: 'd1', date: '2025-05-20', source: '成功撮合 · SFC RO 合規顧問', amountHKD: 480, amountFAC: 320, payoutType: 'FAC' },
   { id: 'd2', date: '2025-05-14', source: '邀請入駐 · 跨境貿易專家（user_ref_7a2e）', amountHKD: 120, amountFAC: 80, payoutType: 'FAC' },
   { id: 'd3', date: '2025-04-30', source: '成功撮合 · 家族信託架構設計', amountHKD: 750, amountFAC: 500, payoutType: 'stablecoin' },
 ];
+const TOTAL_EARNINGS_FAC = MOCK_DIVIDENDS.reduce((s, d) => s + (d.amountFAC ?? 0), 0);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function loadPricing(): PricingTiers | null {
@@ -160,8 +171,10 @@ function CardHeader({ icon: Icon, title, subtitle, badge }: {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+const STORAGE_DIVIDEND_CREDITED = 'fac_dividend_credited_v2';
+
 export default function ProfilePage({ onBack }: { onBack: () => void }) {
-  const { facBalance, transactions } = useWallet();
+  const { facBalance, transactions, addTransaction } = useWallet();
 
   const [vaultStatus, setVaultStatus]     = useState<VaultStatus>(getVaultStatus);
   const [userTier, setUserTier]           = useState<UserTier>(getUserTier);
@@ -174,6 +187,14 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
   const pricing = loadPricing();
   const executivePrice = pricing?.executive?.priceMonthly ?? '299';
   const isPartner = userTier === 'executive';
+
+  // 首次進入合夥人頁面時，將最新撮合分紅 +200 $FAC 入帳至主錢包
+  useEffect(() => {
+    if (!isPartner) return;
+    if (localStorage.getItem(STORAGE_DIVIDEND_CREDITED)) return;
+    localStorage.setItem(STORAGE_DIVIDEND_CREDITED, '1');
+    addTransaction({ date: '2025-06-01', label: '來自受邀專家 A 的智慧撮合分紅', amount: 200 });
+  }, [isPartner, addTransaction]);
 
   const vaultLabel =
     vaultStatus === 'none' ? '未開通'
@@ -398,15 +419,25 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
               {/* ── 智慧分紅 ── */}
               {activePartnerTab === 'dividends' && (
                 <div className="space-y-5">
-                  {/* 餘額卡 */}
+                  {/* 餘額卡 + 合夥人收益看板 */}
                   <div className="p-5 rounded-xl" style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.12) 0%, rgba(201,169,110,0.05) 100%)', border: '1px solid rgba(201,169,110,0.3)' }}>
-                    <p className="text-xs mb-1" style={{ color: 'rgba(201,169,110,0.7)' }}>累積智慧分紅餘額</p>
+                    <p className="text-xs mb-1" style={{ color: 'rgba(201,169,110,0.7)' }}>合夥人收益看板</p>
                     <div className="flex items-end gap-3">
                       <span className="text-3xl font-bold tabular-nums" style={{ color: 'var(--champagne)' }}>
                         HKD {partnerData.dividendBalanceHKD.toLocaleString()}
                       </span>
                     </div>
                     <p className="text-xs mt-2" style={{ color: 'rgba(237,232,223,0.45)' }}>來自 {partnerData.referredUsers.length} 位信任網絡成員的撮合收益</p>
+                    <div className="mt-4 pt-4 grid grid-cols-2 gap-3" style={{ borderTop: '1px solid rgba(201,169,110,0.15)' }}>
+                      <div>
+                        <p className="text-xs mb-0.5" style={{ color: 'rgba(201,169,110,0.55)' }}>累積 $FAC 分紅</p>
+                        <p className="text-xl font-bold tabular-nums" style={{ color: '#4CAF7D' }}>+{TOTAL_EARNINGS_FAC} $FAC</p>
+                      </div>
+                      <div>
+                        <p className="text-xs mb-0.5" style={{ color: 'rgba(201,169,110,0.55)' }}>分紅筆數</p>
+                        <p className="text-xl font-bold tabular-nums text-white">{MOCK_DIVIDENDS.length} 筆</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* 提現方式 */}

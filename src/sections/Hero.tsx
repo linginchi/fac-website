@@ -10,6 +10,12 @@ import { useWallet } from '../context/WalletContext';
 const DECODE_COST = 10;
 const STORAGE_NEW_USER = 'fac_voice_identity_seen';
 const STORAGE_LOGGED_IN = 'fac_user_logged_in';
+const STORAGE_TIER = 'fac_user_tier';
+
+function isExecutiveUser(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(STORAGE_TIER) === 'executive';
+}
 
 function isUserLoggedIn(): boolean {
   if (typeof window === 'undefined') return false;
@@ -52,7 +58,7 @@ const suggestions = [
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type AgentPhase = 'idle' | 'new_user_greeting' | 'login_prompt' | 'thinking' | 'draft_confirm' | 'matched' | 'decoded' | 'action';
+type AgentPhase = 'idle' | 'new_user_greeting' | 'login_prompt' | 'partner_welcome' | 'thinking' | 'draft_confirm' | 'matched' | 'decoded' | 'action';
 type UserMode = 'employer' | 'expert' | null;
 
 // ─── Success beep (語音確認成功回饋) ───────────────────────────────────────────
@@ -115,6 +121,7 @@ export default function Hero() {
   const [draftSummary, setDraftSummary]     = useState('');
   const [decodeError, setDecodeError]       = useState('');
   const [jobOfferSent, setJobOfferSent]     = useState(false);
+  const [isPartnerUser]                     = useState(() => isExecutiveUser());
 
   const matchText = '已為您從「個人智慧錢包」網絡中匹配到 3–5 位符合條件的隱世專家，請解碼深度資歷以查看脫敏介紹。';
   const { displayed: matchDisplayed, done: matchDone } = useTypewriter(matchText, 22, agentPhase === 'matched');
@@ -194,6 +201,13 @@ export default function Hero() {
     };
   }, [isMicPulsing]);
 
+  // ─── Partner welcome → thinking (2.5 秒後自動進入分析流程) ────────────────
+  useEffect(() => {
+    if (agentPhase !== 'partner_welcome') return;
+    const id = setTimeout(() => setAgentPhase('thinking'), 2500);
+    return () => clearTimeout(id);
+  }, [agentPhase]);
+
   // ─── Thinking stepper → draft_confirm ─────────────────────────────────────
   useEffect(() => {
     if (agentPhase !== 'thinking') return;
@@ -245,7 +259,12 @@ export default function Hero() {
     setDecodeError('');
     setJobOfferSent(false);
     setUserMode(classifyIntent(commandValue));
-    setAgentPhase('thinking');
+    // 合夥人（Executive）優先顯示專屬問候，再進入分析流程
+    if (isExecutiveUser()) {
+      setAgentPhase('partner_welcome');
+    } else {
+      setAgentPhase('thinking');
+    }
   }, [commandValue, classifyIntent]);
 
   const handleDecode = useCallback(() => {
@@ -507,7 +526,9 @@ export default function Hero() {
                     <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(201,169,110,0.14)', border: '1px solid rgba(201,169,110,0.28)' }}>
                       <BrainCircuit className="w-3.5 h-3.5" style={{ color: 'var(--champagne)' }} />
                     </div>
-                    <span className="text-xs font-semibold" style={{ color: 'var(--champagne)' }}>FAC 智慧傳承 · 專屬顧問</span>
+                    <span className="text-xs font-semibold" style={{ color: 'var(--champagne)' }}>
+                      FAC 智慧傳承 · {isPartnerUser ? '合夥人專屬顧問' : '專屬顧問'}
+                    </span>
                     {userMode && agentPhase !== 'new_user_greeting' && (
                       <span className="text-xs px-2 py-0.5 rounded-md" style={{
                         background: userMode === 'employer' ? 'rgba(76,175,80,0.15)' : 'rgba(33,150,243,0.15)',
@@ -534,6 +555,41 @@ export default function Hero() {
                 </div>
 
                 <div className="px-5 py-4 space-y-4">
+                  {/* ─ 合夥人專屬問候 (V2.1) ─ */}
+                  {agentPhase === 'partner_welcome' && (
+                    <>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(201,169,110,0.18)', border: '1px solid rgba(201,169,110,0.45)', color: '#C9A96E' }}>
+                          ◆ 合夥人專屬
+                        </span>
+                      </div>
+                      <p className="text-sm leading-relaxed" style={{ color: 'rgba(237,232,223,0.92)', lineHeight: 1.85 }}>
+                        尊敬的<strong style={{ color: 'var(--champagne)' }}>合夥人</strong>，目前您的圈子內有 <strong style={{ color: '#4CAF7D' }}>3 個新動態</strong>，需要您參與決策或查看分紅嗎？
+                      </p>
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        {[
+                          { label: '新撮合分紅', val: '+200 $FAC', color: '#4CAF7D' },
+                          { label: '待投票提案', val: '1 個', color: '#C9A96E' },
+                          { label: '信任網絡', val: '2 人', color: 'rgba(237,232,223,0.7)' },
+                        ].map(({ label, val, color }) => (
+                          <div key={label} className="p-3 rounded-xl text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,169,110,0.15)' }}>
+                            <p className="text-xs mb-1" style={{ color: 'rgba(201,169,110,0.55)' }}>{label}</p>
+                            <p className="text-sm font-bold tabular-nums" style={{ color }}>{val}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        <a href="/profile" className="inline-flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-semibold" style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}>
+                          查看合夥人中心
+                        </a>
+                        <button type="button" onClick={() => setAgentPhase('thinking')} className="inline-flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-medium" style={{ border: '1px solid rgba(201,169,110,0.4)', color: 'var(--champagne)' }}>
+                          繼續智慧匹配
+                        </button>
+                      </div>
+                      <p className="text-xs mt-1" style={{ color: 'rgba(237,232,223,0.35)' }}>正在準備分析流程，稍後自動進入匹配…</p>
+                    </>
+                  )}
+
                   {/* ─ 未登入引導：語音/文字提示 + Summary Card + 語音確認 ─ */}
                   {agentPhase === 'login_prompt' && (
                     <>
