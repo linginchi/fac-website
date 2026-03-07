@@ -787,14 +787,56 @@ export default function Hero() {
 
                   {/* ─ Action sent ─ */}
                   {agentPhase === 'action' && (
-                    <div className="border-t pt-4 flex items-start gap-3" style={{ borderColor: 'rgba(201,169,110,0.15)' }}>
-                      <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#4CAF7D' }} />
-                      <p className="text-xs" style={{ color: 'rgba(237,232,223,0.7)', lineHeight: 1.7 }}>
-                        {jobOfferSent
-                          ? 'Job Offer 已透過加密通道傳送至匹配專家，系統將在 24 小時內回覆。所有通訊受銀行級私人保險箱保護。'
-                          : '私密對話預約已提交，Agent 將優先處理您的需求。請確保 $FAC 餘額充足以開啟加密通道。'
-                        }
+                    <div className="border-t pt-4 space-y-4" style={{ borderColor: 'rgba(201,169,110,0.15)' }}>
+                      <div className="flex items-start gap-3">
+                        <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#4CAF7D' }} />
+                        <p className="text-xs" style={{ color: 'rgba(237,232,223,0.7)', lineHeight: 1.7 }}>
+                          {jobOfferSent
+                            ? 'Job Offer 已透過加密通道傳送至匹配專家，系統將在 24 小時內回覆。所有通訊受銀行級私人保險箱保護。'
+                            : '私密對話預約已提交，Agent 將優先處理您的需求。請確保 $FAC 餘額充足以開啟加密通道。'
+                          }
+                        </p>
+                      </div>
+                      {/* 升級邀請 - 非 Executive 用戶 */}
+                      {!isPartnerUser && (
+                        <div className="p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.1) 0%, rgba(201,169,110,0.04) 100%)', border: '1px solid rgba(201,169,110,0.3)' }}>
+                          <p className="text-xs font-semibold mb-1" style={{ color: 'var(--champagne)' }}>◆ 升級為合夥人，解鎖更多權益</p>
+                          <p className="text-xs mb-3" style={{ color: 'rgba(237,232,223,0.65)', lineHeight: 1.65 }}>
+                            作為 Executive 合夥人，您可享有智慧撮合分紅（5–10%）、去中心化治理投票權，以及專屬「邀請函保險箱」。
+                          </p>
+                          <a href="/profile" className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold" style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}>
+                            前往個人中心升級
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ─ 專家身份引導（matched/decoded/action 相位，supply 模式）─ */}
+                  {(agentPhase === 'matched' || agentPhase === 'decoded' || agentPhase === 'action') && userMode === 'expert' && (
+                    <div className="mt-2 p-4 rounded-xl border" style={{ background: 'rgba(33,150,243,0.06)', borderColor: 'rgba(33,150,243,0.25)' }}>
+                      <p className="text-xs font-semibold mb-1.5" style={{ color: '#64B5F6' }}>偵測到您的專家身份 · 建議路徑</p>
+                      <p className="text-xs mb-3" style={{ color: 'rgba(237,232,223,0.75)', lineHeight: 1.7 }}>
+                        建議您同步 LinkedIn 並開通「去中心化保險箱」，將您的傳奇資歷安全鎖入鏈上私密空間，讓平台為您精準配對 Job Offer。
                       </p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {[
+                          { label: '① 同步 LinkedIn', done: true },
+                          { label: '② 開通保險箱', done: false },
+                          { label: '③ 升級為合夥人', done: false },
+                        ].map(({ label, done }) => (
+                          <span key={label} className="text-xs px-2.5 py-1 rounded-md" style={{
+                            background: done ? 'rgba(76,175,80,0.12)' : 'rgba(255,255,255,0.05)',
+                            border: `1px solid ${done ? 'rgba(76,175,80,0.35)' : 'rgba(201,169,110,0.2)'}`,
+                            color: done ? '#81C784' : 'rgba(237,232,223,0.65)'
+                          }}>
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                      <a href="/register" className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold" style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}>
+                        立即同步 LinkedIn · 領 80 $FAC
+                      </a>
                     </div>
                   )}
                 </div>

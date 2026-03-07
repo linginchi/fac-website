@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   ArrowLeft, Shield, Download, Lock, Cloud, CheckCircle, X,
   Copy, Users, TrendingUp, Vote, ChevronRight, Coins, Gift,
@@ -173,6 +173,197 @@ function CardHeader({ icon: Icon, title, subtitle, badge }: {
 
 const STORAGE_DIVIDEND_CREDITED = 'fac_dividend_credited_v2';
 
+// ─── Invitation Card Component ────────────────────────────────────────────────
+function InvitationCardPanel({ referralCode, onCopied, copied }: { referralCode: string; onCopied: () => void; copied: boolean }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const shortCode = referralCode.replace('FAC-', '');
+  const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://fac-platform.pages.dev'}/register?ref=${referralCode}`;
+
+  const handleDownloadPNG = () => {
+    const W = 900, H = 500;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const c = canvas.getContext('2d');
+    if (!c) return;
+
+    // Background gradient
+    const bg = c.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#070E1F');
+    bg.addColorStop(0.5, '#0D1F3C');
+    bg.addColorStop(1, '#070E1F');
+    c.fillStyle = bg; c.fillRect(0, 0, W, H);
+
+    // Noise texture via tiny dots
+    c.fillStyle = 'rgba(255,255,255,0.02)';
+    for (let i = 0; i < 1500; i++) {
+      c.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+    }
+
+    // Outer gold border
+    c.strokeStyle = '#C9A96E'; c.lineWidth = 2;
+    roundRect(c, 18, 18, W - 36, H - 36, 16);
+    c.stroke();
+
+    // Inner subtle border
+    c.strokeStyle = 'rgba(201,169,110,0.28)'; c.lineWidth = 1;
+    roundRect(c, 30, 30, W - 60, H - 60, 10);
+    c.stroke();
+
+    // Top decorative line
+    const lineGrad = c.createLinearGradient(100, 0, W - 100, 0);
+    lineGrad.addColorStop(0, 'transparent');
+    lineGrad.addColorStop(0.5, 'rgba(201,169,110,0.6)');
+    lineGrad.addColorStop(1, 'transparent');
+    c.strokeStyle = lineGrad; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(100, 98); c.lineTo(W - 100, 98); c.stroke();
+
+    // Corner diamonds
+    [[50, 50], [W - 50, 50], [50, H - 50], [W - 50, H - 50]].forEach(([x, y]) => {
+      c.save(); c.translate(x, y); c.rotate(Math.PI / 4);
+      c.strokeStyle = 'rgba(201,169,110,0.5)'; c.lineWidth = 1;
+      c.strokeRect(-4, -4, 8, 8); c.restore();
+    });
+
+    // FAC wordmark (small)
+    c.fillStyle = 'rgba(201,169,110,0.5)';
+    c.font = '500 13px Arial, sans-serif';
+    c.textAlign = 'center';
+    c.fillText('FACILITATING ARTISAN COLLECTIVE', W / 2, 76);
+
+    // Main title
+    const titleGrad = c.createLinearGradient(0, 130, 0, 200);
+    titleGrad.addColorStop(0, '#E8C97A');
+    titleGrad.addColorStop(1, '#A8883A');
+    c.fillStyle = titleGrad;
+    c.font = 'bold 46px Arial, sans-serif';
+    c.textAlign = 'center';
+    c.fillText('智慧合夥人 專屬邀請', W / 2, 175);
+
+    // Subtitle
+    c.fillStyle = 'rgba(201,169,110,0.65)';
+    c.font = '16px Arial, sans-serif';
+    c.fillText('FAC Partner Tier · Exclusive Invitation', W / 2, 210);
+
+    // Divider
+    c.strokeStyle = 'rgba(201,169,110,0.2)'; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(120, 240); c.lineTo(W - 120, 240); c.stroke();
+
+    // Quote
+    c.fillStyle = 'rgba(237,232,223,0.8)';
+    c.font = '18px Arial, sans-serif';
+    c.textAlign = 'center';
+    c.fillText('有些智慧，值得存入保險箱；有些朋友，值得共同傳承。', W / 2, 290);
+
+    // Code label
+    c.fillStyle = 'rgba(201,169,110,0.5)';
+    c.font = '12px Arial, sans-serif';
+    c.fillText('— EXCLUSIVE INVITATION CODE —', W / 2, 340);
+
+    // Code value (monospace style)
+    c.fillStyle = '#C9A96E';
+    c.font = 'bold 36px Courier New, monospace';
+    c.fillText(referralCode, W / 2, 390);
+
+    // Bottom note
+    c.fillStyle = 'rgba(237,232,223,0.35)';
+    c.font = '11px Arial, sans-serif';
+    c.fillText('被邀請者首月享 8 折優惠 · 邀請者獲永久分紅權', W / 2, 448);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FAC-Partner-Invitation-${shortCode}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+
+  function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Preview Card */}
+      <div ref={cardRef} className="relative rounded-2xl overflow-hidden select-none" style={{
+        background: 'linear-gradient(135deg, #070E1F 0%, #0D1F3C 50%, #070E1F 100%)',
+        border: '2px solid #C9A96E',
+        boxShadow: '0 0 0 1px rgba(201,169,110,0.15) inset, 0 12px 40px rgba(0,0,0,0.6)',
+        padding: '2px',
+        minHeight: '200px',
+      }}>
+        {/* Inner border */}
+        <div className="absolute inset-3 rounded-xl pointer-events-none" style={{ border: '1px solid rgba(201,169,110,0.25)' }} />
+        {/* Corner accents */}
+        {['top-4 left-4', 'top-4 right-4', 'bottom-4 left-4', 'bottom-4 right-4'].map((pos) => (
+          <div key={pos} className={`absolute ${pos} w-2 h-2 rotate-45`} style={{ border: '1px solid rgba(201,169,110,0.5)' }} />
+        ))}
+        <div className="relative z-10 px-8 py-7 text-center space-y-3">
+          <p className="text-xs tracking-widest uppercase" style={{ color: 'rgba(201,169,110,0.55)', letterSpacing: '0.2em' }}>
+            Facilitating Artisan Collective
+          </p>
+          <div>
+            <h2 className="text-2xl font-bold leading-tight" style={{
+              background: 'linear-gradient(135deg, #E8C97A 0%, #C9A96E 50%, #A8883A 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+            }}>
+              智慧合夥人 專屬邀請
+            </h2>
+            <p className="text-xs mt-1" style={{ color: 'rgba(201,169,110,0.55)' }}>FAC Partner Tier · Exclusive Invitation</p>
+          </div>
+          {/* Divider */}
+          <div className="h-px my-1" style={{ background: 'linear-gradient(90deg,transparent,rgba(201,169,110,0.3),transparent)' }} />
+          <p className="text-sm" style={{ color: 'rgba(237,232,223,0.75)', lineHeight: 1.75, fontStyle: 'italic' }}>
+            「有些智慧，值得存入保險箱；<br />有些朋友，值得共同傳承。」
+          </p>
+          {/* Divider */}
+          <div className="h-px my-1" style={{ background: 'linear-gradient(90deg,transparent,rgba(201,169,110,0.3),transparent)' }} />
+          <div>
+            <p className="text-xs mb-2" style={{ color: 'rgba(201,169,110,0.45)', letterSpacing: '0.15em' }}>— EXCLUSIVE INVITATION CODE —</p>
+            <p className="text-2xl font-bold tracking-widest font-mono" style={{ color: '#C9A96E', textShadow: '0 0 20px rgba(201,169,110,0.4)' }}>
+              {referralCode}
+            </p>
+          </div>
+          <p className="text-xs" style={{ color: 'rgba(237,232,223,0.3)' }}>
+            被邀請者首月享 8 折優惠 · 邀請者獲永久分紅權
+          </p>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="space-y-2">
+        <button
+          onClick={handleDownloadPNG}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all"
+          style={{ background: 'linear-gradient(135deg, #C9A96E 0%, #a8883a 100%)', color: '#0A1628' }}
+        >
+          <Download className="w-4 h-4" />
+          下載電子邀請函 (PNG)
+        </button>
+        <button
+          onClick={() => { navigator.clipboard.writeText(inviteLink).catch(() => {}); onCopied(); }}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all"
+          style={{ border: '1px solid rgba(201,169,110,0.45)', color: copied ? '#4CAF7D' : 'var(--champagne)' }}
+        >
+          <Copy className="w-4 h-4" />
+          {copied ? '已複製邀請連結 ✓' : '複製專屬邀請連結'}
+        </button>
+      </div>
+      <p className="text-xs text-center" style={{ color: 'rgba(237,232,223,0.3)' }}>
+        每位合夥人的邀請碼具鏈上唯一性，永久追蹤信任網絡。
+      </p>
+    </div>
+  );
+}
+
 export default function ProfilePage({ onBack }: { onBack: () => void }) {
   const { facBalance, transactions, addTransaction } = useWallet();
 
@@ -182,7 +373,10 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
   const [showPaymentModal, setShowPaymentModal]   = useState(false);
   const [paymentConfirming, setPaymentConfirming] = useState(false);
   const [copied, setCopied]               = useState(false);
-  const [activePartnerTab, setActivePartnerTab]   = useState<'dividends' | 'referral' | 'governance'>('referral');
+  const [activePartnerTab, setActivePartnerTab]   = useState<'dividends' | 'referral' | 'governance' | 'invite'>('referral');
+  const [isExporting, setIsExporting]             = useState(false);
+  const [exportProgress, setExportProgress]       = useState(0);
+  const [exportDone, setExportDone]               = useState(false);
 
   const pricing = loadPricing();
   const executivePrice = pricing?.executive?.priceMonthly ?? '299';
@@ -213,26 +407,45 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
   }, []);
 
   const handleExportToColdWallet = useCallback(() => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      version: '2.1',
-      vaultStatus, tier: userTier,
-      balance: facBalance,
-      transactions: transactions.slice(0, 50),
-      partnerReferralCode: partnerData.referralCode,
-      note: '此檔案為加密備份，請妥善保管於冷錢包或離線儲存。'
-    };
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
-    const blob = new Blob([JSON.stringify({ encrypted: true, version: '2.1', payload: encoded })], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fac-cold-wallet-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    localStorage.setItem(STORAGE_VAULT, 'cold');
-    setVaultStatus('cold');
-  }, [vaultStatus, userTier, facBalance, transactions, partnerData.referralCode]);
+    if (isExporting) return;
+    setIsExporting(true);
+    setExportProgress(0);
+    setExportDone(false);
+
+    // Animate progress bar 0 → 100
+    const steps = [
+      { pct: 15, delay: 150 }, { pct: 35, delay: 350 },
+      { pct: 58, delay: 600 }, { pct: 80, delay: 900 },
+      { pct: 95, delay: 1100 }, { pct: 100, delay: 1350 },
+    ];
+    steps.forEach(({ pct, delay }) => {
+      setTimeout(() => setExportProgress(pct), delay);
+    });
+
+    setTimeout(() => {
+      setExportDone(true);
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        version: '2.1',
+        vaultStatus, tier: userTier,
+        balance: facBalance,
+        transactions: transactions.slice(0, 50),
+        partnerReferralCode: partnerData.referralCode,
+        note: '此檔案為加密備份，請妥善保管於冷錢包或離線儲存。'
+      };
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+      const blob = new Blob([JSON.stringify({ encrypted: true, version: '2.1', payload: encoded })], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fac-cold-wallet-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      localStorage.setItem(STORAGE_VAULT, 'cold');
+      setVaultStatus('cold');
+      setTimeout(() => { setIsExporting(false); setExportProgress(0); setExportDone(false); }, 2200);
+    }, 1600);
+  }, [isExporting, vaultStatus, userTier, facBalance, transactions, partnerData.referralCode]);
 
   // ── Referral copy ──────────────────────────────────────────────────────────
   const handleCopyCode = useCallback(() => {
@@ -311,14 +524,38 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
               </button>
             )}
             {isPartner && vaultStatus !== 'none' && (
-              <button
-                onClick={handleExportToColdWallet}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style={{ border: '1px solid rgba(201,169,110,0.5)', color: 'var(--champagne)' }}
-              >
-                <Download className="w-4 h-4" />
-                下載數據至冷錢包（含邀請碼備份）
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={handleExportToColdWallet}
+                  disabled={isExporting}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all"
+                  style={{
+                    border: '1px solid rgba(201,169,110,0.5)',
+                    color: isExporting ? 'rgba(201,169,110,0.5)' : 'var(--champagne)',
+                    cursor: isExporting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <Download className="w-4 h-4" />
+                  導出智慧資產至冷錢包
+                </button>
+                {isExporting && (
+                  <div className="p-4 rounded-xl space-y-3" style={{ background: 'rgba(13,31,60,0.9)', border: '1px solid rgba(201,169,110,0.25)' }}>
+                    <p className="text-xs font-semibold" style={{ color: exportDone ? '#4CAF7D' : 'var(--champagne)' }}>
+                      {exportDone ? '✓ 密鑰已生成 · 智慧資產封裝完成' : `數據封裝中… ${exportProgress < 60 ? '正在加密您的智慧資產' : exportProgress < 95 ? '密鑰生成中' : '完成封裝'}`}
+                    </p>
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{ width: `${exportProgress}%`, background: exportDone ? 'linear-gradient(90deg,#4CAF7D,#81C784)' : 'linear-gradient(90deg,#C9A96E,#a8883a)' }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs" style={{ color: 'rgba(237,232,223,0.45)' }}>
+                      <span>{exportProgress < 40 ? '初始化加密環境' : exportProgress < 80 ? '序列化鏈上資料' : '生成 RSA 密鑰對'}</span>
+                      <span>{exportProgress}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </SectionCard>
@@ -339,8 +576,8 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
 
             {/* Tab strip */}
             <div className="flex border-b" style={{ borderColor: 'rgba(201,169,110,0.15)' }}>
-              {(['referral', 'dividends', 'governance'] as const).map((tab) => {
-                const labels = { referral: '邀請碼 & 信任網絡', dividends: '智慧分紅', governance: '治理投票' };
+              {(['referral', 'dividends', 'governance', 'invite'] as const).map((tab) => {
+                const labels = { referral: '邀請碼', dividends: '智慧分紅', governance: '治理投票', invite: '邀請函' };
                 return (
                   <button
                     key={tab}
@@ -570,6 +807,15 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
                     );
                   })}
                 </div>
+              )}
+
+              {/* ── 黑金邀請函 ── */}
+              {activePartnerTab === 'invite' && (
+                <InvitationCardPanel
+                  referralCode={partnerData.referralCode}
+                  onCopied={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                  copied={copied}
+                />
               )}
             </div>
           </SectionCard>
