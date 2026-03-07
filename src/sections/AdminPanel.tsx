@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useTeamMembers, type TeamMember } from '../hooks/useTeamMembers';
+import { usePartners } from '../hooks/usePartners';
+import { useContactKB } from '../hooks/useContactKB';
 import { useSiteConfig } from '../hooks/useSiteConfig';
 import { 
   Users, Settings, FileText, LogOut, Plus, Edit2, Trash2, Save, Upload, 
   ChevronDown, ChevronUp, Globe, Mail, RefreshCw, BarChart3,
-  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin, DollarSign, Star, Network, ShieldAlert
+  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin, DollarSign, Star, Network, ShieldAlert, Building2
 } from 'lucide-react';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
@@ -193,21 +195,27 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const { members, addMember, updateMember, deleteMember, reorderMembers, resetToDefault: resetTeam } = useTeamMembers();
   const { config, updateConfig, resetToDefault: resetConfig } = useSiteConfig();
   
-  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner' | 'filtered'>('team');
+  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner' | 'partnersCms' | 'inbox' | 'filtered'>('team');
   const [pendingRewards, setPendingRewards] = useState<PendingSuggestionReward[]>(loadPendingRewards);
   const [pricingTiers, setPricingTiers] = useState<PricingTiers>(loadPricing);
+  const { partners, addPartner, updatePartner, deletePartner } = usePartners();
+  const { submissions, replySubmission } = useContactKB();
   
   useEffect(() => {
     if (window.location.pathname === '/admin/tokens') setActiveTab('tokens');
     if (window.location.pathname === '/admin/pricing') setActiveTab('pricing');
     if (window.location.pathname === '/admin/partner') setActiveTab('partner');
+    if (window.location.pathname === '/admin/partners') setActiveTab('partnersCms');
+    if (window.location.pathname === '/admin/inbox') setActiveTab('inbox');
   }, []);
 
-  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner' | 'filtered') => {
+  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner' | 'partnersCms' | 'inbox' | 'filtered') => {
     setActiveTab(tab);
     if (tab === 'tokens') window.history.replaceState({}, '', '/admin/tokens');
     if (tab === 'pricing') window.history.replaceState({}, '', '/admin/pricing');
     if (tab === 'partner') window.history.replaceState({}, '', '/admin/partner');
+    if (tab === 'partnersCms') window.history.replaceState({}, '', '/admin/partners');
+    if (tab === 'inbox') window.history.replaceState({}, '', '/admin/inbox');
   };
 
   const STORAGE_AI_FILTERED = 'fac_ai_filtered';
@@ -457,6 +465,30 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               >
                 <Star className="w-5 h-5" />
                 <span>合夥人看板</span>
+              </button>
+
+              <button
+                onClick={() => switchToTab('partnersCms')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                  activeTab === 'partnersCms' 
+                    ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Building2 className="w-5 h-5" />
+                <span>合作夥伴管理</span>
+              </button>
+
+              <button
+                onClick={() => switchToTab('inbox')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                  activeTab === 'inbox' 
+                    ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Mail className="w-5 h-5" />
+                <span>留言板</span>
               </button>
 
               <button
@@ -1548,6 +1580,124 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 </div>
               );
             })()}
+
+            {/* 合作夥伴管理 — /admin/partners */}
+            {activeTab === 'partnersCms' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-bold text-white">合作夥伴管理</h2>
+                <p className="text-sm text-white/50">首頁合作夥伴清單由此管理，修改後即時生效。</p>
+                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.18)' }}>
+                  <div className="px-5 py-3 border-b grid grid-cols-12 text-xs font-medium" style={{ borderColor: 'rgba(201,169,110,0.12)', color: 'rgba(237,232,223,0.4)' }}>
+                    <span className="col-span-1">Logo</span>
+                    <span className="col-span-2">名稱</span>
+                    <span className="col-span-3">連結</span>
+                    <span className="col-span-4">描述</span>
+                    <span className="col-span-2 text-right">操作</span>
+                  </div>
+                  {partners.map((p) => (
+                    <div key={p.id} className="px-5 py-4 border-b grid grid-cols-12 items-center gap-2" style={{ borderColor: 'rgba(201,169,110,0.08)' }}>
+                      <div className="col-span-1">
+                        {p.logo ? (
+                          <img src={p.logo} alt="" className="w-8 h-8 object-contain rounded" />
+                        ) : (
+                          <span className="text-white/30 text-xs">—</span>
+                        )}
+                      </div>
+                      <div className="col-span-2 font-medium text-white">{p.name}</div>
+                      <div className="col-span-3 truncate text-xs" style={{ color: 'rgba(237,232,223,0.6)' }}>{p.link || '—'}</div>
+                      <div className="col-span-4 truncate text-xs" style={{ color: 'rgba(237,232,223,0.6)' }}>{p.description || '—'}</div>
+                      <div className="col-span-2 text-right flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const name = window.prompt('名稱', p.name);
+                            if (name != null) updatePartner(p.id, { name });
+                            const link = window.prompt('連結', p.link || '');
+                            if (link != null) updatePartner(p.id, { link: link || undefined });
+                            const desc = window.prompt('描述', p.description || '');
+                            if (desc != null) updatePartner(p.id, { description: desc || undefined });
+                            const logo = window.prompt('Logo URL', p.logo || '');
+                            if (logo != null) updatePartner(p.id, { logo: logo || undefined });
+                          }}
+                          className="px-2 py-1 text-xs rounded hover:bg-white/10 text-[#FFD700]"
+                        >
+                          編輯
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { if (confirm('確定刪除？')) deletePartner(p.id); }}
+                          className="px-2 py-1 text-xs rounded hover:bg-red-500/20 text-red-400"
+                        >
+                          刪除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = window.prompt('新夥伴名稱');
+                    if (!name) return;
+                    const description = window.prompt('描述（選填）');
+                    const link = window.prompt('連結 URL（選填）');
+                    const logo = window.prompt('Logo 圖片 URL（選填）');
+                    addPartner({ name, description: description || undefined, link: link || undefined, logo: logo || undefined, order: partners.length + 1 });
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+                  style={{ background: 'rgba(255,215,0,0.15)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.3)' }}
+                >
+                  <Plus className="w-4 h-4" />
+                  新增合作夥伴
+                </button>
+              </div>
+            )}
+
+            {/* 留言板 — Contact Bot 轉辦，回覆後自動存入知識庫 */}
+            {activeTab === 'inbox' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-bold text-white">留言板</h2>
+                <p className="text-sm text-white/50">超出知識庫的用戶問題會轉交至此。回覆後將自動存入 Agent 知識庫，供下次自動回答。</p>
+                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.18)' }}>
+                  <div className="px-5 py-3 border-b grid grid-cols-12 text-xs font-medium" style={{ borderColor: 'rgba(201,169,110,0.12)', color: 'rgba(237,232,223,0.4)' }}>
+                    <span className="col-span-1">#</span>
+                    <span className="col-span-5">用戶留言</span>
+                    <span className="col-span-2">時間</span>
+                    <span className="col-span-4">管理員回覆 / 操作</span>
+                  </div>
+                  {submissions.length === 0 ? (
+                    <div className="px-5 py-12 text-center text-white/40">尚無轉辦留言</div>
+                  ) : (
+                    submissions.map((sub, i) => (
+                      <div key={sub.id} className="px-5 py-4 border-b" style={{ borderColor: 'rgba(201,169,110,0.08)' }}>
+                        <div className="grid grid-cols-12 gap-2 items-start">
+                          <span className="col-span-1 text-white/40 text-sm">{i + 1}</span>
+                          <div className="col-span-5 text-sm text-white/90 break-words">{sub.message}</div>
+                          <div className="col-span-2 text-xs text-white/45">{new Date(sub.at).toLocaleString('zh-HK')}</div>
+                          <div className="col-span-4">
+                            {sub.reply ? (
+                              <div className="text-sm text-[#C9A96E] break-words">{sub.reply}</div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const reply = window.prompt('輸入回覆內容（將存入知識庫供 Agent 使用）：');
+                                  if (reply && reply.trim()) replySubmission(sub.id, reply.trim());
+                                }}
+                                className="px-3 py-1.5 text-xs rounded-lg"
+                                style={{ background: 'rgba(255,215,0,0.15)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.3)' }}
+                              >
+                                回覆並存入知識庫
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* AI 已過濾 — 管理員抽查，不顯示給用戶 */}
             {activeTab === 'filtered' && (

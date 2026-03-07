@@ -51,8 +51,8 @@ export default function Footer() {
     { label: '關於我們', href: '#about' },
     { label: '八大支柱', href: '#services' },
     { label: '代幣經濟', href: '#token' },
-    { label: '導師團隊', href: '#team' },
-    { label: '聯絡我們', href: '#hero' }
+    { label: '合作夥伴', href: '#partners' },
+    { label: '聯絡我們', href: '#contact' }
   ];
 
   const expertiseLinks = [

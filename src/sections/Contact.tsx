@@ -1,8 +1,8 @@
 import { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageCircle } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import ContactBot from '../components/ContactBot';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,8 +13,8 @@ export default function Contact() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        '.contact-gateway-title',
-        { y: 30, opacity: 0 },
+        '.contact-bot-title',
+        { y: 24, opacity: 0 },
         {
           y: 0,
           opacity: 1,
@@ -22,23 +22,23 @@ export default function Contact() {
           ease: 'expo.out',
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: 'top 75%',
+            start: 'top 78%',
             toggleActions: 'play none none reverse'
           }
         }
       );
       gsap.fromTo(
-        '.contact-gateway-btn',
+        '.contact-bot-box',
         { y: 20, opacity: 0 },
         {
           y: 0,
           opacity: 1,
           duration: 0.5,
-          delay: 0.2,
+          delay: 0.15,
           ease: 'expo.out',
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: 'top 75%',
+            start: 'top 78%',
             toggleActions: 'play none none reverse'
           }
         }
@@ -46,11 +46,6 @@ export default function Contact() {
     }, sectionRef);
     return () => ctx.revert();
   }, []);
-
-  const scrollToCommand = () => {
-    const el = document.querySelector('#hero');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
 
   return (
     <section
@@ -71,51 +66,31 @@ export default function Contact() {
         />
       </div>
 
-      <div className="relative z-10 max-w-2xl mx-auto px-6 lg:px-12 text-center">
-        <span className="contact-gateway-title section-tag opacity-0 block mb-4">
-          {t('contact.sectionTag')}
-        </span>
-        <h2
-          className="contact-gateway-title font-bold opacity-0 mb-6"
-          style={{
-            fontSize: 'clamp(1.5rem, 2.8vw, 2rem)',
-            color: 'var(--off-white)',
-            letterSpacing: '0.03em'
-          }}
-        >
-          {t('contact.title')}
-        </h2>
-        <p
-          className="contact-gateway-title opacity-0 text-sm mb-10 mx-auto"
-          style={{
-            color: 'rgba(237,232,223,0.65)',
-            lineHeight: 1.8,
-            maxWidth: '480px'
-          }}
-        >
-          {t('contact.gatewayMessage')}
-        </p>
-        <button
-          type="button"
-          onClick={scrollToCommand}
-          className="contact-gateway-btn opacity-0 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-sm transition-all duration-300"
-          style={{
-            background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)',
-            color: '#0A1628',
-            border: '1px solid rgba(201,169,110,0.4)'
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(201,169,110,0.25)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-            (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-          }}
-        >
-          <MessageCircle className="w-5 h-5" />
-          {t('contact.gatewayCta')}
-        </button>
+      <div className="relative z-10 max-w-2xl mx-auto px-6 lg:px-12">
+        <div className="text-center mb-10">
+          <span className="contact-bot-title section-tag opacity-0 block mb-3">
+            {t('contact.sectionTag')}
+          </span>
+          <h2
+            className="contact-bot-title font-bold opacity-0"
+            style={{
+              fontSize: 'clamp(1.5rem, 2.8vw, 2rem)',
+              color: 'var(--off-white)',
+              letterSpacing: '0.03em'
+            }}
+          >
+            {t('contact.title')}
+          </h2>
+          <p
+            className="contact-bot-title opacity-0 text-sm mt-3 mx-auto"
+            style={{ color: 'rgba(237,232,223,0.55)', lineHeight: 1.7, maxWidth: '480px' }}
+          >
+            {t('contact.gatewayMessage')}
+          </p>
+        </div>
+        <div className="contact-bot-box opacity-0">
+          <ContactBot />
+        </div>
       </div>
     </section>
   );

@@ -29,9 +29,8 @@ export default function Navbar() {
     { key: 'about', href: '#about' },
     { key: 'services', href: '#services' },
     { key: 'token', href: '#token' },
-    { key: 'team', href: '#team' },
     { key: 'partners', href: '#partners' },
-    { key: 'contact', href: '#hero' }
+    { key: 'contact', href: '#contact' }
   ];
 
   const changeLanguage = (code: string) => {

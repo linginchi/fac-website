@@ -5,7 +5,6 @@ import Hero from './sections/Hero';
 import About from './sections/About';
 import Stats from './sections/Stats';
 import Services from './sections/Services';
-import Team from './sections/Team';
 import Partners from './sections/Partners';
 import Contact from './sections/Contact';
 import Token from './sections/Token';
@@ -234,7 +233,6 @@ function App() {
         <Stats />
         <Services />
         <Token />
-        <Team />
         <Partners />
         <Contact />
       </main>
