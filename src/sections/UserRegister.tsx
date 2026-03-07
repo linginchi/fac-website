@@ -16,10 +16,11 @@ export default function UserRegister({ onBack }: UserRegisterProps) {
   };
 
   const handleSyncLinkedIn = () => {
-    // 一鍵同步：更新全域錢包狀態，餘額即時跳動至 130 $FAC (80 + 50)
+    // 一鍵同步：更新全域錢包狀態，餘額即時跳動至 130 $FAC (80 + 50)，並標記已登入
     const now = new Date().toISOString().slice(0, 10);
     addTransaction({ date: now, label: 'LinkedIn 註冊獎勵', amount: 80 });
     addTransaction({ date: now, label: 'LinkedIn 數據同步', amount: 50 });
+    try { localStorage.setItem('fac_user_logged_in', '1'); } catch (_) {}
     setLinkedInSynced(true);
   };
 

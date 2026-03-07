@@ -8,7 +8,27 @@ import { useWallet } from '../context/WalletContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const DECODE_COST = 10;
+const STORAGE_NEW_USER = 'fac_voice_identity_seen';
+const STORAGE_LOGGED_IN = 'fac_user_logged_in';
 
+function isUserLoggedIn(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!localStorage.getItem(STORAGE_LOGGED_IN) || (() => {
+    try {
+      const txs = localStorage.getItem('fac_wallet_transactions');
+      const balance = localStorage.getItem('fac_wallet_balance');
+      if (txs && JSON.parse(txs).length > 0) return true;
+      if (balance && parseInt(balance, 10) > 0) return true;
+    } catch (_) {}
+    return false;
+  })();
+}
+
+/** 需求方：雇主模式 */
+const DEMAND_KEYWORDS = ['我想搵人', '需要顧問', '項目外判', '搵人', '找專家', '聘請', '外判', '想找', '尋找'];
+/** 供應方：專家模式 */
+const SUPPLY_KEYWORDS = ['我是專家', '想接 Job', '過兩招', '接 job', '接job', '接案', '可以提供', '想接', '我是顧問'];
+/** 匹配專家用 */
 const KEYWORDS = ['SFC', 'RO', '工程', '貿易', '老師', '專家', '信託', '融資', '製造', '合規', '律師', '銀行', '教育'];
 
 const MOCK_EXPERTS = [
@@ -18,10 +38,10 @@ const MOCK_EXPERTS = [
 ];
 
 const THINKING_STEPS = [
-  'AI Agent 正在分析需求…',
+  '正在為您辨識身份與意圖（雇主／專家）…',
   '正在掃描「個人智慧錢包」網絡…',
   '正在比對八大智慧支柱資料庫…',
-  '加密通道已建立，準備解鎖匹配結果…',
+  '加密通道已建立，準備解鎖匹配結果。',
 ];
 
 const suggestions = [
@@ -32,7 +52,25 @@ const suggestions = [
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type AgentPhase = 'idle' | 'thinking' | 'matched' | 'decoded' | 'action';
+type AgentPhase = 'idle' | 'new_user_greeting' | 'login_prompt' | 'thinking' | 'draft_confirm' | 'matched' | 'decoded' | 'action';
+type UserMode = 'employer' | 'expert' | null;
+
+// ─── Success beep (語音確認成功回饋) ───────────────────────────────────────────
+function playSuccessBeep() {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.12);
+  } catch (_) {}
+}
 
 // ─── Typewriter Hook ──────────────────────────────────────────────────────────
 function useTypewriter(text: string, speed = 28, active = false) {
@@ -64,6 +102,7 @@ export default function Hero() {
   const commandRef = useRef<HTMLDivElement>(null);
   const ctaRef     = useRef<HTMLDivElement>(null);
   const bubbleRef  = useRef<HTMLDivElement>(null);
+  const waveformCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { facBalance, addTransaction } = useWallet();
 
@@ -72,10 +111,12 @@ export default function Hero() {
   const [isMicPulsing, setIsMicPulsing]     = useState(false);
   const [agentPhase, setAgentPhase]         = useState<AgentPhase>('idle');
   const [thinkingStep, setThinkingStep]     = useState(0);
+  const [userMode, setUserMode]             = useState<UserMode>(null);
+  const [draftSummary, setDraftSummary]     = useState('');
   const [decodeError, setDecodeError]       = useState('');
   const [jobOfferSent, setJobOfferSent]     = useState(false);
 
-  const matchText = '已成功從「個人智慧錢包」網絡中匹配到 3-5 位符合條件的隱世專家，正在等待您解碼深度資歷。';
+  const matchText = '已為您從「個人智慧錢包」網絡中匹配到 3–5 位符合條件的隱世專家，請解碼深度資歷以查看脫敏介紹。';
   const { displayed: matchDisplayed, done: matchDone } = useTypewriter(matchText, 22, agentPhase === 'matched');
 
   // ─── GSAP entrance ──────────────────────────────────────────────────────────
@@ -104,7 +145,56 @@ export default function Hero() {
     }
   }, [agentPhase]);
 
-  // ─── Thinking stepper ───────────────────────────────────────────────────────
+  // ─── Canvas 高級波形動畫（麥克風開啟時）────────────────────────────────────
+  useEffect(() => {
+    if (!isMicPulsing || !waveformCanvasRef.current) return;
+    const canvas = waveformCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const updateSize = () => {
+      const w = canvas.parentElement?.clientWidth ?? 400;
+      const h = 140;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    const barCount = 32;
+    let phase = 0;
+    let raf = 0;
+    const draw = () => {
+      const w = canvas.width / dpr;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      const barW = Math.max(2, (w - (barCount - 1) * 4) / barCount);
+      const gap = 4;
+      const centerY = h / 2;
+      for (let i = 0; i < barCount; i++) {
+        const t = (i / barCount) * Math.PI * 2 + phase;
+        const height = (Math.sin(t) * 0.5 + 0.5) * 28 + 8;
+        const x = i * (barW + gap) + gap * 0.5;
+        const grd = ctx.createLinearGradient(0, centerY + height, 0, centerY - height);
+        grd.addColorStop(0, 'rgba(201,169,110,0.25)');
+        grd.addColorStop(0.5, 'rgba(201,169,110,0.7)');
+        grd.addColorStop(1, 'rgba(201,169,110,0.4)');
+        ctx.fillStyle = grd;
+        ctx.fillRect(x, centerY - height / 2, barW, height);
+      }
+      phase += 0.12;
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      cancelAnimationFrame(raf);
+    };
+  }, [isMicPulsing]);
+
+  // ─── Thinking stepper → draft_confirm ─────────────────────────────────────
   useEffect(() => {
     if (agentPhase !== 'thinking') return;
     setThinkingStep(0);
@@ -115,22 +205,48 @@ export default function Hero() {
         setThinkingStep(step);
       } else {
         clearInterval(id);
-        setAgentPhase('matched');
+        setDraftSummary(`【結構化摘要】意圖：${userMode === 'employer' ? '需求方（雇主）' : userMode === 'expert' ? '供應方（專家）' : '一般查詢'}。內容：${commandValue.trim().slice(0, 80)}${commandValue.trim().length > 80 ? '…' : ''}`);
+        setAgentPhase('draft_confirm');
       }
     }, 900);
     return () => clearInterval(id);
-  }, [agentPhase]);
+  }, [agentPhase, commandValue, userMode]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const hasKeyword = useCallback((q: string) =>
     KEYWORDS.some((k) => q.includes(k)), []);
 
+  const classifyIntent = useCallback((q: string): UserMode => {
+    const t = q.trim();
+    if (DEMAND_KEYWORDS.some((k) => t.includes(k))) return 'employer';
+    if (SUPPLY_KEYWORDS.some((k) => t.includes(k))) return 'expert';
+    return null;
+  }, []);
+
   const handleSubmit = useCallback(() => {
+    const loggedIn = isUserLoggedIn();
+    const isFirstVisit = !localStorage.getItem(STORAGE_NEW_USER);
+
+    if (!loggedIn) {
+      setDecodeError('');
+      setJobOfferSent(false);
+      setDraftSummary(commandValue.trim() ? `【您的輸入】${commandValue.trim().slice(0, 120)}${commandValue.trim().length > 120 ? '…' : ''}` : '');
+      setAgentPhase('login_prompt');
+      return;
+    }
+    if (isFirstVisit) {
+      localStorage.setItem(STORAGE_NEW_USER, '1');
+      setDecodeError('');
+      setJobOfferSent(false);
+      setAgentPhase('new_user_greeting');
+      return;
+    }
     if (!commandValue.trim()) return;
     setDecodeError('');
     setJobOfferSent(false);
+    setUserMode(classifyIntent(commandValue));
     setAgentPhase('thinking');
-  }, [commandValue]);
+  }, [commandValue, classifyIntent]);
 
   const handleDecode = useCallback(() => {
     setDecodeError('');
@@ -142,9 +258,32 @@ export default function Hero() {
     setAgentPhase('decoded');
   }, [facBalance, addTransaction]);
 
+  const handleDraftConfirm = useCallback(() => {
+    playSuccessBeep();
+    setAgentPhase('matched');
+  }, []);
+
   const handleMic = useCallback(() => {
     setIsMicPulsing(true);
-    setTimeout(() => setIsMicPulsing(false), 3000);
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const Win = window as unknown as { webkitSpeechRecognition: new () => { start: () => void; stop: () => void; lang: string; continuous: boolean; interimResults: boolean; onresult: ((e: { results: { 0?: { 0?: { transcript?: string } } } }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null } };
+      const recognition = new Win.webkitSpeechRecognition();
+      recognition.lang = 'zh-HK';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (e: { results: { 0?: { 0?: { transcript?: string } } } }) => {
+        const r = e.results[0]?.[0];
+        const t = (r?.transcript ?? '').trim();
+        if (t) setCommandValue((prev) => (prev ? `${prev} ${t}` : t));
+        playSuccessBeep();
+        setIsMicPulsing(false);
+      };
+      recognition.onend = () => setIsMicPulsing(false);
+      recognition.onerror = () => setIsMicPulsing(false);
+      recognition.start();
+    } else {
+      setTimeout(() => setIsMicPulsing(false), 3000);
+    }
   }, []);
 
   const scrollToSection = (href: string) => {
@@ -156,6 +295,8 @@ export default function Hero() {
     setCommandValue('');
     setDecodeError('');
     setJobOfferSent(false);
+    setUserMode(null);
+    setDraftSummary('');
   };
 
   return (
@@ -322,8 +463,14 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Divider */}
-              <div style={{ height: '1px', background: 'linear-gradient(90deg,transparent,rgba(201,169,110,0.15),transparent)', margin: '0 20px' }} />
+              {/* Divider or Canvas 高級波形 (語音輸入時) */}
+              {isMicPulsing ? (
+                <div className="w-full overflow-hidden rounded-b-[18px]" style={{ height: '140px', background: 'rgba(0,0,0,0.2)' }}>
+                  <canvas ref={waveformCanvasRef} className="block w-full h-full" width={740} height={140} style={{ width: '100%', height: '140px' }} />
+                </div>
+              ) : (
+                <div style={{ height: '1px', background: 'linear-gradient(90deg,transparent,rgba(201,169,110,0.15),transparent)', margin: '0 20px' }} />
+              )}
 
               {/* Suggestion chips */}
               <div className="flex flex-wrap items-center gap-2 px-5 py-3">
@@ -360,7 +507,16 @@ export default function Hero() {
                     <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(201,169,110,0.14)', border: '1px solid rgba(201,169,110,0.28)' }}>
                       <BrainCircuit className="w-3.5 h-3.5" style={{ color: 'var(--champagne)' }} />
                     </div>
-                    <span className="text-xs font-semibold" style={{ color: 'var(--champagne)' }}>FAC AI Agent</span>
+                    <span className="text-xs font-semibold" style={{ color: 'var(--champagne)' }}>FAC 智慧傳承 · 專屬顧問</span>
+                    {userMode && agentPhase !== 'new_user_greeting' && (
+                      <span className="text-xs px-2 py-0.5 rounded-md" style={{
+                        background: userMode === 'employer' ? 'rgba(76,175,80,0.15)' : 'rgba(33,150,243,0.15)',
+                        color: userMode === 'employer' ? '#81C784' : '#64B5F6',
+                        border: `1px solid ${userMode === 'employer' ? 'rgba(76,175,80,0.35)' : 'rgba(33,150,243,0.35)'}`
+                      }}>
+                        {userMode === 'employer' ? '雇主模式' : '專家模式'}
+                      </span>
+                    )}
                     {agentPhase === 'thinking' && (
                       <span className="flex gap-1">
                         {[0, 1, 2].map((i) => (
@@ -378,11 +534,88 @@ export default function Hero() {
                 </div>
 
                 <div className="px-5 py-4 space-y-4">
+                  {/* ─ 未登入引導：語音/文字提示 + Summary Card + 語音確認 ─ */}
+                  {agentPhase === 'login_prompt' && (
+                    <>
+                      <p className="text-sm" style={{ color: 'rgba(237,232,223,0.9)', lineHeight: 1.85 }}>
+                        偵測到您尚未登入。請問您的用戶名是？或者需要我為您開設新賬號嗎？本平台為智慧傳承對接，登入後即可辨識您為雇主或專家並提供專屬服務。
+                      </p>
+                      {draftSummary && (
+                        <div className="mt-4 p-4 rounded-xl border" style={{ background: 'rgba(201,169,110,0.06)', borderColor: 'rgba(201,169,110,0.25)' }}>
+                          <p className="text-xs font-semibold mb-2" style={{ color: 'rgba(201,169,110,0.9)' }}>結構化摘要</p>
+                          <p className="text-sm mb-4" style={{ color: 'rgba(237,232,223,0.85)', lineHeight: 1.7 }}>{draftSummary}</p>
+                          <button
+                            onClick={() => { playSuccessBeep(); setAgentPhase('idle'); }}
+                            className="voice-confirm-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium"
+                            style={{ border: '1px solid rgba(201,169,110,0.5)', color: 'var(--champagne)' }}
+                          >
+                            <Mic className="w-4 h-4" />
+                            語音確認
+                          </button>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        <a href="/register" className="inline-flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-semibold" style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}>
+                          開設新賬號（LinkedIn 即領 80 $FAC）
+                        </a>
+                        <button type="button" onClick={resetAgent} className="inline-flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-medium" style={{ border: '1px solid rgba(201,169,110,0.4)', color: 'var(--champagne)' }}>
+                          稍後再說
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* ─ 新用戶引導 (V1.9) ─ */}
+                  {agentPhase === 'new_user_greeting' && (
+                    <>
+                      <p className="text-sm" style={{ color: 'rgba(237,232,223,0.85)', lineHeight: 1.8 }}>
+                        歡迎加入智慧傳承平台。我是您的專屬顧問，請告訴我您的稱呼或直接授權 LinkedIn 註冊，以便為您提供銀行級私人管家式服務。
+                      </p>
+                      <a
+                        href="/register"
+                        className="inline-flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-semibold transition-all voice-confirm-btn"
+                        style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}
+                      >
+                        使用 LinkedIn 註冊即領 80 $FAC
+                      </a>
+                      <p className="text-xs" style={{ color: 'rgba(201,169,110,0.5)' }}>
+                        無論你是專家、還是雇主，動口不手動 · 輸入需求或點擊麥克風即可繼續
+                      </p>
+                    </>
+                  )}
+
                   {/* ─ Thinking phase ─ */}
                   {agentPhase === 'thinking' && (
                     <p className="text-sm" style={{ color: 'rgba(237,232,223,0.75)', lineHeight: 1.7 }}>
                       {THINKING_STEPS[thinkingStep]}
                     </p>
+                  )}
+
+                  {/* ─ 語音確認：Draft 摘要 + 係/正確/沒問題 (V1.9) ─ */}
+                  {agentPhase === 'draft_confirm' && (
+                    <>
+                      <p className="text-xs font-semibold mb-1" style={{ color: 'rgba(201,169,110,0.9)' }}>結構化摘要</p>
+                      <p className="text-sm mb-4 p-3 rounded-xl" style={{ background: 'rgba(201,169,110,0.06)', color: 'rgba(237,232,223,0.85)', lineHeight: 1.7, border: '1px solid rgba(201,169,110,0.15)' }}>
+                        {draftSummary}
+                      </p>
+                      <p className="text-sm mb-3" style={{ color: 'rgba(237,232,223,0.8)' }}>以上資訊是否正確？</p>
+                      <p className="text-xs mb-2" style={{ color: 'rgba(201,169,110,0.55)' }}>支援語音感應確認</p>
+                      <div className="flex flex-wrap gap-2">
+                        {['係', '正確', '沒問題'].map((label) => (
+                          <button
+                            key={label}
+                            onClick={handleDraftConfirm}
+                            className="voice-confirm-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5"
+                            style={{ border: '1px solid rgba(201,169,110,0.45)', color: 'var(--champagne)' }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.12)'; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                          >
+                            <Mic className="w-3.5 h-3.5 opacity-70" />
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   )}
 
                   {/* ─ Matched phase ─ */}
@@ -402,7 +635,7 @@ export default function Hero() {
                           <p className="text-sm" style={{ color: 'rgba(237,232,223,0.85)', lineHeight: 1.8 }}>
                             {hasKeyword(commandValue)
                               ? <>{matchDisplayed}<span style={{ opacity: 0.5 }}>{!matchDone ? '▌' : ''}</span></>
-                              : '需求已接收。建議您在搜索中加入更多關鍵字（如專業領域或證書），以提升匹配精準度。'
+                              : '已收到您的需求。建議加入更多關鍵字（如專業領域或證書），以便為您精準匹配智慧傳承網絡。'
                             }
                           </p>
 
@@ -411,7 +644,7 @@ export default function Hero() {
                             <div className="mt-4 space-y-2">
                               <button
                                 onClick={handleDecode}
-                                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-300"
+                                className="voice-confirm-btn w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-300"
                                 style={{
                                   background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)',
                                   color: '#0A1628',
@@ -422,6 +655,7 @@ export default function Hero() {
                               >
                                 <Coins className="w-4 h-4" />
                                 解碼專家深度資歷（消耗 {DECODE_COST} $FAC）
+                                <span className="text-[10px] opacity-75 ml-1">· 語音感應</span>
                               </button>
                               {decodeError && (
                                 <div className="flex items-start gap-2 p-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
@@ -467,23 +701,25 @@ export default function Hero() {
                         <div className="flex flex-col sm:flex-row gap-3 pt-2">
                           <button
                             onClick={() => { setJobOfferSent(true); setAgentPhase('action'); }}
-                            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300"
+                            className="voice-confirm-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300"
                             style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}
                             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
                             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
                           >
                             <Send className="w-3.5 h-3.5" />
                             發佈正式 Job Offer
+                            <Mic className="w-3 h-3 opacity-60" />
                           </button>
                           <button
                             onClick={() => setAgentPhase('action')}
-                            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
+                            className="voice-confirm-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
                             style={{ border: '1px solid rgba(201,169,110,0.45)', color: 'var(--champagne)' }}
                             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.08)'; }}
                             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                           >
                             <Calendar className="w-3.5 h-3.5" />
                             預約私密對話（100 $FAC）
+                            <Mic className="w-3 h-3 opacity-60" />
                           </button>
                         </div>
                       )}
@@ -523,8 +759,11 @@ export default function Hero() {
           </a>
         </div>
 
-        <p className="text-xs text-center mt-4" style={{ color: 'rgba(201,169,110,0.45)' }}>
-          已有 500+ 位資深工程師、SFC RO 透過 LinkedIn 加入。
+        <p className="text-sm text-center mt-4" style={{ color: 'rgba(201,169,110,0.65)' }}>
+          無論你是專家、還是雇主，請把你的需求輸入萬能框中。
+        </p>
+        <p className="text-xs text-center mt-1.5" style={{ color: 'rgba(201,169,110,0.35)' }}>
+          已有 500+ 位資深工程師、SFC RO 透過 LinkedIn 加入 · 智慧傳承平台
         </p>
 
         {/* CTA Buttons */}
