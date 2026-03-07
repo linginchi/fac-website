@@ -5,7 +5,7 @@ import { useSiteConfig } from '../hooks/useSiteConfig';
 import { 
   Users, Settings, FileText, LogOut, Plus, Edit2, Trash2, Save, Upload, 
   ChevronDown, ChevronUp, Globe, Mail, RefreshCw, BarChart3,
-  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin, DollarSign
+  TrendingUp, Coins, UserCheck, ArrowUpRight, Gift, CheckCircle, Linkedin, DollarSign, Star, Network
 } from 'lucide-react';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
@@ -191,19 +191,21 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const { members, addMember, updateMember, deleteMember, reorderMembers, resetToDefault: resetTeam } = useTeamMembers();
   const { config, updateConfig, resetToDefault: resetConfig } = useSiteConfig();
   
-  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing'>('team');
+  const [activeTab, setActiveTab] = useState<'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner'>('team');
   const [pendingRewards, setPendingRewards] = useState<PendingSuggestionReward[]>(loadPendingRewards);
   const [pricingTiers, setPricingTiers] = useState<PricingTiers>(loadPricing);
   
   useEffect(() => {
     if (window.location.pathname === '/admin/tokens') setActiveTab('tokens');
     if (window.location.pathname === '/admin/pricing') setActiveTab('pricing');
+    if (window.location.pathname === '/admin/partner') setActiveTab('partner');
   }, []);
 
-  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing') => {
+  const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner') => {
     setActiveTab(tab);
     if (tab === 'tokens') window.history.replaceState({}, '', '/admin/tokens');
     if (tab === 'pricing') window.history.replaceState({}, '', '/admin/pricing');
+    if (tab === 'partner') window.history.replaceState({}, '', '/admin/partner');
   };
 
   const handleDisburseReward = (id: string) => {
@@ -424,6 +426,18 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               >
                 <DollarSign className="w-5 h-5" />
                 <span>定價管理</span>
+              </button>
+
+              <button
+                onClick={() => switchToTab('partner')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                  activeTab === 'partner' 
+                    ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Star className="w-5 h-5" />
+                <span>合夥人看板</span>
               </button>
             </nav>
           </div>
@@ -1370,6 +1384,112 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 </p>
               </div>
             )}
+
+            {/* 合夥人看板 Tab — /admin/partner (V2.1) */}
+            {activeTab === 'partner' && (() => {
+              const mockPartners = [
+                { code: 'FAC-A7K2P9', name: '合夥人 A（脫敏）', referred: 5, dividendHKD: 3200, status: '活躍', votesCount: 2 },
+                { code: 'FAC-B3R8XL', name: '合夥人 B（脫敏）', referred: 3, dividendHKD: 1800, status: '活躍', votesCount: 1 },
+                { code: 'FAC-C9M4TQ', name: '合夥人 C（脫敏）', referred: 8, dividendHKD: 5600, status: '活躍', votesCount: 2 },
+                { code: 'FAC-D1W6NE', name: '合夥人 D（脫敏）', referred: 1, dividendHKD: 480, status: '待激活', votesCount: 0 },
+              ];
+              const totalDividend = mockPartners.reduce((s, p) => s + p.dividendHKD, 0);
+              const totalReferred = mockPartners.reduce((s, p) => s + p.referred, 0);
+              return (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-white">合夥人看板 · Partner Tier V2.1</h2>
+                    <span className="text-xs px-3 py-1.5 rounded-lg" style={{ background: 'rgba(201,169,110,0.12)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.3)' }}>
+                      {mockPartners.length} 位合夥人
+                    </span>
+                  </div>
+
+                  {/* KPI 卡片 */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { icon: Star, label: '活躍合夥人', value: String(mockPartners.filter(p => p.status === '活躍').length), sub: '/' + mockPartners.length + ' 總數', trend: '+1本月' },
+                      { icon: Network, label: '信任網絡成員', value: String(totalReferred), sub: '已引薦入駐', trend: '+3本月' },
+                      { icon: TrendingUp, label: '累積分紅撥發', value: `HKD ${totalDividend.toLocaleString()}`, sub: '本月撥發', trend: '+HKD 2,400' },
+                      { icon: Coins, label: '$FAC 分紅等值', value: `${Math.round(totalDividend * 0.65)}`, sub: '$FAC', trend: undefined },
+                    ].map(({ icon: Icon, label, value, sub, trend }) => (
+                      <div key={label} className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,169,110,0.12)' }}>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.2)' }}>
+                            <Icon className="w-4 h-4" style={{ color: '#C9A96E' }} />
+                          </div>
+                          {trend && <span className="text-xs flex items-center gap-0.5" style={{ color: '#4CAF7D' }}><ArrowUpRight className="w-3 h-3" />{trend}</span>}
+                        </div>
+                        <div className="text-2xl font-bold text-white mb-1">{value}</div>
+                        <div className="text-sm font-medium" style={{ color: '#C9A96E' }}>{label}</div>
+                        <div className="text-xs mt-1" style={{ color: 'rgba(237,232,223,0.4)' }}>{sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 合夥人列表 */}
+                  <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.18)', background: 'rgba(255,255,255,0.02)' }}>
+                    <div className="px-5 py-3 border-b grid grid-cols-12 text-xs font-medium" style={{ borderColor: 'rgba(201,169,110,0.12)', color: 'rgba(237,232,223,0.4)' }}>
+                      <span className="col-span-3">邀請碼</span>
+                      <span className="col-span-2 text-center">引薦人數</span>
+                      <span className="col-span-3 text-right">累積分紅</span>
+                      <span className="col-span-2 text-center">投票次數</span>
+                      <span className="col-span-2 text-right">狀態</span>
+                    </div>
+                    {mockPartners.map((p) => (
+                      <div key={p.code} className="px-5 py-4 border-b grid grid-cols-12 items-center" style={{ borderColor: 'rgba(201,169,110,0.08)' }}>
+                        <div className="col-span-3">
+                          <div className="font-mono text-xs font-bold" style={{ color: 'var(--champagne)' }}>{p.code}</div>
+                          <div className="text-xs" style={{ color: 'rgba(237,232,223,0.45)' }}>{p.name}</div>
+                        </div>
+                        <div className="col-span-2 text-center text-sm text-white">{p.referred}</div>
+                        <div className="col-span-3 text-right">
+                          <div className="text-sm font-semibold" style={{ color: '#4CAF7D' }}>HKD {p.dividendHKD.toLocaleString()}</div>
+                        </div>
+                        <div className="col-span-2 text-center text-sm" style={{ color: 'rgba(237,232,223,0.65)' }}>{p.votesCount}</div>
+                        <div className="col-span-2 text-right">
+                          <span className="text-xs px-2 py-1 rounded-md" style={{
+                            background: p.status === '活躍' ? 'rgba(76,175,80,0.15)' : 'rgba(255,255,255,0.07)',
+                            color: p.status === '活躍' ? '#81C784' : 'rgba(237,232,223,0.55)',
+                            border: `1px solid ${p.status === '活躍' ? 'rgba(76,175,80,0.35)' : 'rgba(255,255,255,0.12)'}`
+                          }}>
+                            {p.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 治理提案管理 */}
+                  <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.18)', background: 'rgba(255,255,255,0.02)' }}>
+                    <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'rgba(201,169,110,0.12)' }}>
+                      <span className="text-sm font-semibold text-white">治理提案 · 董事會決議</span>
+                      <span className="text-xs" style={{ color: 'rgba(237,232,223,0.4)' }}>2 個進行中</span>
+                    </div>
+                    {[
+                      { title: '開啟第九智慧支柱：新能源與 ESG', forPct: 76, against: 24, voters: 102 },
+                      { title: '調整全平台最低基礎解碼費', forPct: 47, against: 53, voters: 116 },
+                    ].map((q) => (
+                      <div key={q.title} className="px-5 py-4 border-b" style={{ borderColor: 'rgba(201,169,110,0.08)' }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm" style={{ color: 'rgba(237,232,223,0.85)' }}>{q.title}</span>
+                          <span className="text-xs" style={{ color: 'rgba(237,232,223,0.4)' }}>{q.voters} 票</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                            <div className="h-full rounded-full" style={{ width: `${q.forPct}%`, background: 'linear-gradient(90deg, #C9A96E, #a8883a)' }} />
+                          </div>
+                          <span className="text-xs tabular-nums" style={{ color: 'var(--champagne)' }}>{q.forPct}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="text-xs" style={{ color: 'rgba(237,232,223,0.35)' }}>
+                    以上為模擬數據。實際接入後，數據由鏈上 / API 實時同步。路徑：<strong>/admin/partner</strong>
+                  </p>
+                </div>
+              );
+            })()}
 
           </div>
         </div>
