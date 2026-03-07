@@ -393,6 +393,41 @@
   50% { opacity: 0.6; transform: scale(1.02); }
 }
 
+/* ── PWA Mobile-First Adjustments ── */
+
+/* Safe area support for iPhone notch / home indicator */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Bottom nav active tab indicator animation */
+@keyframes tab-dot-in {
+  from { opacity: 0; transform: scaleX(0.4); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+
+/* Increase touch target sizes on mobile */
+@media (max-width: 768px) {
+  /* Larger readable text for senior users */
+  .vault-card-title   { font-size: 1rem !important; }
+  .vault-card-detail  { font-size: 0.875rem !important; line-height: 1.75 !important; }
+
+  /* Tag chips: slightly larger tap area */
+  .tag-chip { padding: 3px 8px !important; }
+
+  /* Command box input area: easier to tap */
+  textarea { font-size: 16px !important; } /* prevents iOS zoom on focus */
+
+  /* Bottom nav button ripple on tap */
+  .bottom-nav-btn:active { background: rgba(201,169,110,0.12); border-radius: 12px; }
+}
+
+/* ── Bottom Nav gold center button pulse ── */
+@keyframes center-btn-glow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(201,169,110,0.18), 0 8px 24px rgba(201,169,110,0.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(201,169,110,0.10), 0 12px 32px rgba(201,169,110,0.5); }
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

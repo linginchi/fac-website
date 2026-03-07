@@ -16,6 +16,8 @@ import AdminPanel from './sections/AdminPanel';
 import UserRegister from './sections/UserRegister';
 import WalletPage from './pages/WalletPage';
 import ProfilePage from './pages/ProfilePage';
+import VaultPage from './pages/VaultPage';
+import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
 import './i18n';
 
@@ -53,12 +55,13 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile'>(() => {
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault'>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
       if (p === '/register' || p === '/login') return 'register';
       if (p === '/wallet') return 'wallet';
       if (p === '/profile') return 'profile';
+      if (p === '/vault') return 'vault';
     }
     return 'home';
   });
@@ -83,6 +86,10 @@ function App() {
     }
     if (path === '/profile') {
       setCurrentView('profile');
+      return;
+    }
+    if (path === '/vault') {
+      setCurrentView('vault');
       return;
     }
     if (path === '/register' || path === '/login') {
@@ -143,26 +150,45 @@ function App() {
     );
   }
 
-  // Wallet 流水賬 (/wallet)
-  if (currentView === 'wallet' || window.location.pathname === '/wallet') {
+  if (currentView === 'profile' || window.location.pathname === '/profile') {
     return (
-      <WalletPage
-        onBack={() => {
-          setCurrentView('home');
-          window.history.replaceState({}, '', '/');
-        }}
-      />
+      <>
+        <ProfilePage
+          onBack={() => {
+            setCurrentView('home');
+            window.history.replaceState({}, '', '/');
+          }}
+        />
+        <BottomNav />
+      </>
     );
   }
 
-  if (currentView === 'profile' || window.location.pathname === '/profile') {
+  if (currentView === 'vault' || window.location.pathname === '/vault') {
     return (
-      <ProfilePage
-        onBack={() => {
-          setCurrentView('home');
-          window.history.replaceState({}, '', '/');
-        }}
-      />
+      <>
+        <VaultPage
+          onBack={() => {
+            setCurrentView('home');
+            window.history.replaceState({}, '', '/');
+          }}
+        />
+        <BottomNav />
+      </>
+    );
+  }
+
+  if (currentView === 'wallet' || window.location.pathname === '/wallet') {
+    return (
+      <>
+        <WalletPage
+          onBack={() => {
+            setCurrentView('home');
+            window.history.replaceState({}, '', '/');
+          }}
+        />
+        <BottomNav />
+      </>
     );
   }
 
@@ -182,7 +208,7 @@ function App() {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
-      <main>
+      <main className="pb-20 md:pb-0">
         <Hero />
         <About />
         <Stats />
@@ -193,14 +219,7 @@ function App() {
         <Contact />
       </main>
       <Footer />
-      
-      {/* Demo button to show article view */}
-      <button
-        onClick={() => setCurrentView('article')}
-        className="fixed bottom-8 right-8 z-40 px-4 py-2 bg-[#FFD700]/20 text-[#FFD700] rounded-lg text-sm hover:bg-[#FFD700]/30 transition-colors duration-300"
-      >
-        查看文章页
-      </button>
+      <BottomNav />
     </div>
   );
 }

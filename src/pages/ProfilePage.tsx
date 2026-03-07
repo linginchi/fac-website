@@ -169,6 +169,78 @@ function CardHeader({ icon: Icon, title, subtitle, badge }: {
   );
 }
 
+// ─── CAS Laboratory Declaration ───────────────────────────────────────────────
+function CasDeclarationBlock() {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div
+      className="rounded-2xl overflow-hidden border mb-6"
+      style={{
+        background: 'linear-gradient(145deg, rgba(7,14,31,0.98) 0%, rgba(10,22,40,0.99) 100%)',
+        borderColor: 'rgba(201,169,110,0.28)',
+      }}
+    >
+      {/* Header */}
+      <button
+        className="w-full flex items-start gap-4 px-5 py-4 text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center mt-0.5"
+          style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.25)' }}>
+          <span className="text-base">🏛️</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(201,169,110,0.7)', letterSpacing: '0.05em' }}>
+            關於運營方 · CAS Laboratory
+          </p>
+          <p className="text-sm font-bold" style={{ color: 'var(--off-white)' }}>
+            國科綠色發展國際實驗室（香港）有限公司
+          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+            <span className="text-[10px] px-2 py-0.5 rounded-md"
+              style={{ background: 'rgba(76,175,80,0.12)', border: '1px solid rgba(76,175,80,0.3)', color: '#81C784' }}>
+              香港非盈利擔保有限公司
+            </span>
+            <span className="text-[10px]" style={{ color: 'rgba(237,232,223,0.4)' }}>編號 2828258</span>
+          </div>
+        </div>
+        <span className="text-xs mt-1 flex-shrink-0 transition-transform duration-300"
+          style={{ color: 'rgba(201,169,110,0.55)', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+      </button>
+
+      {/* Expandable pledge */}
+      {expanded && (
+        <div className="px-5 pb-5 space-y-3" style={{ borderTop: '1px solid rgba(201,169,110,0.12)' }}>
+          <p className="text-xs font-semibold pt-4" style={{ color: 'var(--champagne)' }}>
+            《非盈利運營承諾書》
+          </p>
+          {[
+            { title: '董事義務職', desc: '本實驗室全體董事以無薪義務形式履行職責，不從平台運營中獲取個人薪酬或紅利。' },
+            { title: '利潤不分配', desc: '所有法幣收費在扣除雲端服務器與區塊鏈節點維護成本後，餘額全數撥入「香港專業人才傳承基金」，用於支持退休專家的公益傳承活動。' },
+            { title: '技術去中心化', desc: '用戶的智慧資產（資歷、案例、合規記錄）存儲於用戶專屬加密節點，非經本人授權，連實驗室管理人員亦無法讀取。' },
+            { title: '公正撮合', desc: '平台匹配算法以技能相關性為唯一標準，不因付費等級影響撮合公正性。' },
+          ].map(({ title, desc }) => (
+            <div key={title} className="flex gap-3">
+              <span className="w-1 h-1 rounded-full flex-shrink-0 mt-2" style={{ background: 'var(--champagne)' }} />
+              <div>
+                <span className="text-xs font-semibold" style={{ color: 'rgba(237,232,223,0.85)' }}>{title}：</span>
+                <span className="text-xs" style={{ color: 'rgba(237,232,223,0.55)', lineHeight: 1.7 }}>{desc}</span>
+              </div>
+            </div>
+          ))}
+          <div className="pt-2 flex items-center gap-2">
+            <span className="text-[10px] px-2.5 py-1 rounded-md"
+              style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', color: 'rgba(201,169,110,0.65)' }}>
+              香港公司條例第 622 章擔保有限公司
+            </span>
+            <span className="text-[10px]" style={{ color: 'rgba(237,232,223,0.3)' }}>版本 V3.0 · 2025</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const STORAGE_DIVIDEND_CREDITED = 'fac_dividend_credited_v2';
@@ -475,7 +547,7 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #0D1F3C 50%, #0A1628 100%)' }} />
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.4), transparent)' }} />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 py-10 pb-28 md:pb-12">
 
         {/* Header */}
         <button onClick={onBack} className="flex items-center gap-2 text-sm mb-8 transition-colors" style={{ color: 'rgba(201,169,110,0.8)' }}>
@@ -493,6 +565,9 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
             {isPartner ? 'Executive · 合夥人 (Partner)' : userTier === 'professional' ? 'Professional' : 'Basic'}
           </div>
         </div>
+
+        {/* ═══ CAS Laboratory 機構聲明 ════════════════════════════════════════ */}
+        <CasDeclarationBlock />
 
         {/* ═══ 保險箱模塊 ══════════════════════════════════════════════════════ */}
         <SectionCard>

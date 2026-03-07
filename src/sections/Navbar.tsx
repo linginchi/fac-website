@@ -57,7 +57,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between">
-          {/* Logo — FAC | 港匠匯 */}
+          {/* Logo — FAC | 港匠匯 · CAS Laboratory */}
           <a
             href="#hero"
             onClick={(e) => {
@@ -69,12 +69,17 @@ export default function Navbar() {
             <span className="text-xl lg:text-2xl font-bold tracking-wide" style={{ color: 'var(--off-white)' }}>
               F<span style={{ color: 'var(--champagne)' }}>A</span>C
             </span>
-            <span className="hidden sm:inline text-sm font-normal tracking-widest" style={{ color: 'rgba(201,169,110,0.6)' }}>
+            <span className="hidden sm:inline text-sm font-normal tracking-widest" style={{ color: 'rgba(201,169,110,0.45)' }}>
               &nbsp;|&nbsp;
             </span>
-            <span className="hidden sm:inline text-sm lg:text-base font-medium tracking-wider" style={{ color: 'var(--champagne)' }}>
-              港匠匯
-            </span>
+            <div className="hidden sm:flex flex-col leading-none">
+              <span className="text-sm lg:text-base font-medium tracking-wider" style={{ color: 'var(--champagne)' }}>
+                港匠匯
+              </span>
+              <span className="text-[9px] tracking-widest" style={{ color: 'rgba(201,169,110,0.45)', letterSpacing: '0.12em' }}>
+                CAS Laboratory · 非盈利
+              </span>
+            </div>
           </a>
 
           {/* Desktop Navigation */}
