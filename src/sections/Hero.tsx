@@ -427,9 +427,10 @@ export default function Hero() {
                 </span>
               </div>
 
-              {/* Input row */}
-              <div className="flex items-center px-5 py-4 gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center" style={{
+              {/* Input row — desktop: all in one line; mobile: stacked for thumb zone */}
+              <div className="flex flex-col sm:flex-row sm:items-center px-4 sm:px-5 py-3 sm:py-4 gap-2 sm:gap-3">
+                {/* Icon — hidden on mobile for space */}
+                <div className="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-xl items-center justify-center" style={{
                   background: 'linear-gradient(135deg,rgba(201,169,110,0.18) 0%,rgba(201,169,110,0.07) 100%)',
                   border: '1px solid rgba(201,169,110,0.28)'
                 }}>
@@ -443,38 +444,41 @@ export default function Hero() {
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
-                  placeholder="請描述您的需求，AI Agent 將為您配對最合適的智慧顧問…"
-                  className="flex-1 bg-transparent outline-none text-sm lg:text-base min-w-0"
-                  style={{ color: 'var(--off-white)', caretColor: 'var(--champagne)' }}
+                  placeholder="無論您是退休專家還是尋求智慧的雇主，請輸入您的需求…"
+                  className="flex-1 bg-transparent outline-none min-w-0"
+                  style={{ color: 'var(--off-white)', caretColor: 'var(--champagne)', fontSize: '16px' }}
                 />
 
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {/* Mic button */}
-                  <button
-                    title="語音輸入"
-                    onClick={handleMic}
-                    className="relative w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-white/10"
-                    style={{ color: isMicPulsing ? 'var(--champagne)' : 'rgba(201,169,110,0.45)' }}
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
-                  {/* Paperclip */}
-                  <button
-                    title="上傳文件"
-                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-white/10"
-                    style={{ color: 'rgba(201,169,110,0.45)' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--champagne)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(201,169,110,0.45)'; }}
-                  >
-                    <Paperclip className="w-4 h-4" />
-                  </button>
+                {/* Action row (buttons) — on mobile this is a full-width row at bottom for thumb reach */}
+                <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-1">
+                    {/* Mic button — larger touch target on mobile */}
+                    <button
+                      title="語音輸入"
+                      onClick={handleMic}
+                      className="relative flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-white/10 active:scale-95"
+                      style={{
+                        width: '44px', height: '44px',
+                        color: isMicPulsing ? 'var(--champagne)' : 'rgba(201,169,110,0.5)',
+                        background: isMicPulsing ? 'rgba(201,169,110,0.12)' : 'transparent',
+                      }}
+                    >
+                      <Mic className="w-5 h-5" />
+                    </button>
+                    {/* Paperclip */}
+                    <button
+                      title="上傳文件"
+                      className="flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-white/10 hidden sm:flex"
+                      style={{ width: '44px', height: '44px', color: 'rgba(201,169,110,0.4)' }}
+                    >
+                      <Paperclip className="w-4 h-4" />
+                    </button>
+                  </div>
 
                   <button
                     onClick={handleSubmit}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-300 group"
-                    style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.04)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
+                    className="flex items-center gap-1.5 px-5 py-3 rounded-xl font-semibold text-sm transition-all duration-300 group active:scale-95"
+                    style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628', minHeight: '44px' }}
                   >
                     配對
                     <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
@@ -491,13 +495,13 @@ export default function Hero() {
                 <div style={{ height: '1px', background: 'linear-gradient(90deg,transparent,rgba(201,169,110,0.15),transparent)', margin: '0 20px' }} />
               )}
 
-              {/* Suggestion chips */}
-              <div className="flex flex-wrap items-center gap-2 px-5 py-3">
+              {/* Suggestion chips — horizontally scrollable on mobile */}
+              <div className="flex items-center gap-2 px-4 sm:px-5 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 <span className="text-xs flex-shrink-0" style={{ color: 'rgba(201,169,110,0.45)' }}>快速提問：</span>
                 {suggestions.map((s) => (
                   <button key={s} onClick={() => setCommandValue(s)}
-                    className="text-xs px-3 py-1.5 rounded-full transition-all duration-200"
-                    style={{ background: 'rgba(201,169,110,0.07)', border: '1px solid rgba(201,169,110,0.14)', color: 'rgba(237,232,223,0.65)' }}
+                    className="text-xs px-3 py-2 rounded-full transition-all duration-200 flex-shrink-0 active:scale-95"
+                    style={{ background: 'rgba(201,169,110,0.07)', border: '1px solid rgba(201,169,110,0.14)', color: 'rgba(237,232,223,0.65)', whiteSpace: 'nowrap' }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.42)'; (e.currentTarget as HTMLElement).style.color = 'var(--champagne)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.14)'; (e.currentTarget as HTMLElement).style.color = 'rgba(237,232,223,0.65)'; }}
                   >{s}</button>
@@ -635,7 +639,7 @@ export default function Hero() {
                         使用 LinkedIn 註冊即領 80 $FAC
                       </a>
                       <p className="text-xs" style={{ color: 'rgba(201,169,110,0.5)' }}>
-                        無論你是專家、還是雇主，動口不手動 · 輸入需求或點擊麥克風即可繼續
+                                        無論您是退休專家、還是尋求智慧的雇主，動口不手動 · 輸入需求或點擊麥克風即可繼續
                       </p>
                     </>
                   )}
@@ -860,11 +864,11 @@ export default function Hero() {
           </a>
         </div>
 
-        <p className="text-sm text-center mt-4" style={{ color: 'rgba(201,169,110,0.65)' }}>
-          無論你是專家、還是雇主，請把你的需求輸入萬能框中。
+        <p className="text-sm text-center mt-4 px-4" style={{ color: 'rgba(201,169,110,0.65)', lineHeight: 1.7 }}>
+          無論您是退休專家、還是尋求智慧的雇主，請輸入您的需求。
         </p>
         <p className="text-xs text-center mt-1.5" style={{ color: 'rgba(201,169,110,0.35)' }}>
-          已有 500+ 位資深工程師、SFC RO 透過 LinkedIn 加入 · 智慧傳承平台
+          已有 500+ 位資深工程師、SFC RO 透過 LinkedIn 加入 · CAS Laboratory 公益平台
         </p>
 
         {/* CTA Buttons */}

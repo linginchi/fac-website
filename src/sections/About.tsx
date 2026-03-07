@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ShieldCheck, ArrowRight, Lock, Coins, Network } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Lock, Coins, Network, Building2 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -296,6 +296,30 @@ export default function About() {
               </div>
               <p className="mt-2 text-xs" style={{ color: 'rgba(201,169,110,0.6)' }}>
                 所有用戶資料受 GDPR 及香港《個人資料（私隱）條例》保護，隱私控制中心由用戶自主管理
+              </p>
+            </div>
+
+            {/* CAS Laboratory 機構聲明 */}
+            <div
+              className="animate-item opacity-0 rounded-xl p-4 space-y-2"
+              style={{
+                background: 'linear-gradient(135deg, rgba(201,169,110,0.06) 0%, rgba(7,14,31,0.5) 100%)',
+                border: '1px solid rgba(201,169,110,0.22)',
+              }}
+            >
+              <div className="flex items-center gap-2.5">
+                <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(201,169,110,0.8)' }} />
+                <p className="text-xs font-semibold" style={{ color: 'rgba(201,169,110,0.85)' }}>
+                  運營主體 · CAS Laboratory
+                </p>
+              </div>
+              <p className="text-sm font-medium" style={{ color: 'var(--off-white)', lineHeight: 1.5 }}>
+                國科綠色發展國際實驗室（香港）有限公司
+              </p>
+              <p className="text-xs" style={{ color: 'rgba(237,232,223,0.55)', lineHeight: 1.65 }}>
+                香港註冊非盈利擔保有限公司（編號 2828258）。服務香港退休專家，打造
+                <strong style={{ color: 'rgba(237,232,223,0.8)' }}>公正、專業、去中心化</strong>
+                的智慧對接平台。所有收費餘額全數撥入「香港專業人才傳承基金」。
               </p>
             </div>
 

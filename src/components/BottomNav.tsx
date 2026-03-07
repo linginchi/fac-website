@@ -12,7 +12,7 @@ function getActiveTab(): Tab {
   const p = window.location.pathname;
   if (p === '/vault') return 'vault';
   if (p === '/wallet') return 'wallet';
-  if (p === '/profile') return 'me';
+  if (p === '/me' || p === '/profile') return 'me';
   return 'ai';
 }
 
@@ -97,7 +97,7 @@ export default function BottomNav() {
 
         {/* 我的 */}
         <button
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate('/me')}
           className="flex flex-col items-center gap-1 flex-1 py-1 transition-all"
           style={{ color: active === 'me' ? '#C9A96E' : 'rgba(237,232,223,0.45)' }}
         >

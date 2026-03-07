@@ -17,6 +17,7 @@ import UserRegister from './sections/UserRegister';
 import WalletPage from './pages/WalletPage';
 import ProfilePage from './pages/ProfilePage';
 import VaultPage from './pages/VaultPage';
+import MePage from './pages/MePage';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
 import './i18n';
@@ -55,13 +56,14 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault'>(() => {
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me'>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
       if (p === '/register' || p === '/login') return 'register';
       if (p === '/wallet') return 'wallet';
       if (p === '/profile') return 'profile';
       if (p === '/vault') return 'vault';
+      if (p === '/me') return 'me';
     }
     return 'home';
   });
@@ -90,6 +92,10 @@ function App() {
     }
     if (path === '/vault') {
       setCurrentView('vault');
+      return;
+    }
+    if (path === '/me') {
+      setCurrentView('me');
       return;
     }
     if (path === '/register' || path === '/login') {
@@ -168,6 +174,20 @@ function App() {
     return (
       <>
         <VaultPage
+          onBack={() => {
+            setCurrentView('home');
+            window.history.replaceState({}, '', '/');
+          }}
+        />
+        <BottomNav />
+      </>
+    );
+  }
+
+  if (currentView === 'me' || window.location.pathname === '/me') {
+    return (
+      <>
+        <MePage
           onBack={() => {
             setCurrentView('home');
             window.history.replaceState({}, '', '/');
