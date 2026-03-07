@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  ChevronDown, Mic, Paperclip, ArrowRight, Sparkles, Coins, X,
+  ChevronDown, Mic, Paperclip, ArrowRight, Coins, X,
   BrainCircuit, ShieldCheck, Send, Calendar
 } from 'lucide-react';
 import gsap from 'gsap';
@@ -130,13 +130,10 @@ export default function Hero() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
-      tl.fromTo(tagRef.current,
-        { clipPath: 'inset(0 100% 0 0)', opacity: 0 },
-        { clipPath: 'inset(0 0% 0 0)', opacity: 1, duration: 0.7 }, 0.3);
+      /* tagRef & subtitleRef are visually hidden; skip their animation */
       titleRef.current?.querySelectorAll('.title-line').forEach((line, i) => {
-        tl.fromTo(line, { rotateX: -90, y: 60, opacity: 0 }, { rotateX: 0, y: 0, opacity: 1, duration: 0.9 }, 0.6 + i * 0.18);
+        tl.fromTo(line, { rotateX: -90, y: 60, opacity: 0 }, { rotateX: 0, y: 0, opacity: 1, duration: 0.9 }, 0.45 + i * 0.18);
       });
-      tl.fromTo(subtitleRef.current, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8 }, 1.1);
       tl.fromTo(commandRef.current, { y: 44, scale: 0.97, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 1 }, 1.35);
       tl.fromTo(ctaRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 1.8);
     }, heroRef);
@@ -350,30 +347,22 @@ export default function Hero() {
       {/* ── Content ───────────────────────────────────────────────────── */}
       <div className="relative z-10 w-full max-w-4xl mx-auto px-6 lg:px-12 py-32 text-center">
 
-        <span ref={tagRef} className="section-tag opacity-0 inline-flex items-center gap-2 mb-8">
-          <Sparkles className="w-3 h-3" />
-          FAC &nbsp;·&nbsp; Web3 去中心化智慧對接平台
-        </span>
+        {/* Invisible refs — needed for GSAP entrance but content removed */}
+        <span ref={tagRef} className="opacity-0 block h-0 overflow-hidden" />
 
         <div ref={titleRef} className="space-y-1 mb-6" style={{ perspective: '1000px' }}>
           <h1 className="title-line font-bold leading-tight opacity-0" style={{
-            fontSize: 'clamp(2.4rem, 5vw, 4rem)', color: 'var(--off-white)',
+            fontSize: 'clamp(2.2rem, 4.5vw, 3.6rem)', color: 'var(--off-white)',
             fontFamily: "'PingFang HK','Noto Sans TC',sans-serif", letterSpacing: '0.04em'
           }}>智慧沈澱，</h1>
           <h1 className="title-line font-bold leading-tight opacity-0 text-gold-gradient" style={{
-            fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+            fontSize: 'clamp(2.2rem, 4.5vw, 3.6rem)',
             fontFamily: "'PingFang HK','Noto Sans TC',sans-serif", letterSpacing: '0.04em'
           }}>在此相遇。</h1>
         </div>
 
-        <p ref={subtitleRef} className="opacity-0 mb-10 mx-auto" style={{
-          color: 'rgba(237,232,223,0.7)', fontSize: 'clamp(0.9rem,2vw,1.05rem)',
-          lineHeight: '1.9', maxWidth: '560px'
-        }}>
-          香港首個 Web3 去中心化對接平台。有些答案，不在數據庫，
-          <br className="hidden sm:block" />
-          <span style={{ color: 'rgba(201,169,110,0.9)', fontStyle: 'italic' }}>在老江湖的腦袋中。</span>
-        </p>
+        {/* Subtitle hidden — guidance text moved below command box */}
+        <p ref={subtitleRef} className="opacity-0 hidden" aria-hidden="true" />
 
         {/* ════════════════════════════════════════════════════════════════
             萬能指揮框 Command Box  +  $FAC 餘額
@@ -509,7 +498,7 @@ export default function Hero() {
               </div>
 
               <p className="mt-3 text-xs text-center pb-1" style={{ color: 'rgba(201,169,110,0.35)' }}>
-                支持文字 · 語音 · 多模態文件上傳 &nbsp;|&nbsp; Powered by AI Agent (Sonnet 4.6)
+                支持文字 · 語音 · 多模態文件上傳 &nbsp;|&nbsp; FAC 港匠匯 · 智慧管家
               </p>
             </div>
 
@@ -531,7 +520,7 @@ export default function Hero() {
                       <BrainCircuit className="w-3.5 h-3.5" style={{ color: 'var(--champagne)' }} />
                     </div>
                     <span className="text-xs font-semibold" style={{ color: 'var(--champagne)' }}>
-                      FAC 智慧傳承 · {isPartnerUser ? '合夥人專屬顧問' : '專屬顧問'}
+                      FAC 港匠匯 · {isPartnerUser ? '合夥人管家' : '紳士管家'}
                     </span>
                     {userMode && agentPhase !== 'new_user_greeting' && (
                       <span className="text-xs px-2 py-0.5 rounded-md" style={{
@@ -629,7 +618,7 @@ export default function Hero() {
                   {agentPhase === 'new_user_greeting' && (
                     <>
                       <p className="text-sm" style={{ color: 'rgba(237,232,223,0.85)', lineHeight: 1.8 }}>
-                        歡迎加入智慧傳承平台。我是您的專屬顧問，請告訴我您的稱呼或直接授權 LinkedIn 註冊，以便為您提供銀行級私人管家式服務。
+                        歡迎光臨 FAC 港匠匯。我是您的專屬管家，請告訴我您的稱呼，或直接授權 LinkedIn 註冊，以便為您提供銀行級私人管家式服務。
                       </p>
                       <a
                         href="/register"
@@ -864,12 +853,30 @@ export default function Hero() {
           </a>
         </div>
 
-        <p className="text-sm text-center mt-4 px-4" style={{ color: 'rgba(201,169,110,0.65)', lineHeight: 1.7 }}>
-          無論您是退休專家、還是尋求智慧的雇主，請輸入您的需求。
-        </p>
-        <p className="text-xs text-center mt-1.5" style={{ color: 'rgba(201,169,110,0.35)' }}>
-          已有 500+ 位資深工程師、SFC RO 透過 LinkedIn 加入 · CAS Laboratory 公益平台
-        </p>
+        {/* ── 萬能框下方引導語 ─────────────────────────────────────── */}
+        <div
+          className="mt-5 px-4 text-center transition-all duration-500"
+          style={{ opacity: isFocused ? 0.35 : 1, transform: isFocused ? 'translateY(4px)' : 'translateY(0)' }}
+        >
+          <p
+            style={{
+              fontFamily: "'PingFang HK','Noto Sans TC','Microsoft JhengHei',sans-serif",
+              fontSize: 'clamp(0.82rem, 2vw, 0.95rem)',
+              color: 'rgba(201,169,110,0.72)',
+              lineHeight: 1.85,
+              letterSpacing: '0.03em',
+            }}
+          >
+            閣下想分享專業，抑或尋求專家？
+            <br className="sm:hidden" />
+            請即口述、傳訊或上傳圖檔，
+            <strong style={{ color: 'rgba(201,169,110,0.92)', fontWeight: 600 }}>FAC 港匠匯</strong>
+            &thinsp;為您效勞。
+          </p>
+          <p className="mt-2 text-xs" style={{ color: 'rgba(201,169,110,0.28)', letterSpacing: '0.06em' }}>
+            CAS Laboratory · 香港非盈利 · 數據主權歸用戶
+          </p>
+        </div>
 
         {/* CTA Buttons */}
         <div ref={ctaRef} className="opacity-0 flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">

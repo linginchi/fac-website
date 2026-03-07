@@ -29,7 +29,7 @@ const decodeCosts = [
 
 const defenseMechanisms = [
   { icon: Lock, title: '鎖定期 (Lock-up)', desc: '註冊獎勵須在平台活躍滿 30 天，或完成一次有效「資訊解碼」後方可激活使用。' },
-  { icon: Shield, title: '品質門檻', desc: '完善個人信息的獎勵需通過 AI Agent 邏輯性檢查，防止隨意填寫垃圾數據。' },
+  { icon: Shield, title: '品質門檻', desc: '完善個人信息的獎勵需通過 FAC 港匠匯邏輯性審核，防止隨意填寫垃圾數據。' },
   { icon: TrendingUp, title: '回購與銷毀 (Buy-back & Burn)', desc: '平台每月將 20% 訂閱收入用於回購 $FAC 並銷毀，確保稀缺性與長期價值。' },
 ];
 

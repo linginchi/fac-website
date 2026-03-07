@@ -66,20 +66,44 @@ export default function Navbar() {
             }}
             className="flex items-center gap-2 group"
           >
+            {/* FAC wordmark */}
             <span className="text-xl lg:text-2xl font-bold tracking-wide" style={{ color: 'var(--off-white)' }}>
               F<span style={{ color: 'var(--champagne)' }}>A</span>C
             </span>
-            <span className="hidden sm:inline text-sm font-normal tracking-widest" style={{ color: 'rgba(201,169,110,0.45)' }}>
+
+            {/* Divider */}
+            <span className="hidden sm:inline text-sm font-normal" style={{ color: 'rgba(201,169,110,0.3)' }}>
               &nbsp;|&nbsp;
             </span>
-            <div className="hidden sm:flex flex-col leading-none">
-              <span className="text-sm lg:text-base font-medium tracking-wider" style={{ color: 'var(--champagne)' }}>
-                港匠匯
+
+            {/* Brand name + CAS attribution (desktop) */}
+            <div className="hidden sm:flex flex-col leading-none gap-0.5">
+              {/* Line 1: FAC 港匠匯 (Facilitating Artisan Collective) */}
+              <span className="font-semibold tracking-wider" style={{
+                fontSize: 'clamp(0.78rem, 1.2vw, 0.9rem)',
+                color: 'var(--champagne)',
+                fontFamily: "'PingFang HK','Noto Sans TC',sans-serif"
+              }}>
+                港匠匯&nbsp;
+                <span className="font-normal hidden lg:inline" style={{ color: 'rgba(201,169,110,0.6)', fontSize: '0.72rem' }}>
+                  Facilitating Artisan Collective
+                </span>
               </span>
-              <span className="text-[9px] tracking-widest" style={{ color: 'rgba(201,169,110,0.45)', letterSpacing: '0.12em' }}>
-                CAS Laboratory · 非盈利
+              {/* Line 2: Operated by CAS Laboratory · 香港非盈利 */}
+              <span style={{
+                fontSize: '0.62rem',
+                color: 'rgba(201,169,110,0.42)',
+                letterSpacing: '0.05em',
+                fontFamily: "'PingFang HK','Noto Sans TC',sans-serif"
+              }}>
+                Operated by CAS Laboratory (國科綠色發展國際實驗室) · 香港非盈利
               </span>
             </div>
+
+            {/* Mobile-only short label */}
+            <span className="sm:hidden text-sm font-medium" style={{ color: 'var(--champagne)', fontFamily: "'PingFang HK',sans-serif" }}>
+              港匠匯
+            </span>
           </a>
 
           {/* Desktop Navigation */}

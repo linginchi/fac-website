@@ -243,7 +243,7 @@ export default function Services() {
             className="mb-6 text-sm"
             style={{ color: 'rgba(237,232,223,0.5)', lineHeight: '1.8' }}
           >
-            找不到你需要的專業？AI Agent 會幫你解碼需求，配對最合適的智慧顧問。
+            找不到你需要的專業？FAC 港匠匯智慧管家會為您解碼需求，配對最合適的行業顧問。
           </p>
           <button
             onClick={() => scrollToSection('#contact')}
