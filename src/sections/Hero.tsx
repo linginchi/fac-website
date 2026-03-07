@@ -50,12 +50,6 @@ const THINKING_STEPS = [
   '加密通道已建立，準備解鎖匹配結果。',
 ];
 
-const suggestions = [
-  '幫我找跨境貿易合規專家',
-  '家族信託架構如何設計？',
-  '尋找 SFC 持牌 RO 顧問',
-  '企業融資談判老江湖',
-];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AgentPhase = 'idle' | 'new_user_greeting' | 'login_prompt' | 'partner_welcome' | 'thinking' | 'draft_confirm' | 'matched' | 'decoded' | 'action';
@@ -406,16 +400,6 @@ export default function Hero() {
                 </>
               )}
 
-              {/* $FAC badge */}
-              <div className="absolute -top-3.5 right-5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style={{
-                  background: 'linear-gradient(135deg,rgba(10,22,40,0.99) 0%,rgba(13,31,60,0.96) 100%)',
-                  border: '1px solid rgba(201,169,110,0.35)', color: 'var(--champagne)'
-                }}>
-                  $FAC &nbsp;<span style={{ opacity: 0.55 }}>· Token to Decode</span>
-                </span>
-              </div>
-
               {/* Input row — desktop: all in one line; mobile: stacked for thumb zone */}
               <div className="flex flex-col sm:flex-row sm:items-center px-4 sm:px-5 py-3 sm:py-4 gap-2 sm:gap-3">
                 {/* Icon — hidden on mobile for space */}
@@ -433,7 +417,7 @@ export default function Hero() {
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
-                  placeholder="無論您是退休專家還是尋求智慧的雇主，請輸入您的需求…"
+                  placeholder="口述或輸入您的需求…"
                   className="flex-1 bg-transparent outline-none min-w-0"
                   style={{ color: 'var(--off-white)', caretColor: 'var(--champagne)', fontSize: '16px' }}
                 />
@@ -484,22 +468,6 @@ export default function Hero() {
                 <div style={{ height: '1px', background: 'linear-gradient(90deg,transparent,rgba(201,169,110,0.15),transparent)', margin: '0 20px' }} />
               )}
 
-              {/* Suggestion chips — horizontally scrollable on mobile */}
-              <div className="flex items-center gap-2 px-4 sm:px-5 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                <span className="text-xs flex-shrink-0" style={{ color: 'rgba(201,169,110,0.45)' }}>快速提問：</span>
-                {suggestions.map((s) => (
-                  <button key={s} onClick={() => setCommandValue(s)}
-                    className="text-xs px-3 py-2 rounded-full transition-all duration-200 flex-shrink-0 active:scale-95"
-                    style={{ background: 'rgba(201,169,110,0.07)', border: '1px solid rgba(201,169,110,0.14)', color: 'rgba(237,232,223,0.65)', whiteSpace: 'nowrap' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.42)'; (e.currentTarget as HTMLElement).style.color = 'var(--champagne)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,169,110,0.14)'; (e.currentTarget as HTMLElement).style.color = 'rgba(237,232,223,0.65)'; }}
-                  >{s}</button>
-                ))}
-              </div>
-
-              <p className="mt-3 text-xs text-center pb-1" style={{ color: 'rgba(201,169,110,0.35)' }}>
-                支持文字 · 語音 · 多模態文件上傳 &nbsp;|&nbsp; FAC 港匠匯 · 智慧管家
-              </p>
             </div>
 
             {/* ════ Agent Chat Bubble ════════════════════════════════════════ */}
@@ -878,15 +846,8 @@ export default function Hero() {
           </p>
         </div>
 
-        {/* CTA Buttons */}
-        <div ref={ctaRef} className="opacity-0 flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
-          <button onClick={() => scrollToSection('#contact')} className="btn-outline" style={{ whiteSpace: 'nowrap' }}>成為智慧導師</button>
-          <button onClick={() => scrollToSection('#about')} className="btn-gold" style={{ whiteSpace: 'nowrap' }}>了解 FAC 平台</button>
-        </div>
-
-        <p className="mt-10 text-xs tracking-widest uppercase" style={{ color: 'rgba(201,169,110,0.3)' }}>
-          Facilitating Artisan Collective &nbsp;·&nbsp; Web3 · Decentralized · Est. Hong Kong
-        </p>
+        {/* ctaRef kept as invisible anchor for GSAP; no visible buttons */}
+        <div ref={ctaRef} className="opacity-0 h-0 overflow-hidden" aria-hidden="true" />
       </div>
 
       {/* Scroll Indicator */}
