@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 const STORAGE_KB = 'fac_contact_kb';
 const STORAGE_SUBMISSIONS = 'fac_contact_submissions';
+const STORAGE_PLATFORM_MESSAGES = 'fac_platform_messages';
 
 export interface KBEntry {
   id: string;
@@ -14,8 +15,18 @@ export interface Submission {
   id: string;
   message: string;
   at: string;
+  userId?: string;
   reply?: string;
   repliedAt?: string;
+}
+
+export interface PlatformMessage {
+  id: string;
+  from: string;
+  text: string;
+  at: string;
+  read?: boolean;
+  submissionId?: string;
 }
 
 const defaultKB: KBEntry[] = [
@@ -50,13 +61,27 @@ function loadSubmissions(): Submission[] {
   return [];
 }
 
+function loadPlatformMessages(): Record<string, PlatformMessage[]> {
+  try {
+    const raw = localStorage.getItem(STORAGE_PLATFORM_MESSAGES);
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return {};
+}
+
+function savePlatformMessages(data: Record<string, PlatformMessage[]>) {
+  localStorage.setItem(STORAGE_PLATFORM_MESSAGES, JSON.stringify(data));
+}
+
 export function useContactKB() {
   const [kb, setKb] = useState<KBEntry[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [platformMessages, setPlatformMessages] = useState<Record<string, PlatformMessage[]>>({});
 
   useEffect(() => {
     setKb(loadKB());
     setSubmissions(loadSubmissions());
+    setPlatformMessages(loadPlatformMessages());
   }, []);
 
   useEffect(() => {
@@ -67,23 +92,47 @@ export function useContactKB() {
     localStorage.setItem(STORAGE_SUBMISSIONS, JSON.stringify(submissions));
   }, [submissions]);
 
+  useEffect(() => {
+    if (Object.keys(platformMessages).length > 0) savePlatformMessages(platformMessages);
+  }, [platformMessages]);
+
   const addToKB = useCallback((q: string, a: string, lang?: 'zh' | 'en') => {
     setKb((prev) => [...prev, { id: Date.now().toString(), q, a, lang }]);
   }, []);
 
   const addSubmission = useCallback((message: string): Submission => {
-    const sub: Submission = { id: Date.now().toString(), message, at: new Date().toISOString() };
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('fac_user_id') ?? undefined : undefined;
+    const sub: Submission = { id: Date.now().toString(), message, at: new Date().toISOString(), userId };
     setSubmissions((prev) => [sub, ...prev]);
     return sub;
   }, []);
 
-  const replySubmission = useCallback((id: string, reply: string) => {
+  /** 管理員回覆：可選同步至知識庫；自動推送至用戶「平台消息」並觸發外部通知（模擬） */
+  const replySubmission = useCallback((id: string, reply: string, options?: { syncToKB?: boolean }) => {
     const now = new Date().toISOString();
+    const syncToKB = options?.syncToKB !== false;
     setSubmissions((prev) => {
       const one = prev.find((s) => s.id === id);
       if (!one) return prev;
       const updated = { ...one, reply, repliedAt: now };
-      setKb((k) => [...k, { id: `sub-${id}`, q: one.message, a: reply, lang: undefined }]);
+      if (syncToKB) {
+        setKb((k) => [...k, { id: `sub-${id}`, q: one.message, a: reply, lang: undefined }]);
+      }
+      if (one.userId) {
+        setPlatformMessages((pm) => {
+          const list = pm[one.userId!] ?? [];
+          const msg: PlatformMessage = {
+            id: `msg-${id}-${Date.now()}`,
+            from: 'FAC 港匠匯',
+            text: reply,
+            at: now,
+            read: false,
+            submissionId: id,
+          };
+          savePlatformMessages({ ...pm, [one.userId!]: [msg, ...list] });
+          return { ...pm, [one.userId!]: [msg, ...list] };
+        });
+      }
       return prev.map((s) => (s.id === id ? updated : s));
     });
   }, []);
@@ -102,5 +151,28 @@ export function useContactKB() {
     return null;
   }, [kb]);
 
-  return { kb, submissions, addToKB, addSubmission, replySubmission, matchKB };
+  const getMessagesForUser = useCallback((userId: string): PlatformMessage[] => {
+    return platformMessages[userId] ?? [];
+  }, [platformMessages]);
+
+  const markMessageRead = useCallback((userId: string, messageId: string) => {
+    setPlatformMessages((pm) => {
+      const list = pm[userId] ?? [];
+      const next = list.map((m) => (m.id === messageId ? { ...m, read: true } : m));
+      const out = { ...pm, [userId]: next };
+      savePlatformMessages(out);
+      return out;
+    });
+  }, []);
+
+  return {
+    kb,
+    submissions,
+    replySubmission,
+    addToKB,
+    addSubmission,
+    matchKB,
+    getMessagesForUser,
+    markMessageRead,
+  };
 }

@@ -20,7 +20,12 @@ export default function UserRegister({ onBack }: UserRegisterProps) {
     const now = new Date().toISOString().slice(0, 10);
     addTransaction({ date: now, label: 'LinkedIn 註冊獎勵', amount: 80 });
     addTransaction({ date: now, label: 'LinkedIn 數據同步', amount: 50 });
-    try { localStorage.setItem('fac_user_logged_in', '1'); } catch (_) {}
+    try {
+      localStorage.setItem('fac_user_logged_in', '1');
+      if (!localStorage.getItem('fac_user_id')) {
+        localStorage.setItem('fac_user_id', 'user_' + Date.now());
+      }
+    } catch (_) {}
     setLinkedInSynced(true);
   };
 

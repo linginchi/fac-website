@@ -8,7 +8,7 @@ import { useState } from 'react';
 import {
   ArrowLeft, Shield, Coins, Star, ChevronRight,
   Building2, Users, Vote, Download, Gift, Layers,
-  LogIn, CheckCircle
+  LogIn, CheckCircle, MessageCircle
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 
@@ -68,6 +68,14 @@ export default function MePage({ onBack }: { onBack: () => void }) {
       href: '/wallet',
       highlight: false,
       status: facBalance > 0 ? 'active' : 'neutral',
+    },
+    {
+      icon: MessageCircle,
+      label: '平台消息',
+      sub: '來自 FAC 港匠匯 的專業答覆',
+      href: '/me/messages',
+      highlight: false,
+      status: 'neutral',
     },
     {
       icon: Layers,

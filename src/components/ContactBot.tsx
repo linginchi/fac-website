@@ -1,14 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Send, LogIn } from 'lucide-react';
 import { useContactKB } from '../hooks/useContactKB';
 
+const STORAGE_LOGGED_IN = 'fac_user_logged_in';
+function isLoggedIn(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!localStorage.getItem(STORAGE_LOGGED_IN);
+}
+
+const AUTH_PROMPT_ZH = '閣下好，為確保諮詢的專業性與後續跟進，請先登入或註冊。';
+const AUTH_PROMPT_EN = 'To ensure professional consultation and follow-up, please log in or register first.';
 const OUT_OF_SCOPE_ZH = '此問題已記錄，我將轉交實驗室管理員處理。';
 const OUT_OF_SCOPE_EN = 'This has been recorded and will be forwarded to the laboratory administrator.';
 
 export default function ContactBot() {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const { matchKB, addSubmission } = useContactKB();
+  const [loggedIn, setLoggedIn] = useState(false);
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'bot'; text: string }>>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -16,12 +25,16 @@ export default function ContactBot() {
   const lang = i18n.language === 'en' ? 'en' : 'zh';
 
   useEffect(() => {
+    setLoggedIn(isLoggedIn());
+  }, []);
+
+  useEffect(() => {
     listRef.current?.scrollTo(0, listRef.current.scrollHeight);
   }, [messages]);
 
-  const handleSend = async () => {
+  const handleSend = () => {
     const text = input.trim();
-    if (!text || isSending) return;
+    if (!text || isSending || !loggedIn) return;
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', text }]);
     setIsSending(true);
@@ -72,9 +85,24 @@ export default function ContactBot() {
         className="flex-1 overflow-y-auto p-4 space-y-4"
         style={{ minHeight: '240px' }}
       >
-        {messages.length === 0 && (
+        {!loggedIn && (
+          <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+            <p className="text-sm mb-6 leading-relaxed" style={{ color: 'rgba(237,232,223,0.85)', maxWidth: '320px' }}>
+              {lang === 'en' ? AUTH_PROMPT_EN : AUTH_PROMPT_ZH}
+            </p>
+            <a
+              href="/register"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all"
+              style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}
+            >
+              <LogIn className="w-4 h-4" />
+              {lang === 'en' ? 'Log in / Register' : '登入或註冊'}
+            </a>
+          </div>
+        )}
+        {loggedIn && messages.length === 0 && !isSending && (
           <div className="text-center py-8 text-sm" style={{ color: 'rgba(237,232,223,0.5)' }}>
-            {t('contact.botPlaceholder')}
+            {lang === 'en' ? 'Ask about our charter, non-profit status, Web3 or compliance.' : '可詢問章程、非盈利性質、Web3 技術或合規業務。'}
           </div>
         )}
         {messages.map((m, i) => (
@@ -105,31 +133,33 @@ export default function ContactBot() {
         )}
       </div>
 
-      <div className="p-4 border-t flex gap-2" style={{ borderColor: 'rgba(201,169,110,0.15)' }}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          placeholder={lang === 'en' ? 'Type your question...' : '輸入您的問題…'}
-          className="flex-1 px-4 py-3 rounded-xl outline-none text-sm"
-          style={{
-            background: 'rgba(201,169,110,0.08)',
-            border: '1px solid rgba(201,169,110,0.2)',
-            color: 'var(--off-white)',
-            caretColor: 'var(--champagne)'
-          }}
-        />
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={!input.trim() || isSending}
-          className="flex items-center justify-center w-12 h-12 rounded-xl transition-all disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}
-        >
-          <Send className="w-5 h-5" />
-        </button>
-      </div>
+      {loggedIn && (
+        <div className="p-4 border-t flex gap-2" style={{ borderColor: 'rgba(201,169,110,0.15)' }}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            placeholder={lang === 'en' ? 'Type your question...' : '輸入您的問題…'}
+            className="flex-1 px-4 py-3 rounded-xl outline-none text-sm"
+            style={{
+              background: 'rgba(201,169,110,0.08)',
+              border: '1px solid rgba(201,169,110,0.2)',
+              color: 'var(--off-white)',
+              caretColor: 'var(--champagne)'
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={!input.trim() || isSending}
+            className="flex items-center justify-center w-12 h-12 rounded-xl transition-all disabled:opacity-40"
+            style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628' }}
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

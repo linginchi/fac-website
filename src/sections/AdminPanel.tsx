@@ -200,6 +200,10 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const [pricingTiers, setPricingTiers] = useState<PricingTiers>(loadPricing);
   const { partners, addPartner, updatePartner, deletePartner } = usePartners();
   const { submissions, replySubmission } = useContactKB();
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState('');
+  const [syncToKB, setSyncToKB] = useState(true);
+  const [inboxToast, setInboxToast] = useState('');
   
   useEffect(() => {
     if (window.location.pathname === '/admin/tokens') setActiveTab('tokens');
@@ -1653,11 +1657,16 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               </div>
             )}
 
-            {/* 留言板 — Contact Bot 轉辦，回覆後自動存入知識庫 */}
+            {/* 留言板 — Contact Bot 轉辦；回覆觸發平台消息 + 可選同步知識庫 */}
             {activeTab === 'inbox' && (
               <div className="space-y-6">
                 <h2 className="text-xl font-bold text-white">留言板</h2>
-                <p className="text-sm text-white/50">超出知識庫的用戶問題會轉交至此。回覆後將自動存入 Agent 知識庫，供下次自動回答。</p>
+                <p className="text-sm text-white/50">超出知識庫的用戶問題會轉交至此。回覆後將同步至用戶「平台消息」並觸發 Email/簡訊通知（模擬）；可勾選同步至 AI 知識庫。</p>
+                {inboxToast && (
+                  <div className="px-4 py-2 rounded-lg text-sm" style={{ background: 'rgba(76,175,80,0.15)', border: '1px solid rgba(76,175,80,0.35)', color: '#81C784' }}>
+                    {inboxToast}
+                  </div>
+                )}
                 <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.18)' }}>
                   <div className="px-5 py-3 border-b grid grid-cols-12 text-xs font-medium" style={{ borderColor: 'rgba(201,169,110,0.12)', color: 'rgba(237,232,223,0.4)' }}>
                     <span className="col-span-1">#</span>
@@ -1677,17 +1686,57 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                           <div className="col-span-4">
                             {sub.reply ? (
                               <div className="text-sm text-[#C9A96E] break-words">{sub.reply}</div>
+                            ) : replyingToId === sub.id ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={replyDraft}
+                                  onChange={(e) => setReplyDraft(e.target.value)}
+                                  placeholder="輸入回覆內容…"
+                                  rows={3}
+                                  className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                                  style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(201,169,110,0.25)', color: '#fff' }}
+                                />
+                                <label className="flex items-center gap-2 text-xs text-white/70 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={syncToKB}
+                                    onChange={(e) => setSyncToKB(e.target.checked)}
+                                  />
+                                  同步至 AI 知識庫
+                                </label>
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (!replyDraft.trim()) return;
+                                      replySubmission(sub.id, replyDraft.trim(), { syncToKB });
+                                      setInboxToast('已發送至用戶平台消息；已觸發 Email/簡訊通知（模擬）' + (syncToKB ? '；已同步至 AI 知識庫。' : '。'));
+                                      setReplyingToId(null);
+                                      setReplyDraft('');
+                                      setTimeout(() => setInboxToast(''), 4000);
+                                    }}
+                                    className="px-3 py-1.5 text-xs rounded-lg font-medium"
+                                    style={{ background: 'rgba(255,215,0,0.2)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.4)' }}
+                                  >
+                                    提交回覆
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setReplyingToId(null); setReplyDraft(''); }}
+                                    className="px-3 py-1.5 text-xs rounded-lg text-white/60 hover:text-white"
+                                  >
+                                    取消
+                                  </button>
+                                </div>
+                              </div>
                             ) : (
                               <button
                                 type="button"
-                                onClick={() => {
-                                  const reply = window.prompt('輸入回覆內容（將存入知識庫供 Agent 使用）：');
-                                  if (reply && reply.trim()) replySubmission(sub.id, reply.trim());
-                                }}
+                                onClick={() => { setReplyingToId(sub.id); setReplyDraft(''); setSyncToKB(true); }}
                                 className="px-3 py-1.5 text-xs rounded-lg"
                                 style={{ background: 'rgba(255,215,0,0.15)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.3)' }}
                               >
-                                回覆並存入知識庫
+                                回覆（平台消息 + 可選知識庫）
                               </button>
                             )}
                           </div>
