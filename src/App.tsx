@@ -23,7 +23,11 @@ import { useAuth } from './hooks/useAuth';
 import { IdentityProvider } from './contexts/IdentityContext';
 import { FacProvider } from './contexts/FacContext';
 import { InvitationProvider } from './contexts/InvitationContext';
+import { VaultProvider } from './contexts/VaultContext';
+import { WalletProvider } from './contexts/WalletContext';
+import { GovernanceProvider } from './contexts/GovernanceContext';
 import DashboardPage from './pages/DashboardPage';
+import GovernancePage from './pages/GovernancePage';
 import './i18n';
 
 // Sample article data for demonstration
@@ -60,7 +64,7 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me' | 'meMessages' | 'dashboard'>(() => {
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me' | 'meMessages' | 'dashboard' | 'governance'>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
       if (p === '/dashboard') return 'dashboard';
@@ -70,6 +74,7 @@ function App() {
       if (p === '/vault') return 'vault';
       if (p === '/me/messages') return 'meMessages';
       if (p === '/me') return 'me';
+      if (p === '/governance') return 'governance';
     }
     return 'home';
   });
@@ -112,6 +117,10 @@ function App() {
       setCurrentView('me');
       return;
     }
+    if (path === '/governance') {
+      setCurrentView('governance');
+      return;
+    }
     if (path === '/register' || path === '/login') {
       setCurrentView('register');
       return;
@@ -143,6 +152,9 @@ function App() {
     <IdentityProvider>
       <FacProvider userTier="basic" userId="current_user">
         <InvitationProvider>
+          <VaultProvider userId="current_user">
+            <WalletProvider>
+              <GovernanceProvider userId="current_user" userTier="executive">
       {isLoading || !authLoaded ? (
         <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
           <div className="text-center">
@@ -165,7 +177,7 @@ function App() {
         </>
       ) : currentView === 'vault' || window.location.pathname === '/vault' ? (
         <>
-          <VaultPage onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
+          <VaultPage />
           <BottomNav />
         </>
       ) : currentView === 'meMessages' || window.location.pathname === '/me/messages' ? (
@@ -194,6 +206,11 @@ function App() {
         />
       ) : currentView === 'dashboard' || window.location.pathname === '/dashboard' ? (
         <DashboardPage view={dashboardView} intent={dashboardIntent} />
+      ) : currentView === 'governance' || window.location.pathname === '/governance' ? (
+        <>
+          <GovernancePage />
+          <BottomNav />
+        </>
       ) : (
         <div className="min-h-screen bg-black">
           <Navbar />
@@ -210,6 +227,9 @@ function App() {
           <BottomNav />
         </div>
       )}
+              </GovernanceProvider>
+            </WalletProvider>
+          </VaultProvider>
         </InvitationProvider>
       </FacProvider>
     </IdentityProvider>
