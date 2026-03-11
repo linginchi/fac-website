@@ -53,9 +53,11 @@ const MOCK_TASKS: Task[] = [
     publishedAt: '2025-03-01T10:30:00Z',
     depositLockedAt: '2025-03-02T09:00:00Z',
     startedAt: '2025-03-02T09:00:00Z',
+    referralFee: 0,
   },
   {
     id: 'task-002',
+    referralFee: 0,
     partyAId: 'user-a-001',
     partyAMaskedName: '甲方 ***1',
     title: '粤语同声传译服务',

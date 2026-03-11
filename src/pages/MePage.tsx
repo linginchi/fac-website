@@ -1,24 +1,35 @@
 /**
- * MePage — 「我的」頁面 (V3.0 Mobile-First)
+ * MePage — 「我的」頁面 (V5.1 Mobile-First)
  * Route: /me
  * Features: User profile, tier badge, $FAC entry, CAS Laboratory declaration,
- *           quick actions menu, platform mission.
+ *           quick actions menu, platform mission, invitation card generation.
  */
 import { useState } from 'react';
 import {
   ArrowLeft, Shield, Coins, Star, ChevronRight,
   Building2, Users, Vote, Download, Gift, Layers,
-  LogIn, CheckCircle, MessageCircle
+  LogIn, CheckCircle, MessageCircle, Crown
 } from 'lucide-react';
-import { useWallet } from '../context/WalletContext';
+import { useFac } from '../contexts/FacContext';
+import { useInvitation } from '../contexts/InvitationContext';
+import InvitationCardGenerator from '../components/InvitationCardGenerator';
+import type { MembershipTier } from '../types/user';
+import { TIER_CONFIG } from '../types/user';
 
-const STORAGE_TIER     = 'fac_user_tier';
-const STORAGE_LOGGED_IN = 'fac_user_logged_in';
-const STORAGE_VAULT    = 'fac_vault_status';
+const STORAGE_TIER     = 'fac_user_tier_v51';
+const STORAGE_LOGGED_IN = 'fac_user_logged_in_v51';
+const STORAGE_VAULT    = 'fac_vault_status_v51';
 
-function getUserTier(): string {
+function getUserTier(): MembershipTier {
   if (typeof window === 'undefined') return 'basic';
-  return localStorage.getItem(STORAGE_TIER) ?? 'basic';
+  const stored = localStorage.getItem(STORAGE_TIER) as MembershipTier;
+  return stored && TIER_CONFIG[stored] ? stored : 'basic';
+}
+
+function setUserTier(tier: MembershipTier) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_TIER, tier);
+  }
 }
 
 function isLoggedIn(): boolean {
@@ -31,26 +42,41 @@ function getVaultStatus(): string {
   return localStorage.getItem(STORAGE_VAULT) ?? 'none';
 }
 
-const TIER_LABEL: Record<string, string> = {
+const TIER_LABEL: Record<MembershipTier, string> = {
   basic: 'Basic · 標準版',
   professional: 'Professional · 專業版',
   executive: 'Executive · 合夥人',
 };
 
-const TIER_STYLE: Record<string, { bg: string; border: string; color: string }> = {
+const TIER_STYLE: Record<MembershipTier, { bg: string; border: string; color: string }> = {
   basic: { bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)', color: 'rgba(237,232,223,0.6)' },
   professional: { bg: 'rgba(33,150,243,0.1)', border: 'rgba(33,150,243,0.3)', color: '#64B5F6' },
   executive: { bg: 'rgba(201,169,110,0.14)', border: 'rgba(201,169,110,0.45)', color: '#C9A96E' },
 };
 
 export default function MePage({ onBack }: { onBack: () => void }) {
-  const { facBalance } = useWallet();
+  const { wallet, getLifetimeStats } = useFac();
+  const { getStats } = useInvitation();
   const [declarationOpen, setDeclarationOpen] = useState(false);
-  const tier = getUserTier();
+  const [showInviteGenerator, setShowInviteGenerator] = useState(false);
+  const [tier, setTier] = useState<MembershipTier>(() => getUserTier());
   const loggedIn = isLoggedIn();
   const vaultStatus = getVaultStatus();
   const isPartner = tier === 'executive';
-  const tierStyle = TIER_STYLE[tier] ?? TIER_STYLE.basic;
+  const isProfessional = tier === 'professional';
+  const tierStyle = TIER_STYLE[tier];
+  
+  const stats = getLifetimeStats();
+  const inviteStats = getStats('current_user');
+
+  // Quick tier switcher for demo
+  const cycleTier = () => {
+    const tiers: MembershipTier[] = ['basic', 'professional', 'executive'];
+    const currentIndex = tiers.indexOf(tier);
+    const nextTier = tiers[(currentIndex + 1) % tiers.length];
+    setTier(nextTier);
+    setUserTier(nextTier);
+  };
 
   const quickActions = [
     {
@@ -60,14 +86,16 @@ export default function MePage({ onBack }: { onBack: () => void }) {
       href: '/profile',
       highlight: true,
       status: vaultStatus !== 'none' ? 'active' : 'inactive',
+      onClick: undefined,
     },
     {
       icon: Coins,
       label: '$FAC 流水賬',
-      sub: `餘額：${facBalance} $FAC`,
+      sub: `餘額：${wallet.balance.toLocaleString()} $FAC · 淨收益 ${stats.net.toLocaleString()}`,
       href: '/wallet',
       highlight: false,
-      status: facBalance > 0 ? 'active' : 'neutral',
+      status: wallet.balance > 0 ? 'active' : 'neutral',
+      onClick: undefined,
     },
     {
       icon: MessageCircle,
@@ -76,6 +104,7 @@ export default function MePage({ onBack }: { onBack: () => void }) {
       href: '/me/messages',
       highlight: false,
       status: 'neutral',
+      onClick: undefined,
     },
     {
       icon: Layers,
@@ -84,15 +113,17 @@ export default function MePage({ onBack }: { onBack: () => void }) {
       href: '/vault',
       highlight: false,
       status: 'neutral',
+      onClick: undefined,
     },
     ...(isPartner ? [
       {
         icon: Gift,
         label: '邀請摯友',
-        sub: '下載黑金電子邀請函',
-        href: '/profile',
+        sub: `已邀請 ${inviteStats.totalUsed} 人 · 分紅 ${inviteStats.totalRevenue} $FAC`,
+        href: '#',
         highlight: false,
-        status: 'partner',
+        status: 'partner' as const,
+        onClick: () => setShowInviteGenerator(true),
       },
       {
         icon: Download,
@@ -100,7 +131,8 @@ export default function MePage({ onBack }: { onBack: () => void }) {
         sub: '僅限 Executive 合夥人',
         href: '/profile',
         highlight: false,
-        status: 'partner',
+        status: 'partner' as const,
+        onClick: undefined,
       },
       {
         icon: Vote,
@@ -108,16 +140,18 @@ export default function MePage({ onBack }: { onBack: () => void }) {
         sub: '參與實驗室決策',
         href: '/profile',
         highlight: false,
-        status: 'partner',
+        status: 'partner' as const,
+        onClick: undefined,
       },
     ] : [
       {
         icon: Star,
         label: '升級為合夥人',
-        sub: '解鎖分紅 · 治理 · 邀請函',
-        href: '/profile',
+        sub: '解鎖分紅 · 治理 · 邀請函 · 冷錢包導出',
+        href: '/wallet',
         highlight: false,
-        status: 'upgrade',
+        status: 'upgrade' as const,
+        onClick: undefined,
       },
     ]),
   ];
@@ -152,8 +186,10 @@ export default function MePage({ onBack }: { onBack: () => void }) {
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.18) 0%, rgba(201,169,110,0.06) 100%)', border: `1px solid ${tierStyle.border}` }}>
               {isPartner
-                ? <Star className="w-7 h-7" style={{ color: '#C9A96E' }} />
-                : <Users className="w-7 h-7" style={{ color: 'rgba(201,169,110,0.55)' }} />
+                ? <Crown className="w-7 h-7" style={{ color: '#C9A96E' }} />
+                : isProfessional
+                  ? <Star className="w-7 h-7" style={{ color: '#64B5F6' }} />
+                  : <Users className="w-7 h-7" style={{ color: 'rgba(201,169,110,0.55)' }} />
               }
             </div>
 
@@ -171,12 +207,17 @@ export default function MePage({ onBack }: { onBack: () => void }) {
                 )}
               </div>
 
-              {/* Tier badge */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold"
-                style={{ background: tierStyle.bg, border: `1px solid ${tierStyle.border}`, color: tierStyle.color }}>
-                {isPartner && <Star className="w-3 h-3" />}
-                {TIER_LABEL[tier] ?? 'Basic · 標準版'}
-              </div>
+              {/* Tier badge - clickable for demo */}
+              <button 
+                onClick={cycleTier}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all hover:scale-105"
+                style={{ background: tierStyle.bg, border: `1px solid ${tierStyle.border}`, color: tierStyle.color }}
+              >
+                {isPartner && <Crown className="w-3 h-3" />}
+                {isProfessional && <Star className="w-3 h-3" />}
+                {TIER_LABEL[tier]}
+                <span className="text-[8px] opacity-50 ml-1">(點擊切換)</span>
+              </button>
             </div>
           </div>
 
@@ -188,10 +229,30 @@ export default function MePage({ onBack }: { onBack: () => void }) {
               <span className="text-xs" style={{ color: 'rgba(201,169,110,0.7)' }}>$FAC 餘額</span>
             </div>
             <a href="/wallet" className="flex items-center gap-2 text-sm font-bold tabular-nums wallet-balance-shimmer">
-              {facBalance}
+              {wallet.balance.toLocaleString()}
               <span className="text-xs font-normal" style={{ color: 'rgba(201,169,110,0.6)' }}>$FAC</span>
               <ChevronRight className="w-3.5 h-3.5" style={{ color: 'rgba(201,169,110,0.5)' }} />
             </a>
+          </div>
+
+          {/* Tier Benefits Summary */}
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="text-center p-2 bg-white/5 rounded-lg">
+              <p className="text-xs text-gray-400">解碼折扣</p>
+              <p className="text-sm font-bold text-[#C9A96E]">
+                {TIER_CONFIG[tier].features.decodeDiscount > 0 
+                  ? `${(TIER_CONFIG[tier].features.decodeDiscount * 100).toFixed(0)}%` 
+                  : '—'}
+              </p>
+            </div>
+            <div className="text-center p-2 bg-white/5 rounded-lg">
+              <p className="text-xs text-gray-400">深度解碼</p>
+              <p className="text-sm font-bold text-white">{TIER_CONFIG[tier].facCosts.deepDecode}</p>
+            </div>
+            <div className="text-center p-2 bg-white/5 rounded-lg">
+              <p className="text-xs text-gray-400">LinkedIn獎勵</p>
+              <p className="text-sm font-bold text-[#C9A96E]">+{TIER_CONFIG[tier].facRewards.linkedinAuth}</p>
+            </div>
           </div>
 
           {/* Login CTA if not logged in */}
@@ -200,7 +261,7 @@ export default function MePage({ onBack }: { onBack: () => void }) {
               className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all"
               style={{ background: 'linear-gradient(135deg, #C9A96E 0%, #a8883a 100%)', color: '#0A1628' }}>
               <LogIn className="w-4 h-4" />
-              LinkedIn 登入，即領 80 $FAC
+              LinkedIn 登入，即領 {TIER_CONFIG[tier].facRewards.linkedinAuth} $FAC
             </a>
           )}
         </div>
@@ -213,10 +274,16 @@ export default function MePage({ onBack }: { onBack: () => void }) {
           <div className="px-5 py-3 border-b" style={{ borderColor: 'rgba(201,169,110,0.12)' }}>
             <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(201,169,110,0.6)' }}>功能菜單</p>
           </div>
-          {quickActions.map(({ icon: Icon, label, sub, href, status }, idx) => (
+          {quickActions.map(({ icon: Icon, label, sub, href, status, onClick }, idx) => (
             <a
               key={label}
               href={href}
+              onClick={(e) => {
+                if (onClick) {
+                  e.preventDefault();
+                  onClick();
+                }
+              }}
               className="flex items-center gap-4 px-5 py-4 transition-colors"
               style={{
                 borderBottom: idx < quickActions.length - 1 ? '1px solid rgba(201,169,110,0.07)' : 'none',
@@ -309,7 +376,7 @@ export default function MePage({ onBack }: { onBack: () => void }) {
                   style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)', color: 'rgba(201,169,110,0.6)' }}>
                   香港公司條例第 622 章擔保有限公司
                 </span>
-                <span className="text-[10px]" style={{ color: 'rgba(237,232,223,0.3)' }}>版本 V3.0 · 2025</span>
+                <span className="text-[10px]" style={{ color: 'rgba(237,232,223,0.3)' }}>版本 V5.1 · 2026</span>
               </div>
             </div>
           )}
@@ -318,13 +385,21 @@ export default function MePage({ onBack }: { onBack: () => void }) {
         {/* ── 版本資訊 ── */}
         <div className="text-center space-y-1 mt-2">
           <p className="text-xs" style={{ color: 'rgba(237,232,223,0.25)' }}>
-            FAC · 港匠匯 · 智慧傳承平台 V3.0
+            FAC · 港匠匯 · 智慧傳承平台 V5.1-ALPHA
           </p>
           <p className="text-[10px]" style={{ color: 'rgba(237,232,223,0.18)' }}>
             CAS Laboratory · 非盈利 · 數據主權歸用戶
           </p>
         </div>
       </div>
+
+      {/* Invitation Card Generator Modal */}
+      <InvitationCardGenerator
+        isOpen={showInviteGenerator}
+        onClose={() => setShowInviteGenerator(false)}
+        userName="FAC Member"
+        userTier={tier}
+      />
     </div>
   );
 }

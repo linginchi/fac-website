@@ -6,7 +6,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useIdentity } from '../contexts/IdentityContext';
-import { Search, Briefcase, ArrowRight } from 'lucide-react';
+import { Search, Briefcase, ArrowRight, Mic } from 'lucide-react';
 
 // Party A（甲方/需求方）关键词 - 寻找服务
 const PARTY_A_KEYWORDS = [

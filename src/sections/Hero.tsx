@@ -8,6 +8,7 @@ import { useWallet } from '../context/WalletContext';
 import { useTranslation } from 'react-i18next';
 import { useIdentity } from '../contexts/IdentityContext';
 import OmniBox from '../components/OmniBox';
+import VoiceUniversalBox from '../components/VoiceUniversalBox';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const DECODE_COST = 10;
@@ -142,6 +143,7 @@ export default function Hero() {
   const [commandValue, setCommandValue]     = useState('');
   const [isFocused, _setIsFocused]          = useState(false);
   const [isMicPulsing, setIsMicPulsing]     = useState(false);
+  const [isVoiceBoxOpen, setIsVoiceBoxOpen] = useState(false);
   const [agentPhase, setAgentPhase]         = useState<AgentPhase>('idle');
   const [thinkingStep, setThinkingStep]     = useState(0);
   const [userMode, setUserMode]             = useState<UserMode>(null);
@@ -412,6 +414,17 @@ export default function Hero() {
           )}
           <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4" style={{ maxWidth: '740px' }}>
             <OmniBox />
+            <button
+              onClick={() => setIsVoiceBoxOpen(true)}
+              className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #C9A96E 0%, #D4AF37 100%)',
+                boxShadow: '0 4px 16px rgba(201,169,110,0.3)',
+              }}
+              title="语音输入"
+            >
+              <Mic className="w-5 h-5 text-[#0A1628]" />
+            </button>
           </div>
           {/* Placeholder for removed Agent Bubble - keep ref to avoid GSAP issues */}
           {false && (
@@ -800,6 +813,18 @@ export default function Hero() {
         {/* ctaRef kept as invisible anchor for GSAP; no visible buttons */}
         <div ref={ctaRef} className="opacity-0 h-0 overflow-hidden" aria-hidden="true" />
       </div>
+
+      {/* Voice Universal Box Modal */}
+      <VoiceUniversalBox
+        isOpen={isVoiceBoxOpen}
+        onClose={() => setIsVoiceBoxOpen(false)}
+        onSubmit={(text, isVoice) => {
+          setCommandValue(text);
+          if (isVoice) {
+            playSuccessBeep();
+          }
+        }}
+      />
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2">

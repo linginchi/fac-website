@@ -40,6 +40,118 @@ export const SKILL_CATEGORY_LABELS: Record<SkillCategory, string> = {
   other: '其他专长',
 };
 
+// ==================== Membership Tiers (V5.1 用户分级) ====================
+
+export type MembershipTier = 'basic' | 'professional' | 'executive';
+
+export interface TierBenefits {
+  name: string;
+  monthlyFee: number;
+  yearlyFee: number;
+  facRewards: {
+    linkedinAuth: number;
+    linkedinSync: number;
+    profileComplete: number;
+    voiceInput: number;
+    feedback: number;
+  };
+  facCosts: {
+    basicDecode: number;
+    deepDecode: number;
+    privateChat: number;
+  };
+  features: {
+    vaultAccess: boolean;
+    priorityMatching: boolean;
+    coldWalletExport: boolean;
+    governanceVote: boolean;
+    blackGoldInvite: boolean;
+    revenueShare: boolean;
+    decodeDiscount: number;
+  };
+}
+
+export const TIER_CONFIG: Record<MembershipTier, TierBenefits> = {
+  basic: {
+    name: 'Basic',
+    monthlyFee: 0,
+    yearlyFee: 0,
+    facRewards: {
+      linkedinAuth: 80,
+      linkedinSync: 50,
+      profileComplete: 20,
+      voiceInput: 50,
+      feedback: 30,
+    },
+    facCosts: {
+      basicDecode: 10,
+      deepDecode: 50,
+      privateChat: 100,
+    },
+    features: {
+      vaultAccess: true,
+      priorityMatching: false,
+      coldWalletExport: false,
+      governanceVote: false,
+      blackGoldInvite: false,
+      revenueShare: false,
+      decodeDiscount: 0,
+    },
+  },
+  professional: {
+    name: 'Professional',
+    monthlyFee: 99,
+    yearlyFee: 999,
+    facRewards: {
+      linkedinAuth: 100,
+      linkedinSync: 75,
+      profileComplete: 30,
+      voiceInput: 75,
+      feedback: 50,
+    },
+    facCosts: {
+      basicDecode: 8,
+      deepDecode: 40,
+      privateChat: 80,
+    },
+    features: {
+      vaultAccess: true,
+      priorityMatching: true,
+      coldWalletExport: false,
+      governanceVote: false,
+      blackGoldInvite: false,
+      revenueShare: false,
+      decodeDiscount: 0.2,
+    },
+  },
+  executive: {
+    name: 'Executive / Partner',
+    monthlyFee: 299,
+    yearlyFee: 2999,
+    facRewards: {
+      linkedinAuth: 150,
+      linkedinSync: 100,
+      profileComplete: 50,
+      voiceInput: 100,
+      feedback: 80,
+    },
+    facCosts: {
+      basicDecode: 5,
+      deepDecode: 25,
+      privateChat: 50,
+    },
+    features: {
+      vaultAccess: true,
+      priorityMatching: true,
+      coldWalletExport: true,
+      governanceVote: true,
+      blackGoldInvite: true,
+      revenueShare: true,
+      decodeDiscount: 0.5,
+    },
+  },
+};
+
 // ==================== LinkedIn Integration ====================
 
 export interface LinkedInExperience {
@@ -64,8 +176,9 @@ export interface UserProfile {
   // 隐私设置
   vaultVisibility: 'private' | 'partial' | 'public';
   
-  // 会员等级（简化版本）
-  membershipTier: 'basic' | 'verified';
+  // V5.1: 会员等级（完整版本）
+  membershipTier: MembershipTier;
+  membershipExpiresAt?: string; // ISO date
   
   // 身份状态
   currentRole: 'A' | 'B' | 'neutral';
@@ -80,6 +193,12 @@ export interface UserProfile {
   
   // 隐私授权记录
   privacyAuthorizations: PrivacyAuthorization[];
+  
+  // V5.1: 邀请码相关
+  inviteCode?: string;
+  invitedBy?: string;
+  referralCount: number;
+  referralRevenue: number;
   
   createdAt: string;
   updatedAt: string;
@@ -138,6 +257,10 @@ export interface Task {
   depositAmount: number;    // 30% 订金
   platformFee: number;      // 平台维护费（固定低额）
   
+  // V5.1: Executive 分紅
+  referrerId?: string;
+  referralFee: number;
+  
   // 状态
   status: TaskStatus;
   
@@ -191,6 +314,44 @@ export const DEFAULT_PLATFORM_FEE: PlatformFee = {
   },
 };
 
+// ==================== $FAC Token Economy ====================
+
+export type FacTransactionType = 
+  | 'reward_linkedin_auth'
+  | 'reward_linkedin_sync'
+  | 'reward_profile_complete'
+  | 'reward_voice_input'
+  | 'reward_feedback'
+  | 'reward_referral'
+  | 'consume_basic_decode'
+  | 'consume_deep_decode'
+  | 'consume_private_chat'
+  | 'revenue_share';
+
+export interface FacTransaction {
+  id: string;
+  userId: string;
+  type: FacTransactionType;
+  amount: number; // 正数为奖励，负数为消耗
+  description: string;
+  relatedTaskId?: string;
+  relatedUserId?: string;
+  createdAt: string;
+}
+
+// ==================== Invitation System ====================
+
+export interface Invitation {
+  id: string;
+  code: string; // e.g., "FAC-A7K2P9"
+  createdBy: string;
+  createdAt: string;
+  usedBy?: string;
+  usedAt?: string;
+  status: 'active' | 'used' | 'expired';
+  discountPercent: number; // 首月折扣
+}
+
 // ==================== Constants ====================
 
 export const DEFAULT_VAULT_VISIBILITY: UserProfile['vaultVisibility'] = 'private';
@@ -198,5 +359,11 @@ export const DEFAULT_VAULT_VISIBILITY: UserProfile['vaultVisibility'] = 'private
 /** 30% 订金比例 */
 export const DEPOSIT_RATE = 0.3;
 
+/** Executive 分紅比例 */
+export const REFERRAL_REVENUE_SHARE = 0.075; // 7.5%
+
 /** 隐私授权有效期（天） */
 export const PRIVACY_AUTH_EXPIRY_DAYS = 30;
+
+/** 邀请码有效期（天） */
+export const INVITE_CODE_EXPIRY_DAYS = 90;

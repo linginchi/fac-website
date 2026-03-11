@@ -21,6 +21,8 @@ import MessagesPage from './pages/MessagesPage';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
 import { IdentityProvider } from './contexts/IdentityContext';
+import { FacProvider } from './contexts/FacContext';
+import { InvitationProvider } from './contexts/InvitationContext';
 import DashboardPage from './pages/DashboardPage';
 import './i18n';
 
@@ -139,6 +141,8 @@ function App() {
 
   return (
     <IdentityProvider>
+      <FacProvider userTier="basic" userId="current_user">
+        <InvitationProvider>
       {isLoading || !authLoaded ? (
         <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
           <div className="text-center">
@@ -176,7 +180,7 @@ function App() {
         </>
       ) : currentView === 'wallet' || window.location.pathname === '/wallet' ? (
         <>
-          <WalletPage onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
+          <WalletPage />
           <BottomNav />
         </>
       ) : currentView === 'article' ? (
@@ -206,6 +210,8 @@ function App() {
           <BottomNav />
         </div>
       )}
+        </InvitationProvider>
+      </FacProvider>
     </IdentityProvider>
   );
 }
