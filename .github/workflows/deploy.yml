@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,14 +37,28 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Clear npm cache
+        run: npm cache clean --force
+
       - name: Install dependencies
-        run: npm ci
+        run: rm -rf node_modules && npm ci
+
+      - name: Verify V5.1 files exist
+        run: |
+          ls -la src/sections/AdminPanelV51.tsx
+          grep -n "V5.1-ALPHA" src/sections/Navbar.tsx | head -5
+          grep -n "Party A" src/pages/DashboardPage.tsx | head -5
 
       - name: Build
         run: npm run build
         env:
           VITE_API_BASE: 'https://api-fac-platform.mark-377.workers.dev'
           TSC_COMPILE_ON_ERROR: true
+
+      - name: Verify build output
+        run: |
+          ls -la dist/
+          grep -r "V5.1-ALPHA" dist/ | head -5 || echo "WARNING: V5.1-ALPHA not found in build"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
