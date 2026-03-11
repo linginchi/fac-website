@@ -11,7 +11,7 @@ import Token from './sections/Token';
 import Footer from './sections/Footer';
 import Article from './sections/Article';
 import AdminLogin from './sections/AdminLogin';
-import AdminPanel from './sections/AdminPanel';
+import AdminPanelV51 from './sections/AdminPanelV51';
 import UserRegister from './sections/UserRegister';
 import WalletPage from './pages/WalletPage';
 import ProfilePage from './pages/ProfilePage';
@@ -20,6 +20,8 @@ import MePage from './pages/MePage';
 import MessagesPage from './pages/MessagesPage';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
+import { IdentityProvider } from './contexts/IdentityContext';
+import DashboardPage from './pages/DashboardPage';
 import './i18n';
 
 // Sample article data for demonstration
@@ -56,9 +58,10 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me' | 'meMessages'>(() => {
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me' | 'meMessages' | 'dashboard'>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
+      if (p === '/dashboard') return 'dashboard';
       if (p === '/register' || p === '/login') return 'register';
       if (p === '/wallet') return 'wallet';
       if (p === '/profile') return 'profile';
@@ -79,10 +82,14 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check URL for admin / register / wallet
+  // Check URL for admin / register / wallet / dashboard
   useEffect(() => {
     const path = window.location.pathname;
     const hash = window.location.hash;
+    if (path === '/dashboard') {
+      setCurrentView('dashboard');
+      return;
+    }
     if (path === '/wallet') {
       setCurrentView('wallet');
       return;
@@ -126,139 +133,80 @@ function App() {
     };
   }, [i18n]);
 
-  if (isLoading || !authLoaded) {
-    return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-        <div className="text-center">
-          <div className="text-4xl font-bold text-white mb-4">
-            F<span className="text-[#FFD700]">A</span>C
-          </div>
-          <div className="w-32 h-0.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-[#FFD700] animate-[shimmer_1s_infinite]" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Admin route (/admin or /admin/tokens)
-  if (currentView === 'admin' || window.location.pathname.startsWith('/admin')) {
-    if (!auth.isAuthenticated) {
-      return <AdminLogin onLogin={() => {}} />;
-    }
-    return <AdminPanel onLogout={() => setCurrentView('home')} />;
-  }
-
-  // User register / login (/register, /login)
-  if (currentView === 'register' || window.location.pathname === '/register' || window.location.pathname === '/login') {
-    return (
-      <UserRegister
-        onBack={() => {
-          setCurrentView('home');
-          window.history.replaceState({}, '', '/');
-        }}
-      />
-    );
-  }
-
-  if (currentView === 'profile' || window.location.pathname === '/profile') {
-    return (
-      <>
-        <ProfilePage
-          onBack={() => {
-            setCurrentView('home');
-            window.history.replaceState({}, '', '/');
-          }}
-        />
-        <BottomNav />
-      </>
-    );
-  }
-
-  if (currentView === 'vault' || window.location.pathname === '/vault') {
-    return (
-      <>
-        <VaultPage
-          onBack={() => {
-            setCurrentView('home');
-            window.history.replaceState({}, '', '/');
-          }}
-        />
-        <BottomNav />
-      </>
-    );
-  }
-
-  if (currentView === 'meMessages' || window.location.pathname === '/me/messages') {
-    return (
-      <>
-        <MessagesPage
-          onBack={() => {
-            setCurrentView('me');
-            window.history.replaceState({}, '', '/me');
-          }}
-        />
-        <BottomNav />
-      </>
-    );
-  }
-
-  if (currentView === 'me' || window.location.pathname === '/me') {
-    return (
-      <>
-        <MePage
-          onBack={() => {
-            setCurrentView('home');
-            window.history.replaceState({}, '', '/');
-          }}
-        />
-        <BottomNav />
-      </>
-    );
-  }
-
-  if (currentView === 'wallet' || window.location.pathname === '/wallet') {
-    return (
-      <>
-        <WalletPage
-          onBack={() => {
-            setCurrentView('home');
-            window.history.replaceState({}, '', '/');
-          }}
-        />
-        <BottomNav />
-      </>
-    );
-  }
-
-  if (currentView === 'article') {
-    return (
-      <Article
-        title={sampleArticle.title}
-        content={sampleArticle.content}
-        date={sampleArticle.date}
-        author={sampleArticle.author}
-        image={sampleArticle.image}
-        onBack={() => setCurrentView('home')}
-      />
-    );
-  }
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const dashboardView = params?.get('view') ?? null;
+  const dashboardIntent = params?.get('intent') ?? null;
 
   return (
-    <div className="min-h-screen bg-black">
-      <Navbar />
-      <main className="pb-20 md:pb-0">
-        <Hero />
-        <About />
-        <Stats />
-        <Services />
-        <Token />
-        <Partners />
-        <Contact />
-      </main>
-      <Footer />
-      <BottomNav />
-    </div>
+    <IdentityProvider>
+      {isLoading || !authLoaded ? (
+        <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-white mb-4">
+              F<span className="text-[#FFD700]">A</span>C
+            </div>
+            <div className="w-32 h-0.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-[#FFD700] animate-[shimmer_1s_infinite]" />
+            </div>
+          </div>
+        </div>
+      ) : currentView === 'admin' || window.location.pathname.startsWith('/admin') ? (
+        !auth.isAuthenticated ? <AdminLogin onLogin={() => {}} /> : <AdminPanelV51 onLogout={() => setCurrentView('home')} />
+      ) : currentView === 'register' || window.location.pathname === '/register' || window.location.pathname === '/login' ? (
+        <UserRegister onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
+      ) : currentView === 'profile' || window.location.pathname === '/profile' ? (
+        <>
+          <ProfilePage onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
+          <BottomNav />
+        </>
+      ) : currentView === 'vault' || window.location.pathname === '/vault' ? (
+        <>
+          <VaultPage onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
+          <BottomNav />
+        </>
+      ) : currentView === 'meMessages' || window.location.pathname === '/me/messages' ? (
+        <>
+          <MessagesPage onBack={() => { setCurrentView('me'); window.history.replaceState({}, '', '/me'); }} />
+          <BottomNav />
+        </>
+      ) : currentView === 'me' || window.location.pathname === '/me' ? (
+        <>
+          <MePage onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
+          <BottomNav />
+        </>
+      ) : currentView === 'wallet' || window.location.pathname === '/wallet' ? (
+        <>
+          <WalletPage onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
+          <BottomNav />
+        </>
+      ) : currentView === 'article' ? (
+        <Article
+          title={sampleArticle.title}
+          content={sampleArticle.content}
+          date={sampleArticle.date}
+          author={sampleArticle.author}
+          image={sampleArticle.image}
+          onBack={() => setCurrentView('home')}
+        />
+      ) : currentView === 'dashboard' || window.location.pathname === '/dashboard' ? (
+        <DashboardPage view={dashboardView} intent={dashboardIntent} />
+      ) : (
+        <div className="min-h-screen bg-black">
+          <Navbar />
+          <main className="pb-20 md:pb-0">
+            <Hero />
+            <About />
+            <Stats />
+            <Services />
+            <Token />
+            <Partners />
+            <Contact />
+          </main>
+          <Footer />
+          <BottomNav />
+        </div>
+      )}
+    </IdentityProvider>
   );
 }
 

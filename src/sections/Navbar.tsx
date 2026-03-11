@@ -1,7 +1,14 @@
-import { useState, useEffect } from 'react';
+/**
+ * FAC Platform V5.1 - Navbar
+ * P0 要求：Logo 点击必须执行 重置意图 -> 重置身份 -> 回归首页
+ */
+
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, Globe, Coins, User } from 'lucide-react';
+import { Menu, X, Globe, Coins, User, Sparkles } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
+import { useIdentity } from '../contexts/IdentityContext';
+import gsap from 'gsap';
 
 const languages = [
   { code: 'zh-HK', label: '繁體' },
@@ -9,12 +16,47 @@ const languages = [
   { code: 'en', label: 'EN' }
 ];
 
+// V5.1-ALPHA 版本标记
+const VERSION_TAG = 'V5.1-ALPHA';
+
 export default function Navbar() {
   const { t, i18n } = useTranslation();
   const { facBalance } = useWallet();
+  const { resetIdentity, identityContext } = useIdentity();
+  const logoRef = useRef<HTMLAnchorElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
+  /**
+   * P0 优先级：Logo 点击行为
+   * 1. 重置意图 (resetIdentity)
+   * 2. 重置身份 (清除 localStorage)
+   * 3. 回归首页 (window.location.href = '/')
+   */
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // 1. 重置身份和意图
+    resetIdentity();
+    
+    // 2. 视觉反馈
+    if (logoRef.current) {
+      gsap.fromTo(
+        logoRef.current, 
+        { boxShadow: '0 0 0 0 rgba(201,169,110,0)' }, 
+        { 
+          boxShadow: '0 0 24px 4px rgba(201,169,110,0.5)', 
+          duration: 0.15, 
+          yoyo: true, 
+          repeat: 1 
+        }
+      );
+    }
+    
+    // 3. 回归首页
+    window.location.href = '/';
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,7 +70,6 @@ export default function Navbar() {
     { key: 'home', href: '#hero' },
     { key: 'about', href: '#about' },
     { key: 'services', href: '#services' },
-    { key: 'token', href: '#token' },
     { key: 'partners', href: '#partners' },
     { key: 'contact', href: '#contact' }
   ];
@@ -46,6 +87,15 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
   };
 
+  // 根据当前身份获取颜色
+  const getIdentityColor = () => {
+    switch (identityContext) {
+      case 'A': return '#64B5F6'; // 甲方 - 蓝色
+      case 'B': return '#81C784'; // 乙方 - 绿色
+      default: return 'var(--champagne)';
+    }
+  };
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
@@ -56,18 +106,19 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between">
-          {/* Logo — FAC | 港匠匯 · CAS Laboratory */}
+          {/* 
+            Logo — FAC | 港匠匯
+            P0: 点击重置身份 + 回归首页
+          */}
           <a
-            href="#hero"
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToSection('#hero');
-            }}
-            className="flex items-center gap-2 group"
+            ref={logoRef}
+            href="/"
+            onClick={handleLogoClick}
+            className="flex items-center gap-2 group rounded-lg transition-shadow"
           >
             {/* FAC wordmark */}
             <span className="text-xl lg:text-2xl font-bold tracking-wide" style={{ color: 'var(--off-white)' }}>
-              F<span style={{ color: 'var(--champagne)' }}>A</span>C
+              F<span style={{ color: getIdentityColor() }}>A</span>C
             </span>
 
             {/* Divider */}
@@ -75,7 +126,7 @@ export default function Navbar() {
               &nbsp;|&nbsp;
             </span>
 
-            {/* Brand name + CAS attribution — full i18n */}
+            {/* Brand name + CAS attribution */}
             <div className="hidden sm:flex flex-col leading-tight gap-[3px] min-w-0 max-w-[min(42vw,280px)]">
               <span
                 className="font-semibold break-words"
@@ -101,7 +152,7 @@ export default function Navbar() {
               </span>
             </div>
 
-            {/* Mobile: localized title only, wrap if EN */}
+            {/* Mobile: localized title only */}
             <span
               className="sm:hidden font-semibold break-words max-w-[55vw]"
               style={{
@@ -112,6 +163,19 @@ export default function Navbar() {
               }}
             >
               {t('brand.title')}
+            </span>
+
+            {/* V5.1-ALPHA 版本标记 */}
+            <span 
+              className="hidden lg:inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ml-2"
+              style={{
+                background: 'rgba(201,169,110,0.1)',
+                border: '1px solid rgba(201,169,110,0.25)',
+                color: 'rgba(201,169,110,0.7)',
+              }}
+            >
+              <Sparkles className="w-3 h-3" />
+              {VERSION_TAG}
             </span>
           </a>
 
@@ -137,6 +201,20 @@ export default function Navbar() {
 
           {/* Right Side */}
           <div className="hidden lg:flex items-center gap-4">
+            {/* 当前身份指示器 */}
+            {identityContext !== 'neutral' && (
+              <span 
+                className="text-xs px-2.5 py-1 rounded-full font-medium"
+                style={{
+                  background: identityContext === 'A' ? 'rgba(33,150,243,0.1)' : 'rgba(76,175,80,0.1)',
+                  border: `1px solid ${identityContext === 'A' ? 'rgba(33,150,243,0.3)' : 'rgba(76,175,80,0.3)'}`,
+                  color: identityContext === 'A' ? '#64B5F6' : '#81C784'
+                }}
+              >
+                {identityContext === 'A' ? '甲方' : '乙方'}
+              </span>
+            )}
+
             {/* Language Selector */}
             <div className="relative">
               <button
@@ -182,14 +260,15 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* 餘額：香檳金 + 細微閃爍，點擊進入 /wallet */}
+            {/* $FAC 余额 */}
             <a
               href="/wallet"
               className="flex items-center gap-2 text-sm font-medium tabular-nums wallet-balance-shimmer"
             >
               <Coins className="w-4 h-4" />
-              <span>餘額: {facBalance} $FAC</span>
+              <span>{facBalance} $FAC</span>
             </a>
+
             <a
               href="/profile"
               className="flex items-center gap-1.5 text-sm transition-colors duration-300"
@@ -198,17 +277,9 @@ export default function Navbar() {
               onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
             >
               <User className="w-4 h-4" />
-              個人中心
+              个人中心
             </a>
-            <a
-              href="/register"
-              className="text-sm transition-colors duration-300"
-              style={{ color: 'rgba(237,232,223,0.8)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
-            >
-              註冊 / 登入
-            </a>
+
             {/* CTA Button */}
             <button
               onClick={() => scrollToSection('#hero')}
@@ -236,6 +307,33 @@ export default function Navbar() {
           style={{ borderTop: '1px solid rgba(201,169,110,0.15)' }}
         >
           <div className="px-6 py-6 space-y-4">
+            {/* 版本标记 (移动端) */}
+            <div 
+              className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-4"
+              style={{
+                background: 'rgba(201,169,110,0.08)',
+                border: '1px solid rgba(201,169,110,0.2)',
+                color: 'rgba(201,169,110,0.7)',
+              }}
+            >
+              <Sparkles className="w-3 h-3" />
+              FAC Platform {VERSION_TAG}
+            </div>
+
+            {/* 当前身份显示 */}
+            {identityContext !== 'neutral' && (
+              <div 
+                className="px-3 py-2 rounded-lg text-sm"
+                style={{
+                  background: identityContext === 'A' ? 'rgba(33,150,243,0.1)' : 'rgba(76,175,80,0.1)',
+                  border: `1px solid ${identityContext === 'A' ? 'rgba(33,150,243,0.3)' : 'rgba(76,175,80,0.3)'}`,
+                  color: identityContext === 'A' ? '#64B5F6' : '#81C784'
+                }}
+              >
+                当前身份：{identityContext === 'A' ? '甲方（需求方）' : '乙方（提供方）'}
+              </div>
+            )}
+
             {navLinks.map((link) => (
               <a
                 key={link.key}
@@ -274,23 +372,18 @@ export default function Navbar() {
               className="flex items-center justify-center gap-2 py-3 text-sm font-medium wallet-balance-shimmer"
             >
               <Coins className="w-4 h-4" />
-              餘額: {facBalance} $FAC
+              余额: {facBalance} $FAC
             </a>
+
             <a
               href="/profile"
               className="flex items-center justify-center gap-2 py-3 text-sm"
               style={{ color: 'rgba(237,232,223,0.8)' }}
             >
               <User className="w-4 h-4" />
-              個人中心
+              个人中心
             </a>
-            <a
-              href="/register"
-              className="block text-center py-3 border rounded-lg transition-colors mt-4"
-              style={{ borderColor: 'rgba(201,169,110,0.35)', color: 'var(--champagne)' }}
-            >
-              註冊 / 登入
-            </a>
+
             <button
               onClick={() => scrollToSection('#hero')}
               className="btn-gold w-full mt-4"

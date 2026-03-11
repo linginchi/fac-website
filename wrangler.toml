@@ -1,0 +1,52 @@
+# FAC Platform V5.1 - Cloudflare Workers Configuration
+# Backend API for GitHub Pages frontend
+# Frontend: https://www.hkfac.com
+
+name = "api-fac-platform"
+main = "functions/api/[[path]].ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 启用 Workers 子域名 (默认)
+workers_dev = true
+
+# ============================================
+# D1 Database Binding
+# ============================================
+[[d1_databases]]
+binding = "DB"
+database_name = "fac-platform-db-prod"
+database_id = "1dd7183b-4877-4e75-843f-45ba9f629de3"
+
+# ============================================
+# KV Namespace (for session/cache)
+# ============================================
+[[kv_namespaces]]
+binding = "CACHE"
+id = "4e81d990afae4fddb7c743d87dab7232"
+
+# ============================================
+# Environment Variables
+# ============================================
+[vars]
+PLATFORM_VERSION = "V5.1-ALPHA"
+PLATFORM_NAME = "港匠匯 FAC"
+DEPOSIT_RATE = "0.3"
+PLATFORM_FEE = "50"
+
+# ============================================
+# 开发环境
+# ============================================
+[env.development]
+vars = { ENVIRONMENT = "development" }
+
+# ============================================
+# 生产环境
+# ============================================
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "fac-platform-db-prod"
+database_id = "1dd7183b-4877-4e75-843f-45ba9f629de3"

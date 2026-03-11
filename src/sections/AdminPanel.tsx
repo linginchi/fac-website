@@ -4,6 +4,7 @@ import { useTeamMembers, type TeamMember } from '../hooks/useTeamMembers';
 import { usePartners } from '../hooks/usePartners';
 import { useContactKB } from '../hooks/useContactKB';
 import { useSiteConfig } from '../hooks/useSiteConfig';
+import Pagination from '../components/Pagination';
 import { 
   Users, Settings, FileText, LogOut, Plus, Edit2, Trash2, Save, Upload, 
   ChevronDown, ChevronUp, Globe, Mail, RefreshCw, BarChart3,
@@ -204,23 +205,104 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const [replyDraft, setReplyDraft] = useState('');
   const [syncToKB, setSyncToKB] = useState(true);
   const [inboxToast, setInboxToast] = useState('');
-  
+  const [teamPage, setTeamPage] = useState(1);
+  const [teamPageSize, setTeamPageSize] = useState(10);
+  const [partnerPage, setPartnerPage] = useState(1);
+  const [partnerPageSize, setPartnerPageSize] = useState(10);
+
+  // ─── URL 參數同步（T-001.1）：讀取 ?tab=team&page=1&size=10，支持前進/後退
+  const PAGE_SIZE_OPTIONS = [10, 20, 50];
+  const readPaginationFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const path = window.location.pathname;
+    if (path === '/admin/partners') {
+      const p = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1);
+      const s = PAGE_SIZE_OPTIONS.includes(Number(params.get('size'))) ? Number(params.get('size')) : 10;
+      setPartnerPage(p);
+      setPartnerPageSize(s);
+      return;
+    }
+    if (path === '/admin') {
+      const p = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1);
+      const s = PAGE_SIZE_OPTIONS.includes(Number(params.get('size'))) ? Number(params.get('size')) : 10;
+      setTeamPage(p);
+      setTeamPageSize(s);
+    }
+  };
+
   useEffect(() => {
     if (window.location.pathname === '/admin/tokens') setActiveTab('tokens');
     if (window.location.pathname === '/admin/pricing') setActiveTab('pricing');
     if (window.location.pathname === '/admin/partner') setActiveTab('partner');
-    if (window.location.pathname === '/admin/partners') setActiveTab('partnersCms');
+    if (window.location.pathname === '/admin/partners') {
+      setActiveTab('partnersCms');
+      readPaginationFromUrl();
+    }
     if (window.location.pathname === '/admin/inbox') setActiveTab('inbox');
+    if (window.location.pathname === '/admin') {
+      readPaginationFromUrl();
+    }
   }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const path = window.location.pathname;
+      if (path === '/admin/partners') {
+        setActiveTab('partnersCms');
+        readPaginationFromUrl();
+      } else if (path === '/admin') {
+        setActiveTab('team');
+        readPaginationFromUrl();
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const syncTeamPaginationToUrl = (page: number, size: number) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', 'team');
+    params.set('page', String(page));
+    params.set('size', String(size));
+    const search = params.toString();
+    window.history.replaceState({}, '', `/admin${search ? `?${search}` : ''}`);
+  };
+
+  const syncPartnerPaginationToUrl = (page: number, size: number) => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('size', String(size));
+    window.history.replaceState({}, '', `/admin/partners?${params.toString()}`);
+  };
 
   const switchToTab = (tab: 'team' | 'content' | 'settings' | 'stats' | 'tokens' | 'pricing' | 'partner' | 'partnersCms' | 'inbox' | 'filtered') => {
     setActiveTab(tab);
     if (tab === 'tokens') window.history.replaceState({}, '', '/admin/tokens');
     if (tab === 'pricing') window.history.replaceState({}, '', '/admin/pricing');
     if (tab === 'partner') window.history.replaceState({}, '', '/admin/partner');
-    if (tab === 'partnersCms') window.history.replaceState({}, '', '/admin/partners');
+    if (tab === 'partnersCms') {
+      window.history.replaceState({}, '', '/admin/partners');
+      syncPartnerPaginationToUrl(partnerPage, partnerPageSize);
+    }
     if (tab === 'inbox') window.history.replaceState({}, '', '/admin/inbox');
+    if (tab === 'team') {
+      window.history.replaceState({}, '', '/admin');
+      syncTeamPaginationToUrl(teamPage, teamPageSize);
+    }
   };
+
+  // 分頁或每頁筆數變更時寫回 URL，支持前進/後退恢復狀態
+  useEffect(() => {
+    if (activeTab === 'team' && window.location.pathname === '/admin') {
+      syncTeamPaginationToUrl(teamPage, teamPageSize);
+    }
+  }, [activeTab, teamPage, teamPageSize]);
+
+  useEffect(() => {
+    if (activeTab === 'partnersCms' && window.location.pathname === '/admin/partners') {
+      syncPartnerPaginationToUrl(partnerPage, partnerPageSize);
+    }
+  }, [activeTab, partnerPage, partnerPageSize]);
 
   const STORAGE_AI_FILTERED = 'fac_ai_filtered';
   const [filteredList, setFilteredList] = useState<Array<{ text: string; at: string }>>([]);
@@ -295,6 +377,9 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         ...memberForm,
         order: members.length + 1
       });
+      const newTotal = members.length + 1;
+      const lastPage = Math.max(1, Math.ceil(newTotal / teamPageSize));
+      setTeamPage(lastPage);
     }
     
     resetMemberForm();
@@ -328,7 +413,21 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
 
   const handleDeleteMember = (id: string) => {
     if (confirm('确定要删除这位团队成员吗？')) {
+      const newLength = members.length - 1;
+      if (newLength <= (teamPage - 1) * teamPageSize) {
+        setTeamPage(Math.max(1, teamPage - 1));
+      }
       deleteMember(id);
+    }
+  };
+
+  const handleDeletePartner = (id: string) => {
+    if (confirm('確定刪除？')) {
+      const newLength = partners.length - 1;
+      if (newLength <= (partnerPage - 1) * partnerPageSize) {
+        setPartnerPage(Math.max(1, partnerPage - 1));
+      }
+      deletePartner(id);
     }
   };
 
@@ -353,6 +452,34 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     newFeatures[index] = value;
     updateConfig('about', { [field]: newFeatures });
   };
+
+  // Pagination guards for team and partners
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(members.length / teamPageSize));
+    if (teamPage > totalPages) {
+      setTeamPage(totalPages);
+    }
+  }, [members.length, teamPage, teamPageSize]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(partners.length / partnerPageSize));
+    if (partnerPage > totalPages) {
+      setPartnerPage(totalPages);
+    }
+  }, [partners.length, partnerPage, partnerPageSize]);
+
+  const pagedMembers =
+    members.length === 0
+      ? []
+      : members.slice((teamPage - 1) * teamPageSize, teamPage * teamPageSize);
+
+  const pagedPartners =
+    partners.length === 0
+      ? []
+      : partners.slice(
+          (partnerPage - 1) * partnerPageSize,
+          partnerPage * partnerPageSize
+        );
 
   return (
     <div className="min-h-screen bg-black">
@@ -666,58 +793,80 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 {/* Members List */}
                 <div className="bg-white/5 rounded-2xl overflow-hidden">
                   <div className="divide-y divide-white/10">
-                    {members.map((member, index) => (
-                      <div key={member.id} className="flex items-center gap-4 px-6 py-4">
-                        <div className="flex flex-col gap-1">
-                          <button
-                            onClick={() => handleMoveMember(index, 'up')}
-                            disabled={index === 0}
-                            className="text-white/30 hover:text-[#FFD700] disabled:opacity-30"
-                          >
-                            <ChevronUp className="w-4 h-4" />
-                          </button>
-                          <span className="text-center text-white/50 text-xs">{member.order}</span>
-                          <button
-                            onClick={() => handleMoveMember(index, 'down')}
-                            disabled={index === members.length - 1}
-                            className="text-white/30 hover:text-[#FFD700] disabled:opacity-30"
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        <img src={member.image} alt={member.name} className="w-12 h-12 rounded-lg object-cover" />
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-white font-medium">{member.name}</span>
-                            <span className="text-white/30">/</span>
-                            <span className="text-white/60 text-sm">{member.nameEn}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[#FFD700] text-sm">{member.role}</span>
-                            <span className="text-white/30">/</span>
-                            <span className="text-white/50 text-sm">{member.roleEn}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditMember(member)}
-                            className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#FFD700]/20"
-                          >
-                            <Edit2 className="w-4 h-4 text-white/60" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteMember(member.id)}
-                            className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-red-500/20"
-                          >
-                            <Trash2 className="w-4 h-4 text-white/60" />
-                          </button>
-                        </div>
+                    {pagedMembers.length === 0 ? (
+                      <div className="px-6 py-8 text-center text-sm text-white/50">
+                        暫無數據
                       </div>
-                    ))}
+                    ) : (
+                      pagedMembers.map((member, index) => {
+                        const globalIndex = (teamPage - 1) * teamPageSize + index;
+                        const isFirst = globalIndex === 0;
+                        const isLast = globalIndex === members.length - 1;
+                        return (
+                          <div key={member.id} className="flex items-center gap-4 px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              <button
+                                onClick={() => handleMoveMember(globalIndex, 'up')}
+                                disabled={isFirst}
+                                className="text-white/30 hover:text-[#FFD700] disabled:opacity-30"
+                              >
+                                <ChevronUp className="w-4 h-4" />
+                              </button>
+                              <span className="text-center text-white/50 text-xs">{member.order}</span>
+                              <button
+                                onClick={() => handleMoveMember(globalIndex, 'down')}
+                                disabled={isLast}
+                                className="text-white/30 hover:text-[#FFD700] disabled:opacity-30"
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            <img src={member.image} alt={member.name} className="w-12 h-12 rounded-lg object-cover" />
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-white font-medium">{member.name}</span>
+                                <span className="text-white/30">/</span>
+                                <span className="text-white/60 text-sm">{member.nameEn}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[#FFD700] text-sm">{member.role}</span>
+                                <span className="text-white/30">/</span>
+                                <span className="text-white/50 text-sm">{member.roleEn}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEditMember(member)}
+                                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#FFD700]/20"
+                              >
+                                <Edit2 className="w-4 h-4 text-white/60" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMember(member.id)}
+                                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-red-500/20"
+                              >
+                                <Trash2 className="w-4 h-4 text-white/60" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
+                  {members.length > 0 && (
+                    <div className="px-4 pb-4">
+                      <Pagination
+                        total={members.length}
+                        currentPage={teamPage}
+                        pageSize={teamPageSize}
+                        onPageChange={setTeamPage}
+                        onPageSizeChange={setTeamPageSize}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1598,46 +1747,61 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                     <span className="col-span-4">描述</span>
                     <span className="col-span-2 text-right">操作</span>
                   </div>
-                  {partners.map((p) => (
-                    <div key={p.id} className="px-5 py-4 border-b grid grid-cols-12 items-center gap-2" style={{ borderColor: 'rgba(201,169,110,0.08)' }}>
-                      <div className="col-span-1">
-                        {p.logo ? (
-                          <img src={p.logo} alt="" className="w-8 h-8 object-contain rounded" />
-                        ) : (
-                          <span className="text-white/30 text-xs">—</span>
-                        )}
-                      </div>
-                      <div className="col-span-2 font-medium text-white">{p.name}</div>
-                      <div className="col-span-3 truncate text-xs" style={{ color: 'rgba(237,232,223,0.6)' }}>{p.link || '—'}</div>
-                      <div className="col-span-4 truncate text-xs" style={{ color: 'rgba(237,232,223,0.6)' }}>{p.description || '—'}</div>
-                      <div className="col-span-2 text-right flex gap-2 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const name = window.prompt('名稱', p.name);
-                            if (name != null) updatePartner(p.id, { name });
-                            const link = window.prompt('連結', p.link || '');
-                            if (link != null) updatePartner(p.id, { link: link || undefined });
-                            const desc = window.prompt('描述', p.description || '');
-                            if (desc != null) updatePartner(p.id, { description: desc || undefined });
-                            const logo = window.prompt('Logo URL', p.logo || '');
-                            if (logo != null) updatePartner(p.id, { logo: logo || undefined });
-                          }}
-                          className="px-2 py-1 text-xs rounded hover:bg-white/10 text-[#FFD700]"
-                        >
-                          編輯
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { if (confirm('確定刪除？')) deletePartner(p.id); }}
-                          className="px-2 py-1 text-xs rounded hover:bg-red-500/20 text-red-400"
-                        >
-                          刪除
-                        </button>
-                      </div>
+                  {pagedPartners.length === 0 ? (
+                    <div className="px-5 py-8 text-center text-sm text-white/50">
+                      暫無數據
                     </div>
-                  ))}
+                  ) : (
+                    pagedPartners.map((p) => (
+                      <div key={p.id} className="px-5 py-4 border-b grid grid-cols-12 items-center gap-2" style={{ borderColor: 'rgba(201,169,110,0.08)' }}>
+                        <div className="col-span-1">
+                          {p.logo ? (
+                            <img src={p.logo} alt="" className="w-8 h-8 object-contain rounded" />
+                          ) : (
+                            <span className="text-white/30 text-xs">—</span>
+                          )}
+                        </div>
+                        <div className="col-span-2 font-medium text-white">{p.name}</div>
+                        <div className="col-span-3 truncate text-xs" style={{ color: 'rgba(237,232,223,0.6)' }}>{p.link || '—'}</div>
+                        <div className="col-span-4 truncate text-xs" style={{ color: 'rgba(237,232,223,0.6)' }}>{p.description || '—'}</div>
+                        <div className="col-span-2 text-right flex gap-2 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const name = window.prompt('名稱', p.name);
+                              if (name != null) updatePartner(p.id, { name });
+                              const link = window.prompt('連結', p.link || '');
+                              if (link != null) updatePartner(p.id, { link: link || undefined });
+                              const desc = window.prompt('描述', p.description || '');
+                              if (desc != null) updatePartner(p.id, { description: desc || undefined });
+                              const logo = window.prompt('Logo URL', p.logo || '');
+                              if (logo != null) updatePartner(p.id, { logo: logo || undefined });
+                            }}
+                            className="px-2 py-1 text-xs rounded hover:bg-white/10 text-[#FFD700]"
+                          >
+                            編輯
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePartner(p.id)}
+                            className="px-2 py-1 text-xs rounded hover:bg-red-500/20 text-red-400"
+                          >
+                            刪除
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
+                {partners.length > 0 && (
+                  <Pagination
+                    total={partners.length}
+                    currentPage={partnerPage}
+                    pageSize={partnerPageSize}
+                    onPageChange={setPartnerPage}
+                    onPageSizeChange={setPartnerPageSize}
+                  />
+                )}
                 <button
                   type="button"
                   onClick={() => {

@@ -35,3 +35,10 @@ lerna-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Wrangler
+.wrangler/
+wrangler.toml.backup
+
+# Local development
+.dev.vars

@@ -6,6 +6,8 @@ import {
 import gsap from 'gsap';
 import { useWallet } from '../context/WalletContext';
 import { useTranslation } from 'react-i18next';
+import { useIdentity } from '../contexts/IdentityContext';
+import OmniBox from '../components/OmniBox';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const DECODE_COST = 10;
@@ -135,6 +137,7 @@ export default function Hero() {
 
   const { facBalance, addTransaction } = useWallet();
   const { t } = useTranslation();
+  const { identityContext, getIdentityLabel } = useIdentity();
 
   const [commandValue, setCommandValue]     = useState('');
   const [isFocused, setIsFocused]           = useState(false);
@@ -396,119 +399,22 @@ export default function Hero() {
         <p ref={subtitleRef} className="opacity-0 hidden" aria-hidden="true" />
 
         {/* ════════════════════════════════════════════════════════════════
-            萬能指揮框 Command Box  +  $FAC 餘額
+            萬能框 OmniBox (S-001)  +  身份指示  +  $FAC 餘額
         ═══════════════════════════════════════════════════════════════════ */}
         <div ref={commandRef} className="opacity-0 mb-8 flex flex-col sm:flex-row items-start justify-center gap-4 sm:gap-5">
-
-          {/* Command Box wrapper */}
-          <div className="relative w-full" style={{ maxWidth: '740px' }}>
-
-            {/* Box itself */}
-            <div
-              className="relative transition-all duration-500"
-              style={{
-                borderRadius: '18px',
-                background: 'linear-gradient(135deg,rgba(13,31,60,0.96) 0%,rgba(10,22,40,0.99) 100%)',
-                border: isMicPulsing
-                  ? '1px solid rgba(201,169,110,0.7)'
-                  : isFocused
-                    ? '1px solid rgba(201,169,110,0.55)'
-                    : '1px solid rgba(201,169,110,0.2)',
-                boxShadow: isMicPulsing
-                  ? '0 0 0 4px rgba(201,169,110,0.12), 0 0 0 8px rgba(201,169,110,0.06), 0 0 48px rgba(201,169,110,0.2)'
-                  : isFocused
-                    ? '0 0 48px rgba(201,169,110,0.13), 0 12px 40px rgba(0,0,0,0.45)'
-                    : '0 6px 28px rgba(0,0,0,0.35)',
-                backdropFilter: 'blur(24px)',
-                transition: 'box-shadow 0.4s, border 0.4s'
-              }}
-            >
-              {/* Mic pulse rings */}
-              {isMicPulsing && (
-                <>
-                  <div className="absolute inset-0 rounded-[18px] pointer-events-none" style={{
-                    border: '1px solid rgba(201,169,110,0.35)',
-                    animation: 'mic-ring 1.2s ease-out infinite'
-                  }} />
-                  <div className="absolute inset-0 rounded-[18px] pointer-events-none" style={{
-                    border: '1px solid rgba(201,169,110,0.2)',
-                    animation: 'mic-ring 1.2s ease-out 0.4s infinite'
-                  }} />
-                </>
-              )}
-
-              {/* Input row — desktop: all in one line; mobile: stacked for thumb zone */}
-              <div className="flex flex-col sm:flex-row sm:items-center px-4 sm:px-5 py-3 sm:py-4 gap-2 sm:gap-3">
-                {/* Icon — hidden on mobile for space */}
-                <div className="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-xl items-center justify-center" style={{
-                  background: 'linear-gradient(135deg,rgba(201,169,110,0.18) 0%,rgba(201,169,110,0.07) 100%)',
-                  border: '1px solid rgba(201,169,110,0.28)'
-                }}>
-                  <span className="text-xs font-bold" style={{ color: 'var(--champagne)', fontFamily: "'PingFang HK',sans-serif" }}>匠</span>
-                </div>
-
-                <input
-                  type="text"
-                  value={commandValue}
-                  onChange={(e) => setCommandValue(e.target.value)}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
-                  placeholder="口述或輸入您的需求…"
-                  className="flex-1 bg-transparent outline-none min-w-0"
-                  style={{ color: 'var(--off-white)', caretColor: 'var(--champagne)', fontSize: '16px' }}
-                />
-
-                {/* Action row (buttons) — on mobile this is a full-width row at bottom for thumb reach */}
-                <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
-                  <div className="flex items-center gap-1">
-                    {/* Mic button — larger touch target on mobile */}
-                    <button
-                      title="語音輸入"
-                      onClick={handleMic}
-                      className="relative flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-white/10 active:scale-95"
-                      style={{
-                        width: '44px', height: '44px',
-                        color: isMicPulsing ? 'var(--champagne)' : 'rgba(201,169,110,0.5)',
-                        background: isMicPulsing ? 'rgba(201,169,110,0.12)' : 'transparent',
-                      }}
-                    >
-                      <Mic className="w-5 h-5" />
-                    </button>
-                    {/* Paperclip */}
-                    <button
-                      title="上傳文件"
-                      className="flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-white/10 hidden sm:flex"
-                      style={{ width: '44px', height: '44px', color: 'rgba(201,169,110,0.4)' }}
-                    >
-                      <Paperclip className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={handleSubmit}
-                    className="flex items-center gap-1.5 px-5 py-3 rounded-xl font-semibold text-sm transition-all duration-300 group active:scale-95"
-                    style={{ background: 'linear-gradient(135deg,#C9A96E 0%,#a8883a 100%)', color: '#0A1628', minHeight: '44px' }}
-                  >
-                    配對
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Divider or Canvas 高級波形 (語音輸入時) */}
-              {isMicPulsing ? (
-                <div className="w-full overflow-hidden rounded-b-[18px]" style={{ height: '140px', background: 'rgba(0,0,0,0.2)' }}>
-                  <canvas ref={waveformCanvasRef} className="block w-full h-full" width={740} height={140} style={{ width: '100%', height: '140px' }} />
-                </div>
-              ) : (
-                <div style={{ height: '1px', background: 'linear-gradient(90deg,transparent,rgba(201,169,110,0.15),transparent)', margin: '0 20px' }} />
-              )}
-
+          {/* 身份狀態指示器 S-001 */}
+          {identityContext !== 'neutral' && (
+            <div className="w-full flex justify-center mb-2 order-first">
+              <span className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ color: '#C9A96E', border: '1px solid rgba(201,169,110,0.5)', background: 'rgba(201,169,110,0.08)' }}>
+                {identityContext === 'A' ? '委託方模式 | Client Mode' : '服務方模式 | Provider Mode'}
+              </span>
             </div>
-
-            {/* ════ Agent Chat Bubble ════════════════════════════════════════ */}
-            {agentPhase !== 'idle' && (
+          )}
+          <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4" style={{ maxWidth: '740px' }}>
+            <OmniBox />
+          </div>
+          {/* Placeholder for removed Agent Bubble - keep ref to avoid GSAP issues */}
+          {false && (
               <div
                 ref={bubbleRef}
                 className="mt-4 text-left rounded-2xl overflow-hidden"
@@ -854,8 +760,6 @@ export default function Hero() {
                 </div>
               </div>
             )}
-          </div>
-
           {/* $FAC 餘額 */}
           <a
             href="/wallet"
