@@ -12,7 +12,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import type { IdentityContext as IdentityContextType, IdentityState, IdentityActions } from '../types/identity';
+import type { IdentityState, IdentityActions } from '../types/identity';
 
 const STORAGE_KEY = 'fac_identity_context_v51';
 

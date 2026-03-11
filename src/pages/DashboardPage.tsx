@@ -12,7 +12,7 @@ import Footer from '../sections/Footer';
 import BottomNav from '../components/BottomNav';
 import { 
   ArrowLeft, Search, Briefcase, Shield, Lock, 
-  DollarSign, CheckCircle, Clock, User, AlertCircle,
+  DollarSign,
   FileText, ChevronRight
 } from 'lucide-react';
 import type { Task, TaskStatus } from '../types/user';
@@ -82,7 +82,7 @@ const STATUS_LABELS: Record<TaskStatus, { label: string; color: string; bg: stri
   cancelled: { label: '已取消', color: 'rgba(237,232,223,0.4)', bg: 'rgba(255,255,255,0.05)' },
 };
 
-export default function DashboardPage({ view: viewProp, intent }: DashboardPageProps) {
+export default function DashboardPage({ view: viewProp, intent: _intent }: DashboardPageProps) {
   const { identityContext: _identityContext, getIdentityLabel: _getIdentityLabel, getIdentityDescription: _getIdentityDescription, switchToA, switchToB } = useIdentity();
   const { facBalance: _facBalance } = useWallet();
   const viewFromUrl = getViewFromUrl();

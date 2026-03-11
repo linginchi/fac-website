@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  ChevronDown, Mic, Paperclip, ArrowRight, Coins, X,
+  ChevronDown, Mic, Coins, X,
   BrainCircuit, ShieldCheck, Send, Calendar
 } from 'lucide-react';
 import gsap from 'gsap';
@@ -137,10 +137,10 @@ export default function Hero() {
 
   const { facBalance, addTransaction } = useWallet();
   const { t } = useTranslation();
-  const { identityContext, getIdentityLabel } = useIdentity();
+  const { identityContext, getIdentityLabel: _getIdentityLabel } = useIdentity();
 
   const [commandValue, setCommandValue]     = useState('');
-  const [isFocused, setIsFocused]           = useState(false);
+  const [isFocused, _setIsFocused]          = useState(false);
   const [isMicPulsing, setIsMicPulsing]     = useState(false);
   const [agentPhase, setAgentPhase]         = useState<AgentPhase>('idle');
   const [thinkingStep, setThinkingStep]     = useState(0);
@@ -261,7 +261,7 @@ export default function Hero() {
     return null;
   }, []);
 
-  const handleSubmit = useCallback(() => {
+  const _handleSubmit = useCallback(() => {
     const loggedIn = isUserLoggedIn();
     const isFirstVisit = !localStorage.getItem(STORAGE_NEW_USER);
 
@@ -313,7 +313,7 @@ export default function Hero() {
     setAgentPhase('matched');
   }, []);
 
-  const handleMic = useCallback(() => {
+  const _handleMic = useCallback(() => {
     setIsMicPulsing(true);
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const Win = window as unknown as { webkitSpeechRecognition: new () => { start: () => void; stop: () => void; lang: string; continuous: boolean; interimResults: boolean; onresult: ((e: { results: { 0?: { 0?: { transcript?: string } } } }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null } };
