@@ -83,8 +83,8 @@ const STATUS_LABELS: Record<TaskStatus, { label: string; color: string; bg: stri
 };
 
 export default function DashboardPage({ view: viewProp, intent }: DashboardPageProps) {
-  const { identityContext, getIdentityLabel, getIdentityDescription, switchToA, switchToB } = useIdentity();
-  const { facBalance } = useWallet();
+  const { identityContext: _identityContext, getIdentityLabel: _getIdentityLabel, getIdentityDescription: _getIdentityDescription, switchToA, switchToB } = useIdentity();
+  const { facBalance: _facBalance } = useWallet();
   const viewFromUrl = getViewFromUrl();
   const view: ViewMode = viewProp === 'a' || viewFromUrl === 'a' ? 'a' : viewProp === 'b' || viewFromUrl === 'b' ? 'b' : null;
   const effectiveView: 'a' | 'b' | 'neutral' = view === 'a' ? 'a' : view === 'b' ? 'b' : 'neutral';
