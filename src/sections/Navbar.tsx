@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Menu, X, Globe, Coins, User, Sparkles } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useIdentity } from '../contexts/IdentityContext';
+import { useUser } from '../contexts/UserContext';
 import gsap from 'gsap';
 
 const languages = [
@@ -23,6 +24,7 @@ export default function Navbar() {
   const { t, i18n } = useTranslation();
   const { facBalance } = useWallet();
   const { resetIdentity, identityContext } = useIdentity();
+  const { isLoggedIn, currentUser, userRole, logout } = useUser();
   const logoRef = useRef<HTMLAnchorElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -249,28 +251,87 @@ export default function Navbar() {
               <span>{facBalance} $FAC</span>
             </a>
 
-            {/* 登录/注册 */}
-            <a
-              href="/register"
-              className="flex items-center gap-1.5 text-sm transition-colors duration-300"
-              style={{ color: 'rgba(237,232,223,0.8)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
-            >
-              <User className="w-4 h-4" />
-              登入 / 註冊
-            </a>
+            {/* 登录状态显示 */}
+            {isLoggedIn && currentUser ? (
+              <>
+                {/* 用户身份标签 */}
+                <span 
+                  className="text-xs px-2.5 py-1 rounded-full font-medium"
+                  style={{
+                    background: userRole === 'A' 
+                      ? 'rgba(33,150,243,0.12)' 
+                      : userRole === 'B' 
+                        ? 'rgba(76,175,80,0.12)' 
+                        : 'rgba(201,169,110,0.1)',
+                    border: `1px solid ${userRole === 'A' 
+                      ? 'rgba(33,150,243,0.3)' 
+                      : userRole === 'B' 
+                        ? 'rgba(76,175,80,0.3)' 
+                        : 'rgba(201,169,110,0.2)'}`,
+                    color: userRole === 'A' 
+                      ? '#64B5F6' 
+                      : userRole === 'B' 
+                        ? '#81C784' 
+                        : '#C9A96E'
+                  }}
+                >
+                  {userRole === 'A' ? '甲方' : userRole === 'B' ? '乙方' : '訪客'}
+                </span>
+                
+                {/* 用户头像和名称 */}
+                <a
+                  href="/me"
+                  className="flex items-center gap-2 text-sm transition-colors duration-300 hover:text-[#C9A96E]"
+                  style={{ color: 'rgba(237,232,223,0.9)' }}
+                >
+                  {currentUser.avatarUrl ? (
+                    <img 
+                      src={currentUser.avatarUrl} 
+                      alt="Avatar" 
+                      className="w-7 h-7 rounded-full border border-[#C9A96E]/30"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-[#C9A96E]/20 flex items-center justify-center border border-[#C9A96E]/30">
+                      <User className="w-4 h-4 text-[#C9A96E]" />
+                    </div>
+                  )}
+                  <span className="max-w-[100px] truncate">{currentUser.displayName || '用戶'}</span>
+                </a>
 
-            <a
-              href="/me"
-              className="flex items-center gap-1.5 text-sm transition-colors duration-300"
-              style={{ color: 'rgba(237,232,223,0.8)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
-            >
-              <User className="w-4 h-4" />
-              个人中心
-            </a>
+                {/* 登出按钮 */}
+                <button
+                  onClick={logout}
+                  className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  登出
+                </button>
+              </>
+            ) : (
+              <>
+                {/* 登录/注册 */}
+                <a
+                  href="/register"
+                  className="flex items-center gap-1.5 text-sm transition-colors duration-300"
+                  style={{ color: 'rgba(237,232,223,0.8)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
+                >
+                  <User className="w-4 h-4" />
+                  登入 / 註冊
+                </a>
+
+                <a
+                  href="/me"
+                  className="flex items-center gap-1.5 text-sm transition-colors duration-300"
+                  style={{ color: 'rgba(237,232,223,0.8)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
+                >
+                  <User className="w-4 h-4" />
+                  用戶中心
+                </a>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -344,23 +405,66 @@ export default function Navbar() {
               余额: {facBalance} $FAC
             </a>
 
-            <a
-              href="/register"
-              className="flex items-center justify-center gap-2 py-3 text-sm"
-              style={{ color: 'rgba(237,232,223,0.8)' }}
-            >
-              <User className="w-4 h-4" />
-              登入 / 註冊
-            </a>
+            {isLoggedIn && currentUser ? (
+              <>
+                <div 
+                  className="px-3 py-2 rounded-lg text-sm"
+                  style={{
+                    background: userRole === 'A' 
+                      ? 'rgba(33,150,243,0.1)' 
+                      : 'rgba(76,175,80,0.1)',
+                    border: `1px solid ${userRole === 'A' 
+                      ? 'rgba(33,150,243,0.3)' 
+                      : 'rgba(76,175,80,0.3)'}`,
+                    color: userRole === 'A' ? '#64B5F6' : '#81C784'
+                  }}
+                >
+                  {userRole === 'A' ? '甲方（需求方）' : '乙方（提供方）'}
+                </div>
+                <a
+                  href="/me"
+                  className="flex items-center justify-center gap-2 py-3 text-sm"
+                  style={{ color: 'rgba(237,232,223,0.9)' }}
+                >
+                  {currentUser.avatarUrl ? (
+                    <img 
+                      src={currentUser.avatarUrl} 
+                      alt="Avatar" 
+                      className="w-6 h-6 rounded-full border border-[#C9A96E]/30"
+                    />
+                  ) : (
+                    <User className="w-4 h-4" />
+                  )}
+                  {currentUser.displayName || '用戶'}
+                </a>
+                <button
+                  onClick={logout}
+                  className="flex items-center justify-center gap-2 py-3 text-sm text-gray-500"
+                >
+                  登出
+                </button>
+              </>
+            ) : (
+              <>
+                <a
+                  href="/register"
+                  className="flex items-center justify-center gap-2 py-3 text-sm"
+                  style={{ color: 'rgba(237,232,223,0.8)' }}
+                >
+                  <User className="w-4 h-4" />
+                  登入 / 註冊
+                </a>
 
-            <a
-              href="/me"
-              className="flex items-center justify-center gap-2 py-3 text-sm"
-              style={{ color: 'rgba(237,232,223,0.8)' }}
-            >
-              <User className="w-4 h-4" />
-              个人中心
-            </a>
+                <a
+                  href="/me"
+                  className="flex items-center justify-center gap-2 py-3 text-sm"
+                  style={{ color: 'rgba(237,232,223,0.8)' }}
+                >
+                  <User className="w-4 h-4" />
+                  用戶中心
+                </a>
+              </>
+            )}
           </div>
         </div>
       )}

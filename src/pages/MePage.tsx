@@ -8,10 +8,12 @@ import { useState } from 'react';
 import {
   ArrowLeft, Shield, Coins, Star, ChevronRight,
   Building2, Users, Vote, Download, Gift, Layers,
-  LogIn, CheckCircle, MessageCircle, Crown
+  LogIn, CheckCircle, MessageCircle, Crown,
+  Share2, TrendingDown
 } from 'lucide-react';
 import { useFac } from '../contexts/FacContext';
 import { useInvitation } from '../contexts/InvitationContext';
+import { useUser } from '../contexts/UserContext';
 import InvitationCardGenerator from '../components/InvitationCardGenerator';
 import type { MembershipTier } from '../types/user';
 import { TIER_CONFIG } from '../types/user';
@@ -57,6 +59,7 @@ const TIER_STYLE: Record<MembershipTier, { bg: string; border: string; color: st
 export default function MePage({ onBack }: { onBack: () => void }) {
   const { wallet, getLifetimeStats } = useFac();
   const { getStats } = useInvitation();
+  const { currentUser, userRole } = useUser();
   const [declarationOpen, setDeclarationOpen] = useState(false);
   const [showInviteGenerator, setShowInviteGenerator] = useState(false);
   const [tier, setTier] = useState<MembershipTier>(() => getUserTier());
@@ -113,6 +116,24 @@ export default function MePage({ onBack }: { onBack: () => void }) {
       href: '/vault',
       highlight: false,
       status: 'neutral',
+      onClick: undefined,
+    },
+    {
+      icon: Share2,
+      label: '推薦中心',
+      sub: '邀請好友，賺取 $FAC 積分',
+      href: '/referral',
+      highlight: false,
+      status: 'active' as const,
+      onClick: undefined,
+    },
+    {
+      icon: TrendingDown,
+      label: '回購透明度',
+      sub: '查看平台回購與銷毀數據',
+      href: '/buyback',
+      highlight: false,
+      status: 'active' as const,
       onClick: undefined,
     },
     ...(isPartner ? [
@@ -182,22 +203,37 @@ export default function MePage({ onBack }: { onBack: () => void }) {
           }}
         >
           <div className="flex items-start justify-between gap-4">
-            {/* Avatar placeholder */}
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+            {/* Avatar */}
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden"
               style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.18) 0%, rgba(201,169,110,0.06) 100%)', border: `1px solid ${tierStyle.border}` }}>
-              {isPartner
-                ? <Crown className="w-7 h-7" style={{ color: '#C9A96E' }} />
-                : isProfessional
-                  ? <Star className="w-7 h-7" style={{ color: '#64B5F6' }} />
-                  : <Users className="w-7 h-7" style={{ color: 'rgba(201,169,110,0.55)' }} />
-              }
+              {currentUser?.avatarUrl ? (
+                <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : isPartner ? (
+                <Crown className="w-7 h-7" style={{ color: '#C9A96E' }} />
+              ) : isProfessional ? (
+                <Star className="w-7 h-7" style={{ color: '#64B5F6' }} />
+              ) : (
+                <Users className="w-7 h-7" style={{ color: 'rgba(201,169,110,0.55)' }} />
+              )}
             </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1.5">
                 <span className="text-sm font-bold" style={{ color: 'var(--off-white)' }}>
-                  {loggedIn ? '匿名用戶（已登入）' : '未登入'}
+                  {currentUser?.displayName || (loggedIn ? '用戶（已登入）' : '未登入')}
                 </span>
+                {userRole !== 'neutral' && (
+                  <span 
+                    className="text-[10px] px-2 py-0.5 rounded-full"
+                    style={{ 
+                      background: userRole === 'A' ? 'rgba(33,150,243,0.12)' : 'rgba(76,175,80,0.12)',
+                      border: `1px solid ${userRole === 'A' ? 'rgba(33,150,243,0.3)' : 'rgba(76,175,80,0.3)'}`,
+                      color: userRole === 'A' ? '#64B5F6' : '#81C784'
+                    }}
+                  >
+                    {userRole === 'A' ? '甲方' : '乙方'}
+                  </span>
+                )}
                 {loggedIn && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full"
                     style={{ background: 'rgba(76,175,80,0.12)', border: '1px solid rgba(76,175,80,0.3)', color: '#81C784' }}>

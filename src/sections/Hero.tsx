@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  ChevronDown, Mic, Coins, X,
+  ChevronDown, Mic, X, Sparkles,
   BrainCircuit, ShieldCheck, Send, Calendar
 } from 'lucide-react';
 import gsap from 'gsap';
@@ -402,35 +402,48 @@ export default function Hero() {
         <p ref={subtitleRef} className="opacity-0 hidden" aria-hidden="true" />
 
         {/* ════════════════════════════════════════════════════════════════
-            萬能框 OmniBox (S-001)  +  身份指示  +  $FAC 餘額
+            Google风格万能框 - 居中简洁
         ═══════════════════════════════════════════════════════════════════ */}
-        <div ref={commandRef} className="opacity-0 mb-8 flex flex-col sm:flex-row items-start justify-center gap-4 sm:gap-5">
-          {/* 身份狀態指示器 S-001 */}
+        <div ref={commandRef} className="opacity-0 mb-6 w-full flex flex-col items-center">
+          {/* 身份狀態指示器 */}
           {identityContext !== 'neutral' && (
-            <div className="w-full flex justify-center mb-2 order-first">
+            <div className="mb-4">
               <span className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ color: '#C9A96E', border: '1px solid rgba(201,169,110,0.5)', background: 'rgba(201,169,110,0.08)' }}>
-                {identityContext === 'A' ? '委託方模式 | Client Mode' : '服務方模式 | Provider Mode'}
+                {identityContext === 'A' ? '委託方模式 · 发布需求' : '服務方模式 · 展示专长'}
               </span>
             </div>
           )}
-          <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4" style={{ maxWidth: '740px' }}>
+          
+          {/* Google风格搜索框 */}
+          <div className="w-full px-4" style={{ maxWidth: '680px' }}>
             <OmniBox />
-            <button
-              onClick={() => setIsVoiceBoxOpen(true)}
-              className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all hover:scale-105"
-              style={{
-                background: 'linear-gradient(135deg, #C9A96E 0%, #D4AF37 100%)',
-                boxShadow: '0 4px 16px rgba(201,169,110,0.3)',
-              }}
-              title="语音输入"
-            >
-              <Mic className="w-5 h-5 text-[#0A1628]" />
-            </button>
           </div>
           
-          {/* 市场信息走马灯 */}
-          <div className="w-full mt-4" style={{ maxWidth: '740px' }}>
-            <MarketTicker />
+          {/* 快捷操作按钮 */}
+          <div className="mt-6 flex items-center gap-3">
+            <button
+              onClick={() => setIsVoiceBoxOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all hover:bg-white/10"
+              style={{
+                background: 'rgba(201,169,110,0.1)',
+                border: '1px solid rgba(201,169,110,0.2)',
+                color: 'rgba(201,169,110,0.9)',
+              }}
+            >
+              <Mic className="w-4 h-4" />
+              <span>语音输入</span>
+            </button>
+            <a
+              href="/register"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all hover:opacity-90"
+              style={{
+                background: 'linear-gradient(135deg, #C9A96E 0%, #D4AF37 100%)',
+                color: '#0A1628',
+              }}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>立即加入</span>
+            </a>
           </div>
           {/* Placeholder for removed Agent Bubble - keep ref to avoid GSAP issues */}
           {false && (
@@ -649,7 +662,6 @@ export default function Hero() {
                                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
                                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
                               >
-                                <Coins className="w-4 h-4" />
                                 解碼專家深度資歷（消耗 {DECODE_COST} $FAC）
                                 <span className="text-[10px] opacity-75 ml-1">· 語音感應</span>
                               </button>
@@ -779,20 +791,6 @@ export default function Hero() {
                 </div>
               </div>
             )}
-          {/* $FAC 餘額 */}
-          <a
-            href="/wallet"
-            className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl"
-            style={{
-              background: 'linear-gradient(135deg,rgba(13,31,60,0.95) 0%,rgba(10,22,40,0.98) 100%)',
-              border: '1px solid rgba(201,169,110,0.25)', color: 'var(--champagne)'
-            }}
-            title="查看流水賬"
-          >
-            <Coins className="w-4 h-4" />
-            <span className="font-semibold tabular-nums">{facBalance}</span>
-            <span className="text-xs opacity-80">$FAC</span>
-          </a>
         </div>
 
         {/* ── 萬能框下方引導語（全語系）──────────────────────────────────── */}
@@ -832,8 +830,13 @@ export default function Hero() {
         }}
       />
 
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+      {/* Bloomberg风格全宽市场走马灯 */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <MarketTicker />
+      </div>
+
+      {/* Scroll Indicator - 调整位置避免与走马灯重叠 */}
+      <div className="absolute bottom-24 left-1/2 -translate-x-1/2">
         <button
           onClick={() => scrollToSection('#about')}
           className="flex flex-col items-center gap-2 transition-colors duration-300"

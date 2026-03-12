@@ -1,0 +1,32 @@
+# FAC Platform V5.1 - Cloudflare Workers Configuration
+name = "fac-platform-api"
+main = "src/index.ts"
+compatibility_date = "2024-03-01"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "fac-platform-db"
+database_id = "your-database-id-here" # 需要在Cloudflare控制台创建后填入
+
+# Environment Variables
+[vars]
+LINKEDIN_CLIENT_ID = "86rh0n847vlmx9"
+LINKEDIN_REDIRECT_URI = "https://www.hkfac.com/auth/linkedin/callback"
+FAC_TOKEN_ISSUER = "fac-platform"
+FAC_TOKEN_AUDIENCE = "fac-api"
+
+# Secrets (使用 wrangler secret put 设置)
+# LINKEDIN_CLIENT_SECRET
+# JWT_SECRET_KEY
+# ENCRYPTION_KEY
+
+[env.staging]
+name = "fac-platform-api-staging"
+[env.staging.vars]
+LINKEDIN_REDIRECT_URI = "https://staging.hkfac.com/auth/linkedin/callback"
+
+[env.production]
+name = "fac-platform-api"
+[env.production.vars]
+LINKEDIN_REDIRECT_URI = "https://www.hkfac.com/auth/linkedin/callback"

@@ -13,11 +13,14 @@ import Article from './sections/Article';
 import AdminLogin from './sections/AdminLogin';
 import AdminPanelV51 from './sections/AdminPanelV51';
 import UserRegister from './sections/UserRegister';
+import RegistrationWizard from './sections/RegistrationWizard';
 import WalletPage from './pages/WalletPage';
 import ProfilePage from './pages/ProfilePage';
 import VaultPage from './pages/VaultPage';
 import MePage from './pages/MePage';
 import MessagesPage from './pages/MessagesPage';
+import ReferralCenter from './pages/ReferralCenter';
+import BuybackDashboard from './pages/BuybackDashboard';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
 import { IdentityProvider } from './contexts/IdentityContext';
@@ -26,6 +29,9 @@ import { InvitationProvider } from './contexts/InvitationContext';
 import { VaultProvider } from './contexts/VaultContext';
 import { WalletProvider } from './contexts/WalletContext';
 import { GovernanceProvider } from './contexts/GovernanceContext';
+import { ReferralProvider } from './contexts/ReferralContext';
+import { BuybackProvider } from './contexts/BuybackContext';
+import { UserProvider } from './contexts/UserContext';
 import DashboardPage from './pages/DashboardPage';
 import GovernancePage from './pages/GovernancePage';
 import './i18n';
@@ -64,7 +70,7 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me' | 'meMessages' | 'dashboard' | 'governance'>(() => {
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me' | 'meMessages' | 'dashboard' | 'governance' | 'referral' | 'buyback'>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
       if (p === '/dashboard') return 'dashboard';
@@ -75,6 +81,8 @@ function App() {
       if (p === '/me/messages') return 'meMessages';
       if (p === '/me') return 'me';
       if (p === '/governance') return 'governance';
+      if (p === '/referral') return 'referral';
+      if (p === '/buyback') return 'buyback';
     }
     return 'home';
   });
@@ -121,6 +129,14 @@ function App() {
       setCurrentView('governance');
       return;
     }
+    if (path === '/referral') {
+      setCurrentView('referral');
+      return;
+    }
+    if (path === '/buyback') {
+      setCurrentView('buyback');
+      return;
+    }
     if (path === '/register' || path === '/login') {
       setCurrentView('register');
       return;
@@ -155,6 +171,9 @@ function App() {
           <VaultProvider userId="current_user">
             <WalletProvider>
               <GovernanceProvider userId="current_user" userTier="executive">
+                <ReferralProvider>
+                  <BuybackProvider>
+                    <UserProvider>
       {isLoading || !authLoaded ? (
         <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
           <div className="text-center">
@@ -169,7 +188,10 @@ function App() {
       ) : currentView === 'admin' || window.location.pathname.startsWith('/admin') ? (
         !auth.isAuthenticated ? <AdminLogin onLogin={() => {}} /> : <AdminPanelV51 onLogout={() => setCurrentView('home')} />
       ) : currentView === 'register' || window.location.pathname === '/register' || window.location.pathname === '/login' ? (
-        <UserRegister onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
+        <RegistrationWizard 
+          onComplete={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }}
+          onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }}
+        />
       ) : currentView === 'profile' || window.location.pathname === '/profile' ? (
         <>
           <ProfilePage onBack={() => { setCurrentView('home'); window.history.replaceState({}, '', '/'); }} />
@@ -211,6 +233,14 @@ function App() {
           <GovernancePage />
           <BottomNav />
         </>
+      ) : currentView === 'referral' || window.location.pathname === '/referral' ? (
+        <>
+          <ReferralCenter />
+        </>
+      ) : currentView === 'buyback' || window.location.pathname === '/buyback' ? (
+        <>
+          <BuybackDashboard />
+        </>
       ) : (
         <div className="min-h-screen bg-black">
           <Navbar />
@@ -227,6 +257,9 @@ function App() {
           <BottomNav />
         </div>
       )}
+              </UserProvider>
+                  </BuybackProvider>
+                </ReferralProvider>
               </GovernanceProvider>
             </WalletProvider>
           </VaultProvider>

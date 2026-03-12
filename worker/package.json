@@ -1,0 +1,30 @@
+{
+  "name": "fac-platform-api",
+  "version": "5.1.0",
+  "description": "FAC Platform V5.1 - Cloudflare Workers Backend API",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "db:create": "wrangler d1 create fac-platform-db",
+    "db:migrate": "wrangler d1 migrations apply fac-platform-db",
+    "db:migrate:local": "wrangler d1 migrations apply fac-platform-db --local",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "fac",
+    "platform",
+    "cloudflare",
+    "workers",
+    "d1"
+  ],
+  "author": "FAC Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240301.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^3.25.0"
+  }
+}
