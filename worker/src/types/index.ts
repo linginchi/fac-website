@@ -9,6 +9,11 @@ export interface Env {
   ENCRYPTION_KEY: string;
   FAC_TOKEN_ISSUER: string;
   FAC_TOKEN_AUDIENCE: string;
+  // AI Model API Keys
+  QWEN_API_KEY?: string;
+  DEEPSEEK_API_KEY?: string;
+  DOUBAO_API_KEY?: string;
+  DOUBAO_ENDPOINT_ID?: string;
 }
 
 // User types

@@ -1,14 +1,16 @@
 /**
  * FAC Platform AI Agent - 多模態文件解析服務
  * 支持 PDF、Word、圖片、語音文件的智能解析
+ * 集成中國大模型：通義千問、DeepSeek、豆包
  */
 
 import type { Env } from '../types';
+import { extractInfoWithAI, checkAIHealth } from '../utils/aiModels';
 
 // CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
@@ -16,27 +18,27 @@ const corsHeaders = {
 const FILE_TYPE_CONFIG = {
   pdf: {
     mimeTypes: ['application/pdf'],
-    maxSize: 20 * 1024 * 1024, // 20MB
+    maxSize: 20 * 1024 * 1024,
     extractMethod: 'text-extraction',
-    aiPrompt: 'Extract personal information from this resume/CV including: name, phone, email, location, company, job title, years of experience, skills, and a brief summary. Return as structured JSON.',
+    label: 'PDF',
   },
   doc: {
     mimeTypes: ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     maxSize: 20 * 1024 * 1024,
     extractMethod: 'text-extraction',
-    aiPrompt: 'Extract personal information from this document including: name, phone, email, location, company, job title, years of experience, skills, and a brief summary. Return as structured JSON.',
+    label: 'Word',
   },
   image: {
     mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 10 * 1024 * 1024,
     extractMethod: 'ocr+vision',
-    aiPrompt: 'This is an image of a document or business card. Perform OCR and extract: name, phone, email, location, company, job title, and any other contact information. Return as structured JSON.',
+    label: '圖片',
   },
   audio: {
     mimeTypes: ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/ogg', 'audio/webm', 'audio/x-m4a'],
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: 50 * 1024 * 1024,
     extractMethod: 'speech-to-text',
-    aiPrompt: 'This is a spoken introduction or resume. Transcribe the audio and extract: name, background, skills, experience, and contact information if mentioned. Return as structured JSON.',
+    label: '語音',
   },
 };
 
@@ -59,68 +61,32 @@ function detectFileType(mimeType: string, filename: string): string | null {
   return null;
 }
 
-// 模擬 AI 解析（實際部署時替換為真實 AI 調用）
-async function mockAIAnalyze(
+// 從文件內容提取文本（簡化版本，實際需要更複雜的處理）
+async function extractTextFromFile(
+  fileBuffer: ArrayBuffer,
   fileType: string,
-  fileContent: ArrayBuffer,
-  filename: string
-): Promise<any> {
-  // 這裡是模擬的 AI 解析結果
-  // 實際部署時，這裡應該調用：
-  // - OpenAI GPT-4 Vision API (圖片)
-  // - OpenAI Whisper API (語音)
-  // - 或 Cloudflare AI (如果可用)
+  mimeType: string
+): Promise<string> {
+  // 對於文本類型，嘗試直接解碼
+  if (fileType === 'pdf' || fileType === 'doc') {
+    // 注意：這是簡化處理，實際需要 PDF/DOC 解析庫
+    // 在 Workers 環境中，可以使用 pdf-parse 或其他庫
+    const text = new TextDecoder('utf-8').decode(fileBuffer);
+    // 提取可打印字符
+    return text.replace(/[^\x20-\x7E\u4e00-\u9fa5]/g, ' ').slice(0, 10000);
+  }
   
-  const mockResponses = [
-    {
-      name: '張偉明',
-      phone: '+852 9123 4567',
-      email: 'wmcheng@example.com',
-      location: '香港中環',
-      company: '環球顧問有限公司',
-      title: '資深財務顧問',
-      yearsExperience: '15',
-      skills: ['財務規劃', '稅務諮詢', '跨境投資'],
-      summary: '擁有15年財務顧問經驗，專精於跨境稅務規劃和企業融資。曾服務於多家跨國企業，協助客戶實現資產優化配置。',
-    },
-    {
-      name: '李思敏',
-      phone: '+852 9876 5432',
-      email: 'smli@example.com',
-      location: '香港尖沙咀',
-      company: '創新科技有限公司',
-      title: '項目總監',
-      yearsExperience: '12',
-      skills: ['項目管理', '團隊領導', '商業分析'],
-      summary: '資深項目管理專家，擅長大型IT項目交付。具備PMP認證，成功交付超過50個企業級項目。',
-    },
-    {
-      name: '王大衛',
-      phone: '+852 9345 6789',
-      email: 'dwong@example.com',
-      location: '香港灣仔',
-      company: '獨立顧問',
-      title: '法律顧問',
-      yearsExperience: '20',
-      skills: ['商業法律', '合規審查', '知識產權'],
-      summary: '執業律師，專注於商業法律和知識產權領域。為初創企業和中小企提供法律諮詢服務。',
-    },
-  ];
+  if (fileType === 'image') {
+    // 圖片將通過 AI Vision API 處理，這裡返回標記
+    return `[IMAGE_FILE:${mimeType}]`;
+  }
   
-  // 根據文件名哈希選擇一個固定的模擬結果
-  const hash = filename.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const mockData = mockResponses[hash % mockResponses.length];
+  if (fileType === 'audio') {
+    // 語音將通過 ASR API 處理
+    return `[AUDIO_FILE:${mimeType}]`;
+  }
   
-  // 模擬處理延遲
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  return {
-    extractedInfo: mockData,
-    fileType,
-    confidence: 0.92,
-    processedAt: new Date().toISOString(),
-    aiModel: 'FAC-Agent-v1.0 (Mock)',
-  };
+  return '';
 }
 
 // 主處理函數
@@ -136,6 +102,8 @@ export async function handleParseRoutes(request: Request, env: Env): Promise<Res
   // 文件解析端點
   if (path === '/api/parse/file' && request.method === 'POST') {
     try {
+      const startTime = Date.now();
+      
       // 獲取上傳的文件
       const formData = await request.formData();
       const file = formData.get('file') as File | null;
@@ -155,7 +123,7 @@ export async function handleParseRoutes(request: Request, env: Env): Promise<Res
           success: false,
           error: { 
             code: 'UNSUPPORTED_TYPE', 
-            message: 'Unsupported file type. Please upload PDF, Word, Image, or Audio files.' 
+            message: 'Unsupported file type. Please upload PDF, Word, Image (JPG/PNG), or Audio (MP3/WAV) files.' 
           }
         }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
       }
@@ -167,7 +135,7 @@ export async function handleParseRoutes(request: Request, env: Env): Promise<Res
           success: false,
           error: { 
             code: 'FILE_TOO_LARGE', 
-            message: `File too large. Maximum size for ${fileType} is ${config.maxSize / 1024 / 1024}MB` 
+            message: `File too large. Maximum size for ${config.label} is ${config.maxSize / 1024 / 1024}MB` 
           }
         }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
       }
@@ -175,37 +143,49 @@ export async function handleParseRoutes(request: Request, env: Env): Promise<Res
       // 讀取文件內容
       const fileBuffer = await file.arrayBuffer();
       
-      // TODO: 實際部署時，這裡應該：
-      // 1. 將文件上傳到 R2/S3 存儲
-      // 2. 調用 AI 服務進行解析（OpenAI, Claude, 或 Cloudflare AI）
-      // 3. 返回解析結果
+      // 提取文本內容
+      const extractedText = await extractTextFromFile(fileBuffer, fileType, file.type);
       
-      // 目前使用模擬 AI 解析
-      const analysisResult = await mockAIAnalyze(fileType, fileBuffer, file.name);
+      // 使用 AI 模型解析
+      const isImage = fileType === 'image';
+      const aiResult = await extractInfoWithAI(env, extractedText, fileType, isImage);
       
-      // 根據用戶角色調整解析結果
-      if (userRole === 'A') {
-        // 甲方（企業）可能需要不同的信息結構
-        analysisResult.extractedInfo = {
-          ...analysisResult.extractedInfo,
-          contactPerson: analysisResult.extractedInfo.name,
-          companyName: analysisResult.extractedInfo.company,
-        };
+      const processingTime = Date.now() - startTime;
+      
+      if (!aiResult.success) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: { 
+            code: 'AI_PARSE_ERROR', 
+            message: aiResult.error || 'Failed to parse file with AI' 
+          }
+        }), { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
       }
       
-      return new Response(JSON.stringify({
+      // 構建響應
+      const response = {
         success: true,
         data: {
-          ...analysisResult,
+          extractedInfo: aiResult.data,
           originalFile: {
             name: file.name,
             size: file.size,
             type: file.type,
             detectedType: fileType,
+            label: config.label,
+          },
+          aiProcessing: {
+            modelUsed: aiResult.modelUsed,
+            processingTimeMs: processingTime,
+            isMock: aiResult.modelUsed === 'mock-fallback',
           },
         },
-        message: 'File analyzed successfully',
-      }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+        message: `File analyzed successfully using ${aiResult.modelUsed}`,
+      };
+      
+      return new Response(JSON.stringify(response), { 
+        headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+      });
       
     } catch (error: any) {
       console.error('Parse error:', error);
@@ -229,7 +209,22 @@ export async function handleParseRoutes(request: Request, env: Env): Promise<Res
           mimeTypes: config.mimeTypes,
           maxSize: config.maxSize,
           maxSizeMB: config.maxSize / 1024 / 1024,
+          label: config.label,
         })),
+      },
+    }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+  }
+  
+  // AI 模型健康檢查
+  if (path === '/api/parse/ai-health' && request.method === 'GET') {
+    const health = await checkAIHealth(env);
+    return new Response(JSON.stringify({
+      success: true,
+      data: {
+        ...health,
+        availableModels: Object.entries(health)
+          .filter(([, v]) => v)
+          .map(([k]) => k),
       },
     }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
   }
@@ -241,8 +236,9 @@ export async function handleParseRoutes(request: Request, env: Env): Promise<Res
       data: {
         status: 'healthy',
         service: 'FAC AI Parse Agent',
-        version: '1.0.0',
+        version: '2.0.0',
         capabilities: ['pdf', 'doc', 'image', 'audio'],
+        supportedModels: ['deepseek-chat', 'qwen-turbo', 'doubao-lite', 'mock-fallback'],
       },
     }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
   }
