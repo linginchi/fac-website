@@ -179,26 +179,6 @@ export default function Navbar() {
             </span>
           </a>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.key}
-                href={link.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection(link.href);
-                }}
-                className="text-sm animated-underline transition-colors duration-300"
-                style={{ color: 'rgba(237,232,223,0.75)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.75)')}
-              >
-                {t(`nav.${link.key}`)}
-              </a>
-            ))}
-          </div>
-
           {/* Right Side */}
           <div className="hidden lg:flex items-center gap-4">
             {/* 当前身份指示器 */}
@@ -291,14 +271,6 @@ export default function Navbar() {
               <User className="w-4 h-4" />
               个人中心
             </a>
-
-            {/* CTA Button */}
-            <button
-              onClick={() => scrollToSection('#hero')}
-              className="btn-gold text-sm"
-            >
-              {t('nav.cta')}
-            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -346,21 +318,6 @@ export default function Navbar() {
               </div>
             )}
 
-            {navLinks.map((link) => (
-              <a
-                key={link.key}
-                href={link.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection(link.href);
-                }}
-                className="block transition-colors duration-300"
-                style={{ color: 'rgba(237,232,223,0.8)' }}
-              >
-                {t(`nav.${link.key}`)}
-              </a>
-            ))}
-
             {/* Mobile Language Selector */}
             <div className="pt-4" style={{ borderTop: '1px solid rgba(201,169,110,0.15)' }}>
               <div className="flex gap-4">
@@ -404,13 +361,6 @@ export default function Navbar() {
               <User className="w-4 h-4" />
               个人中心
             </a>
-
-            <button
-              onClick={() => scrollToSection('#hero')}
-              className="btn-gold w-full mt-4"
-            >
-              {t('nav.cta')}
-            </button>
           </div>
         </div>
       )}
