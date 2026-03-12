@@ -444,6 +444,7 @@ i18n
       'en': { translation: en }
     },
     fallbackLng: 'zh-HK',
+    lng: 'zh-HK', // 默认使用繁体中文
     interpolation: {
       escapeValue: false
     },

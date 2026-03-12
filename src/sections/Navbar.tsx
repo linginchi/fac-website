@@ -269,8 +269,20 @@ export default function Navbar() {
               <span>{facBalance} $FAC</span>
             </a>
 
+            {/* 登录/注册 */}
             <a
-              href="/profile"
+              href="/register"
+              className="flex items-center gap-1.5 text-sm transition-colors duration-300"
+              style={{ color: 'rgba(237,232,223,0.8)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(237,232,223,0.8)')}
+            >
+              <User className="w-4 h-4" />
+              登入 / 註冊
+            </a>
+
+            <a
+              href="/me"
               className="flex items-center gap-1.5 text-sm transition-colors duration-300"
               style={{ color: 'rgba(237,232,223,0.8)' }}
               onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--champagne)')}
@@ -376,7 +388,16 @@ export default function Navbar() {
             </a>
 
             <a
-              href="/profile"
+              href="/register"
+              className="flex items-center justify-center gap-2 py-3 text-sm"
+              style={{ color: 'rgba(237,232,223,0.8)' }}
+            >
+              <User className="w-4 h-4" />
+              登入 / 註冊
+            </a>
+
+            <a
+              href="/me"
               className="flex items-center justify-center gap-2 py-3 text-sm"
               style={{ color: 'rgba(237,232,223,0.8)' }}
             >
