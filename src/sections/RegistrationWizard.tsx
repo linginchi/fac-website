@@ -36,11 +36,9 @@ const SKILL_OPTIONS = [
   { id: 'healthcare', label: '醫療健康', category: 'healthcare' as const },
 ];
 
-// LinkedIn OAuth配置
+// LinkedIn OAuth配置 - 必须与LinkedIn App配置完全一致
 const LINKEDIN_CLIENT_ID = '86rh0n847vlmx9';
-const LINKEDIN_REDIRECT_URI = typeof window !== 'undefined' 
-  ? `${window.location.origin}/register`
-  : 'https://www.hkfac.com/register';
+const LINKEDIN_REDIRECT_URI = 'https://www.hkfac.com/auth/linkedin/callback';
 const LINKEDIN_SCOPE = 'openid profile email';
 
 export default function RegistrationWizard({ onComplete, onBack }: RegistrationWizardProps) {
