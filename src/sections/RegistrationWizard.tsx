@@ -41,6 +41,9 @@ const LINKEDIN_CLIENT_ID = '86rh0n847vlmx9';
 const LINKEDIN_REDIRECT_URI = 'https://www.hkfac.com/auth/linkedin/callback';
 const LINKEDIN_SCOPE = 'openid profile email';
 
+// API基础URL
+const API_BASE_URL = 'https://api-fac-platform.mark-377.workers.dev';
+
 export default function RegistrationWizard({ onComplete, onBack }: RegistrationWizardProps) {
   const { 
     currentUser, 
@@ -142,41 +145,77 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     window.location.href = `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
   };
 
+  // 跳过LinkedIn，直接手动注册
+  const handleSkipLinkedIn = () => {
+    // 创建本地用户ID
+    const userId = `user_${Date.now()}`;
+    localStorage.setItem('fac_user_id', userId);
+    localStorage.setItem('fac_user_logged_in', '1');
+    
+    // 发放部分奖励（手动注册比LinkedIn少）
+    const now = new Date().toISOString().slice(0, 10);
+    addTransaction({ date: now, label: '手動註冊', amount: 50 });
+    
+    // 进入身份选择步骤
+    setRegistrationStep(2);
+  };
+
   // 处理LinkedIn回调
   const handleLinkedInCallback = async (code: string) => {
     setIsLinkedInLoading(true);
     
     try {
-      // 调用后端API交换code获取token
-      const response = await fetch('/api/auth/linkedin/callback?code=' + encodeURIComponent(code));
-      const data = await response.json();
+      // 调用后端API交换code获取token（使用完整URL）
+      const response = await fetch(`${API_BASE_URL}/api/auth/linkedin/callback?code=${encodeURIComponent(code)}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      });
       
       if (!response.ok) {
-        throw new Error(data.error?.message || 'LinkedIn登录失败');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `API错误: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message || 'LinkedIn登录失败');
       }
 
       // 登录成功，更新用户状态
-      const { user, token } = data;
+      const { user, token } = result.data;
       
       // 存储token
       localStorage.setItem('fac_auth_token', token);
       
       // 预填充表单数据
-      if (user.name) {
-        setFormData(prev => ({ ...prev, displayName: user.name }));
+      if (user.displayName) {
+        setFormData(prev => ({ ...prev, displayName: user.displayName }));
       }
-      if (user.avatar_url) {
-        setAvatarPreview(user.avatar_url);
+      if (user.avatarUrl) {
+        setAvatarPreview(user.avatarUrl);
       }
       
       // 发放LinkedIn登录奖励
       const now = new Date().toISOString().slice(0, 10);
       addTransaction({ date: now, label: 'LinkedIn 授權註冊', amount: 80 });
       
+      // 存储用户信息
+      localStorage.setItem('fac_user_id', user.id);
+      localStorage.setItem('fac_user_logged_in', '1');
+      localStorage.setItem('fac_user_profile', JSON.stringify(user));
+      localStorage.setItem('fac_linkedin_connected', '1');
+      
       // 进入下一步
       setRegistrationStep(2);
     } catch (error: any) {
-      setLinkedInError(error.message || '登录过程中发生错误');
+      console.error('LinkedIn callback error:', error);
+      setLinkedInError(error.message || '登录过程中发生错误，请使用手动注册');
+      
+      // 出错后3秒自动显示手动注册选项
+      setTimeout(() => {
+        setIsLinkedInLoading(false);
+      }, 3000);
     } finally {
       setIsLinkedInLoading(false);
     }
@@ -456,6 +495,22 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
           <Linkedin className="w-5 h-5" />
         )}
         <span>{isLinkedInLoading ? '連接中...' : '使用 LinkedIn 登入'}</span>
+      </button>
+
+      {/* 分隔線 */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-white/10" />
+        <span className="text-xs text-gray-500">或</span>
+        <div className="flex-1 h-px bg-white/10" />
+      </div>
+
+      {/* 跳過LinkedIn按鈕 */}
+      <button
+        onClick={handleSkipLinkedIn}
+        disabled={isLinkedInLoading}
+        className="w-full py-3 px-5 rounded-xl text-sm font-medium transition-all duration-300 hover:opacity-95 border border-white/20 text-gray-300 hover:text-white hover:border-[#C9A96E]/50"
+      >
+        跳過 LinkedIn，手動註冊
       </button>
 
       <p className="text-xs text-gray-500">
