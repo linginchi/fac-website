@@ -21,7 +21,7 @@ import MePage from './pages/MePage';
 import MessagesPage from './pages/MessagesPage';
 import ReferralCenter from './pages/ReferralCenter';
 import BuybackDashboard from './pages/BuybackDashboard';
-import LinkedInCallback from './pages/LinkedInCallback';
+
 import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
 import { IdentityProvider } from './contexts/IdentityContext';
@@ -71,7 +71,7 @@ const sampleArticle = {
 function App() {
   const { i18n } = useTranslation();
   const { auth, isLoaded: authLoaded } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me' | 'meMessages' | 'dashboard' | 'governance' | 'referral' | 'buyback' | 'linkedin-callback'>(() => {
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'admin' | 'register' | 'wallet' | 'profile' | 'vault' | 'me' | 'meMessages' | 'dashboard' | 'governance' | 'referral' | 'buyback'>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
       if (p === '/dashboard') return 'dashboard';
@@ -84,7 +84,6 @@ function App() {
       if (p === '/governance') return 'governance';
       if (p === '/referral') return 'referral';
       if (p === '/buyback') return 'buyback';
-      if (p === '/auth/linkedin/callback') return 'linkedin-callback';
     }
     return 'home';
   });
@@ -137,10 +136,6 @@ function App() {
     }
     if (path === '/buyback') {
       setCurrentView('buyback');
-      return;
-    }
-    if (path === '/auth/linkedin/callback') {
-      setCurrentView('linkedin-callback');
       return;
     }
     if (path === '/register' || path === '/login') {
@@ -246,10 +241,6 @@ function App() {
       ) : currentView === 'buyback' || window.location.pathname === '/buyback' ? (
         <>
           <BuybackDashboard />
-        </>
-      ) : currentView === 'linkedin-callback' || window.location.pathname === '/auth/linkedin/callback' ? (
-        <>
-          <LinkedInCallback />
         </>
       ) : (
         <div className="min-h-screen bg-black">

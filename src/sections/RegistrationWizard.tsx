@@ -1,19 +1,14 @@
 /**
- * FAC Platform V5.1 - 用户注册向导
- * 多步骤注册流程：LinkedIn登录 → 身份选择 → 完善资料 → 创建钱包
- * 
- * 修复内容：
- * 1. 接入真实LinkedIn OAuth
- * 2. 修复文件上传（头像和CV分离）
- * 3. 表单字段移除所有限制
+ * FAC Platform V5.1 - 用户注册向导 (纯手动版)
+ * 多步骤注册流程：身份选择 → PDF解析/手动填写 → 创建钱包
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { 
-  Linkedin, ChevronRight, ChevronLeft, User, Building2, 
+  ChevronRight, ChevronLeft, User, Building2, 
   Upload, Mic, MicOff, CheckCircle, Wallet, Coins,
   Briefcase, MapPin, Phone, DollarSign, Clock, FileText,
-  Sparkles, Shield, Eye, EyeOff, Loader2
+  Sparkles, Shield, Eye, EyeOff, Loader2, FileUp, X
 } from 'lucide-react';
 import { useUser, type UserRole } from '../contexts/UserContext';
 import { useWallet } from '../context/WalletContext';
@@ -35,14 +30,6 @@ const SKILL_OPTIONS = [
   { id: 'education', label: '教育培訓', category: 'education' as const },
   { id: 'healthcare', label: '醫療健康', category: 'healthcare' as const },
 ];
-
-// LinkedIn OAuth配置 - 必须与LinkedIn App配置完全一致
-const LINKEDIN_CLIENT_ID = '86rh0n847vlmx9';
-const LINKEDIN_REDIRECT_URI = 'https://www.hkfac.com/auth/linkedin/callback';
-const LINKEDIN_SCOPE = 'openid profile email';
-
-// API基础URL
-const API_BASE_URL = 'https://api-fac-platform.mark-377.workers.dev';
 
 export default function RegistrationWizard({ onComplete, onBack }: RegistrationWizardProps) {
   const { 
@@ -70,12 +57,12 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
   const [cvFileName, setCvFileName] = useState<string>('');
   const [isGeneratingWallet, setIsGeneratingWallet] = useState(false);
   const [showWalletSecret, setShowWalletSecret] = useState(false);
-  const [isLinkedInLoading, setIsLinkedInLoading] = useState(false);
-  const [linkedInError, setLinkedInError] = useState<string>('');
+  const [isParsingPDF, setIsParsingPDF] = useState(false);
+  const [pdfParseError, setPdfParseError] = useState<string>('');
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
 
-  // 表单状态
+  // 表单状态 - 移除所有限制，用户可以完全自由输入
   const [formData, setFormData] = useState({
     displayName: '',
     phone: '',
@@ -94,154 +81,38 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     jobBudget: '',
   });
 
-  // 检查URL参数（LinkedIn OAuth回调）
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state');
-    const error = url.searchParams.get('error');
-    const errorDescription = url.searchParams.get('error_description');
-
-    if (error) {
-      setLinkedInError(errorDescription || 'LinkedIn授权失败');
-      return;
-    }
-
-    if (code && state) {
-      // 验证state防止CSRF攻击
-      const savedState = sessionStorage.getItem('linkedin_oauth_state');
-      if (state !== savedState) {
-        setLinkedInError('安全验证失败，请重试');
-        return;
-      }
-      
-      // 清除URL参数
-      window.history.replaceState({}, '', '/register');
-      
-      // 处理LinkedIn登录
-      handleLinkedInCallback(code);
-    }
-  }, []);
-
-  // LinkedIn OAuth登录
-  const handleLinkedInLogin = () => {
-    setIsLinkedInLoading(true);
-    setLinkedInError('');
-    
-    // 生成随机state防止CSRF
-    const state = Math.random().toString(36).substring(2, 15);
-    sessionStorage.setItem('linkedin_oauth_state', state);
-    
-    // 构建LinkedIn OAuth URL
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: LINKEDIN_CLIENT_ID,
-      redirect_uri: LINKEDIN_REDIRECT_URI,
-      state: state,
-      scope: LINKEDIN_SCOPE,
-    });
-    
-    // 跳转到LinkedIn授权页面
-    window.location.href = `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
-  };
-
-  // 跳过LinkedIn，直接手动注册
-  const handleSkipLinkedIn = () => {
-    // 创建本地用户ID
+  // 初始化用户ID（手动注册时创建）
+  const initUser = () => {
     const userId = `user_${Date.now()}`;
     localStorage.setItem('fac_user_id', userId);
     localStorage.setItem('fac_user_logged_in', '1');
-    
-    // 发放部分奖励（手动注册比LinkedIn少）
-    const now = new Date().toISOString().slice(0, 10);
-    addTransaction({ date: now, label: '手動註冊', amount: 50 });
-    
-    // 进入身份选择步骤
-    setRegistrationStep(2);
-  };
-
-  // 处理LinkedIn回调
-  const handleLinkedInCallback = async (code: string) => {
-    setIsLinkedInLoading(true);
-    
-    try {
-      // 调用后端API交换code获取token（使用完整URL）
-      const response = await fetch(`${API_BASE_URL}/api/auth/linkedin/callback?code=${encodeURIComponent(code)}`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `API错误: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || 'LinkedIn登录失败');
-      }
-
-      // 登录成功，更新用户状态
-      const { user, token } = result.data;
-      
-      // 存储token
-      localStorage.setItem('fac_auth_token', token);
-      
-      // 预填充表单数据
-      if (user.displayName) {
-        setFormData(prev => ({ ...prev, displayName: user.displayName }));
-      }
-      if (user.avatarUrl) {
-        setAvatarPreview(user.avatarUrl);
-      }
-      
-      // 发放LinkedIn登录奖励
-      const now = new Date().toISOString().slice(0, 10);
-      addTransaction({ date: now, label: 'LinkedIn 授權註冊', amount: 80 });
-      
-      // 存储用户信息
-      localStorage.setItem('fac_user_id', user.id);
-      localStorage.setItem('fac_user_logged_in', '1');
-      localStorage.setItem('fac_user_profile', JSON.stringify(user));
-      localStorage.setItem('fac_linkedin_connected', '1');
-      
-      // 进入下一步
-      setRegistrationStep(2);
-    } catch (error: any) {
-      console.error('LinkedIn callback error:', error);
-      setLinkedInError(error.message || '登录过程中发生错误，请使用手动注册');
-      
-      // 出错后3秒自动显示手动注册选项
-      setTimeout(() => {
-        setIsLinkedInLoading(false);
-      }, 3000);
-    } finally {
-      setIsLinkedInLoading(false);
-    }
+    return userId;
   };
 
   // 选择身份
   const handleRoleSelect = (role: UserRole) => {
+    initUser();
     setUserRole(role);
-    setRegistrationStep(3);
+    setRegistrationStep(2);
+    
+    // 发放注册奖励
+    const now = new Date().toISOString().slice(0, 10);
+    addTransaction({ date: now, label: '手動註冊', amount: 50 });
   };
 
-  // 处理表单输入 - 移除所有限制
+  // 处理表单输入 - 完全无限制
   const handleInputChange = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // 头像上传 - 修复文件处理
+  // 头像上传
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 验证文件类型
       if (!file.type.startsWith('image/')) {
         alert('请上传图片文件');
         return;
       }
-      // 验证文件大小（最大5MB）
       if (file.size > 5 * 1024 * 1024) {
         alert('图片大小不能超过5MB');
         return;
@@ -249,49 +120,89 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
       
       setAvatarFile(file);
       
-      // 创建本地预览
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
         setAvatarPreview(result);
-        // 立即更新用户资料
         updateProfile({ avatarUrl: result });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // CV上传 - 独立的上传处理
-  const handleCVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 模拟PDF解析（实际项目中需要调用后端API或PDF解析库）
+  const parsePDF = async (_file: File): Promise<Partial<typeof formData>> => {
+    return new Promise((resolve) => {
+      // 模拟解析延迟
+      setTimeout(() => {
+        // 这里返回模拟的解析结果
+        // 实际项目中应该调用 PDF 解析服务
+        resolve({
+          displayName: '解析用戶',
+          phone: '+852 1234 5678',
+          location: '香港',
+          bio: '從PDF解析的個人簡介...',
+        });
+      }, 1500);
+    });
+  };
+
+  // CV/PDF上传
+  const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // 验证文件类型
-      const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ];
-      if (!allowedTypes.includes(file.type)) {
-        alert('请上传PDF或Word文件');
-        return;
-      }
-      // 验证文件大小（最大10MB）
-      if (file.size > 10 * 1024 * 1024) {
-        alert('文件大小不能超过10MB');
-        return;
-      }
-      
-      setCvFile(file);
-      setCvFileName(file.name);
-      
-      // 创建本地预览（仅用于显示）
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // CV文件不直接存储内容，只存储引用
-        updateProfile({ cvUrl: file.name });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      alert('请上传PDF或Word文件');
+      return;
     }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('文件大小不能超过10MB');
+      return;
+    }
+    
+    setCvFile(file);
+    setCvFileName(file.name);
+    setPdfParseError('');
+    
+    // 如果是PDF，尝试解析
+    if (file.type === 'application/pdf') {
+      setIsParsingPDF(true);
+      try {
+        const parsedData = await parsePDF(file);
+        // 询问用户是否使用解析的数据
+        const useParsed = window.confirm(
+          'PDF解析完成！\n\n' +
+          `姓名: ${parsedData.displayName}\n` +
+          `電話: ${parsedData.phone}\n` +
+          `地點: ${parsedData.location}\n\n` +
+          '是否使用這些資料自動填充表單？'
+        );
+        
+        if (useParsed) {
+          setFormData(prev => ({
+            ...prev,
+            ...parsedData,
+          }));
+        }
+        
+        // 发放PDF上传奖励
+        const now = new Date().toISOString().slice(0, 10);
+        addTransaction({ date: now, label: '上傳CV/PDF', amount: 30 });
+        
+      } catch (error) {
+        setPdfParseError('PDF解析失敗，請手動填寫資料');
+      } finally {
+        setIsParsingPDF(false);
+      }
+    }
+    
+    updateProfile({ cvUrl: file.name });
   };
 
   // 语音输入
@@ -299,7 +210,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     if (!isRecording) {
       setIsRecording(true);
       
-      // 使用真实的Web Speech API
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
         const recognition = new SpeechRecognition();
@@ -317,7 +227,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         
         recognition.onerror = () => {
           setIsRecording(false);
-          // 降级到模拟数据
           const mockBio = '我是一位擁有20年經驗的財務顧問，精通跨境稅務規劃和企業融資。目前專注於為中小企業提供專業諮詢服務。';
           setTranscript(mockBio);
           handleInputChange('bio', mockBio);
@@ -329,7 +238,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         
         recognition.start();
       } else {
-        // 浏览器不支持语音识别，使用模拟
         setTimeout(() => {
           const mockBio = '我是一位擁有20年經驗的財務顧問，精通跨境稅務規劃和企業融資。目前專注於為中小企業提供專業諮詢服務。';
           setTranscript(mockBio);
@@ -350,7 +258,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         ? prev.filter(id => id !== skillId)
         : [...prev, skillId];
       
-      // 添加到用户资料
       if (!isSelected) {
         const skill = SKILL_OPTIONS.find(s => s.id === skillId);
         if (skill) {
@@ -373,7 +280,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
   const handleGenerateWallet = async () => {
     setIsGeneratingWallet(true);
     
-    // 模拟生成过程
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     const address = generateWallet();
@@ -389,7 +295,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
 
   // 完成注册
   const handleComplete = async () => {
-    // 更新所有资料
     updateProfile({
       displayName: formData.displayName,
       phone: formData.phone,
@@ -402,22 +307,22 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
       industry: formData.industry,
     });
     
-    // TODO: 实际上传文件到服务器
-    // 这里应该调用API上传avatarFile和cvFile
-    
     await completeRegistration();
     onComplete?.();
   };
 
   // 步骤指示器
   const StepIndicator = () => {
-    const steps = ['LinkedIn', '身份', '資料', '錢包'];
+    const steps = ['身份', '資料', '錢包'];
+    // 步骤偏移：以前是4步，现在3步
+    const adjustedStep = registrationStep >= 2 ? registrationStep - 1 : 1;
+    
     return (
       <div className="flex items-center justify-center gap-2 mb-8">
         {steps.map((step, idx) => {
           const stepNum = idx + 1;
-          const isActive = registrationStep === stepNum;
-          const isCompleted = registrationStep > stepNum;
+          const isActive = adjustedStep === stepNum;
+          const isCompleted = adjustedStep > stepNum;
           
           return (
             <div key={step} className="flex items-center">
@@ -445,87 +350,29 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     );
   };
 
-  // 步骤1: LinkedIn 登录
-  const Step1_LinkedIn = () => (
-    <div className="text-center space-y-6">
-      <div className="w-20 h-20 mx-auto rounded-2xl bg-[#0A66C2]/10 border border-[#0A66C2]/20 flex items-center justify-center">
-        <Linkedin className="w-10 h-10 text-[#0A66C2]" />
-      </div>
-      
-      <div>
-        <h2 className="text-xl font-bold text-white mb-2">使用 LinkedIn 一鍵註冊</h2>
+  // 步骤1: 选择身份 (现在是第一步)
+  const Step1_RoleSelect = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="w-20 h-20 mx-auto rounded-2xl bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center mb-4">
+          <User className="w-10 h-10 text-[#C9A96E]" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">選擇您的身份</h2>
         <p className="text-sm text-gray-400">
-          安全同步您的職業資歷，快速建立智慧保險箱
+          這將決定您在平台上的主要使用方式
         </p>
       </div>
 
       <div 
-        className="py-3 px-4 rounded-xl text-sm"
+        className="py-3 px-4 rounded-xl text-sm mb-6"
         style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)' }}
       >
         <div className="flex items-center justify-center gap-2 text-[#C9A96E] mb-2">
           <Coins className="w-4 h-4" />
-          <span className="font-medium">註冊即領 80 $FAC</span>
+          <span className="font-medium">註冊即領 50 $FAC</span>
         </div>
-        <p className="text-xs text-gray-500">
-          平台採用去中心化存儲，您的數據僅存於您的專屬加密節點
-        </p>
-      </div>
-
-      {linkedInError && (
-        <div className="py-2 px-3 rounded-lg text-sm text-red-400 bg-red-500/10 border border-red-500/20">
-          {linkedInError}
-        </div>
-      )}
-
-      <button
-        onClick={handleLinkedInLogin}
-        disabled={isLinkedInLoading}
-        className="w-full flex items-center justify-center gap-3 py-4 px-5 rounded-xl font-semibold text-base transition-all duration-300 hover:opacity-95 hover:scale-[1.01] disabled:opacity-50"
-        style={{
-          background: 'linear-gradient(135deg, #0A66C2 0%, #004182 100%)',
-          color: '#fff',
-          border: '1px solid rgba(255,255,255,0.15)',
-          boxShadow: '0 4px 20px rgba(10,102,194,0.35)'
-        }}
-      >
-        {isLinkedInLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : (
-          <Linkedin className="w-5 h-5" />
-        )}
-        <span>{isLinkedInLoading ? '連接中...' : '使用 LinkedIn 登入'}</span>
-      </button>
-
-      {/* 分隔線 */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-white/10" />
-        <span className="text-xs text-gray-500">或</span>
-        <div className="flex-1 h-px bg-white/10" />
-      </div>
-
-      {/* 跳過LinkedIn按鈕 */}
-      <button
-        onClick={handleSkipLinkedIn}
-        disabled={isLinkedInLoading}
-        className="w-full py-3 px-5 rounded-xl text-sm font-medium transition-all duration-300 hover:opacity-95 border border-white/20 text-gray-300 hover:text-white hover:border-[#C9A96E]/50"
-      >
-        跳過 LinkedIn，手動註冊
-      </button>
-
-      <p className="text-xs text-gray-500">
-        註冊即表示您同意我們的<a href="/terms.html" target="_blank" className="text-[#C9A96E] hover:underline">服務條款</a>與<a href="/privacy.html" target="_blank" className="text-[#C9A96E] hover:underline">隱私政策</a>
-      </p>
-    </div>
-  );
-
-  // 步骤2: 选择身份
-  const Step2_RoleSelect = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-xl font-bold text-white mb-2">選擇您的身份</h2>
-        <p className="text-sm text-gray-400">
-          這將決定您在平台上的主要使用方式
+        <p className="text-xs text-gray-500 text-center">
+          上傳PDF/CV額外獲得 30 $FAC
         </p>
       </div>
 
@@ -556,9 +403,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
                 </span>
                 <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400">
                   分享專業智慧
-                </span>
-                <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400">
-                  獲得額外收入
                 </span>
               </div>
             </div>
@@ -593,34 +437,65 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
                 <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400">
                   匹配專家資源
                 </span>
-                <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400">
-                  獲得專業服務
-                </span>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-blue-400 transition-colors" />
           </div>
         </button>
       </div>
-
-      <button
-        onClick={() => setRegistrationStep(1)}
-        className="w-full flex items-center justify-center gap-2 py-3 text-sm text-gray-400 hover:text-white transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        返回
-      </button>
     </div>
   );
 
-  // 步骤3: 完善资料
-  const Step3_Profile = () => (
+  // 步骤2: 完善资料
+  const Step2_Profile = () => (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-bold text-white mb-2">完善您的資料</h2>
         <p className="text-sm text-gray-400">
           {userRole === 'B' ? '讓企業更好地了解您的專業背景' : '讓專家更好地了解您的企業需求'}
         </p>
+      </div>
+
+      {/* PDF上传区域 - 新增 */}
+      <div 
+        className="p-5 rounded-2xl border-2 border-dashed border-[#C9A96E]/30 bg-[#C9A96E]/5 text-center cursor-pointer hover:border-[#C9A96E]/60 transition-colors"
+        onClick={() => cvInputRef.current?.click()}
+      >
+        <input
+          ref={cvInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onChange={handleCVUpload}
+          className="hidden"
+        />
+        <FileUp className="w-10 h-10 text-[#C9A96E] mx-auto mb-3" />
+        <p className="text-sm text-white font-medium mb-1">
+          {isParsingPDF ? '正在解析PDF...' : '上傳 PDF/Word 自動填充'}
+        </p>
+        <p className="text-xs text-gray-500">
+          {cvFileName || '支持 PDF, DOC, DOCX 格式，最大10MB'}
+        </p>
+        {isParsingPDF && (
+          <Loader2 className="w-5 h-5 text-[#C9A96E] animate-spin mx-auto mt-2" />
+        )}
+        {pdfParseError && (
+          <p className="text-xs text-red-400 mt-2">{pdfParseError}</p>
+        )}
+        {cvFileName && !isParsingPDF && (
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <span className="text-xs text-green-400">✓ {cvFileName}</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCvFile(null);
+                setCvFileName('');
+              }}
+              className="text-xs text-red-400 hover:text-red-300"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 头像上传 */}
@@ -644,12 +519,12 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         <input
           ref={avatarInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp"
+          accept="image/*"
           onChange={handleAvatarUpload}
           className="hidden"
         />
         <p className="text-xs text-gray-500 mt-2">
-          {avatarFile ? `已選擇: ${avatarFile.name}` : '點擊上傳頭像 (JPG/PNG/GIF, 最大5MB)'}
+          {avatarFile ? `已選擇: ${avatarFile.name}` : '點擊上傳頭像'}
         </p>
       </div>
 
@@ -663,6 +538,8 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
             onChange={(e) => handleInputChange('displayName', e.target.value)}
             placeholder={userRole === 'B' ? '您的姓名或專業稱號' : '企業聯繫人姓名'}
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50"
+            autoComplete="off"
+            spellCheck="false"
           />
         </div>
 
@@ -678,6 +555,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
               onChange={(e) => handleInputChange('phone', e.target.value)}
               placeholder="+852"
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50"
+              autoComplete="off"
             />
           </div>
           <div>
@@ -691,6 +569,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
               onChange={(e) => handleInputChange('location', e.target.value)}
               placeholder="香港"
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50"
+              autoComplete="off"
             />
           </div>
         </div>
@@ -719,6 +598,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
               : '請介紹您的企業背景和專業需求...'}
             rows={4}
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50 resize-none"
+            spellCheck="false"
           />
           {transcript && (
             <p className="text-xs text-green-400 mt-1">✓ 語音轉文字成功 (+50 $FAC)</p>
@@ -775,33 +655,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
                 />
               </div>
             </div>
-
-            <div>
-              <label className="block text-xs text-gray-400 mb-2">
-                <Clock className="w-3 h-3 inline mr-1" />
-                可服務時間
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {['工作日', '週末', '上午', '下午', '晚上', '彈性'].map(time => (
-                  <button
-                    key={time}
-                    onClick={() => {
-                      const newAvailability = formData.availability.includes(time)
-                        ? formData.availability.filter(t => t !== time)
-                        : [...formData.availability, time];
-                      handleInputChange('availability', newAvailability);
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-xs transition-all ${
-                      formData.availability.includes(time)
-                        ? 'bg-[#C9A96E] text-[#0A1628]'
-                        : 'bg-white/5 text-gray-400 border border-white/10'
-                    }`}
-                  >
-                    {time}
-                  </button>
-                ))}
-              </div>
-            </div>
           </>
         )}
 
@@ -819,6 +672,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
                 onChange={(e) => handleInputChange('companyName', e.target.value)}
                 placeholder="您的公司名稱"
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50"
+                autoComplete="off"
               />
             </div>
 
@@ -828,8 +682,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
                 <select
                   value={formData.industry}
                   onChange={(e) => handleInputChange('industry', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#C9A96E]/50 appearance-none"
-                  style={{ backgroundImage: 'none' }}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#C9A96E]/50"
                 >
                   <option value="" className="bg-[#0A1628]">請選擇</option>
                   <option value="finance" className="bg-[#0A1628]">金融服務</option>
@@ -855,75 +708,20 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
                 </select>
               </div>
             </div>
-
-            <div>
-              <label className="block text-xs text-gray-400 mb-2">
-                <FileText className="w-3 h-3 inline mr-1" />
-                當前需求簡述
-              </label>
-              <textarea
-                value={formData.jobDescription}
-                onChange={(e) => handleInputChange('jobDescription', e.target.value)}
-                placeholder="請描述您正在尋找的專業服務或人才類型..."
-                rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50 resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs text-gray-400 mb-2">
-                <DollarSign className="w-3 h-3 inline mr-1" />
-                預算範圍 (HKD)
-              </label>
-              <input
-                type="text"
-                value={formData.jobBudget}
-                onChange={(e) => handleInputChange('jobBudget', e.target.value)}
-                placeholder="例如：每小時 500-800 或 項目總額 50000"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50"
-              />
-            </div>
           </>
         )}
-
-        {/* CV上传 - 修复版本 */}
-        <div>
-          <label className="block text-xs text-gray-400 mb-2">
-            <FileText className="w-3 h-3 inline mr-1" />
-            上傳履歷/CV（可選）
-          </label>
-          <input
-            ref={cvInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            onChange={handleCVUpload}
-            className="hidden"
-          />
-          <div 
-            className="border-2 border-dashed border-white/10 rounded-xl p-6 text-center cursor-pointer hover:border-[#C9A96E]/30 transition-colors"
-            onClick={() => cvInputRef.current?.click()}
-          >
-            <Upload className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">
-              {cvFileName || '點擊上傳 PDF 或 Word 文件'}
-            </p>
-            <p className="text-xs text-gray-600 mt-1">
-              {cvFile ? `已選擇: ${cvFile.name} (${(cvFile.size / 1024 / 1024).toFixed(2)}MB)` : '支持 PDF, DOC, DOCX 格式，最大10MB'}
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* 导航按钮 */}
       <div className="flex gap-3 pt-4">
         <button
-          onClick={() => setRegistrationStep(2)}
+          onClick={() => setRegistrationStep(1)}
           className="flex-1 py-3 rounded-xl text-sm text-gray-400 hover:text-white transition-colors border border-white/10"
         >
           返回
         </button>
         <button
-          onClick={() => setRegistrationStep(4)}
+          onClick={() => setRegistrationStep(3)}
           disabled={!formData.displayName}
           className="flex-1 py-3 rounded-xl text-sm font-medium bg-[#C9A96E] text-[#0A1628] disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
@@ -933,8 +731,8 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     </div>
   );
 
-  // 步骤4: 创建钱包
-  const Step4_Wallet = () => (
+  // 步骤3: 创建钱包
+  const Step3_Wallet = () => (
     <div className="space-y-6">
       <div className="text-center">
         <div className="w-16 h-16 mx-auto rounded-2xl bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center mb-4">
@@ -1027,7 +825,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
             style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.2)' }}
           >
             <p className="text-sm text-[#C9A96E] font-medium mb-1">註冊完成獎勵</p>
-            <p className="text-2xl font-bold text-white">150 $FAC</p>
+            <p className="text-2xl font-bold text-white">100+ $FAC</p>
             <p className="text-xs text-gray-500 mt-1">已發放至您的錢包</p>
           </div>
 
@@ -1041,7 +839,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
       )}
 
       <button
-        onClick={() => setRegistrationStep(3)}
+        onClick={() => setRegistrationStep(2)}
         className="w-full py-3 text-sm text-gray-400 hover:text-white transition-colors"
       >
         返回修改資料
@@ -1053,21 +851,17 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     <div className="min-h-screen bg-[#0A1628] py-8 px-4">
       <div className="max-w-md mx-auto">
         {/* 返回按钮 */}
-        {onBack && registrationStep === 1 && (
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1 text-sm mb-6 text-[#C9A96E]/70 hover:text-[#C9A96E] transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            返回首頁
-          </button>
-        )}
+        <button 
+          onClick={onBack}
+          className="flex items-center gap-1 text-sm text-gray-400 hover:text-white mb-6 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          返回首頁
+        </button>
 
         {/* Logo */}
         <div className="text-center mb-6">
-          <div className="text-2xl font-bold text-white mb-1">
-            F<span className="text-[#C9A96E]">A</span>C
-          </div>
+          <h1 className="text-2xl font-bold text-white">FAC</h1>
           <p className="text-xs text-gray-500">智慧沈澱，在此相遇</p>
         </div>
 
@@ -1075,21 +869,14 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         <StepIndicator />
 
         {/* 步骤内容 */}
-        <div 
-          className="rounded-2xl p-6"
-          style={{ 
-            background: 'linear-gradient(145deg, rgba(13,31,60,0.95) 0%, rgba(10,22,40,0.98) 100%)',
-            border: '1px solid rgba(201,169,110,0.15)'
-          }}
-        >
-          {registrationStep === 1 && <Step1_LinkedIn />}
-          {registrationStep === 2 && <Step2_RoleSelect />}
-          {registrationStep === 3 && <Step3_Profile />}
-          {registrationStep === 4 && <Step4_Wallet />}
+        <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
+          {registrationStep === 1 && <Step1_RoleSelect />}
+          {registrationStep === 2 && <Step2_Profile />}
+          {registrationStep === 3 && <Step3_Wallet />}
         </div>
 
-        {/* 底部信息 */}
-        <p className="text-center text-xs text-gray-600 mt-6">
+        {/* 页脚 */}
+        <p className="text-center text-xs text-gray-600 mt-8">
           FAC Platform V5.1 · 國科綠色發展國際實驗室（香港）
         </p>
       </div>
