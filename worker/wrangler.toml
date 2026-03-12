@@ -1,5 +1,5 @@
 # FAC Platform V5.1 - Cloudflare Workers Configuration
-name = "fac-platform-api"
+name = "api-fac-platform"
 main = "src/index.ts"
 compatibility_date = "2024-03-01"
 
@@ -7,7 +7,7 @@ compatibility_date = "2024-03-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "fac-platform-db"
-database_id = "your-database-id-here" # 需要在Cloudflare控制台创建后填入
+database_id = "e36f6f71-afb7-42c1-814e-484e841ee6e8" # 需要在Cloudflare控制台创建后填入
 
 # Environment Variables
 [vars]
@@ -27,6 +27,6 @@ name = "fac-platform-api-staging"
 LINKEDIN_REDIRECT_URI = "https://staging.hkfac.com/auth/linkedin/callback"
 
 [env.production]
-name = "fac-platform-api"
+name = "api-fac-platform"
 [env.production.vars]
 LINKEDIN_REDIRECT_URI = "https://www.hkfac.com/auth/linkedin/callback"

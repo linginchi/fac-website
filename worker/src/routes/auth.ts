@@ -171,9 +171,16 @@ export async function handleAuthRoutes(request: Request, env: Env): Promise<Resp
           user: {
             id: user.id,
             email: user.email,
-            name: user.display_name,
-            avatar: user.avatar_url,
+            displayName: user.display_name,
+            avatarUrl: user.avatar_url,
             linkedinId: user.linkedin_id,
+            linkedinSyncedAt: user.linkedin_synced_at,
+            userRole: user.user_role,
+            membershipTier: user.membership_tier,
+            facBalance: user.fac_balance,
+            facLifetimeEarned: user.fac_lifetime_earned,
+            facLifetimeSpent: user.fac_lifetime_spent,
+            createdAt: user.created_at,
           },
           isNewUser: isNewUser,
         }

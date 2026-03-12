@@ -40,8 +40,8 @@ export default {
         }), { headers: { 'Content-Type': 'application/json' } });
       }
       
-      // Auth routes
-      if (path.startsWith('/auth/')) {
+      // Auth routes (includes /auth/ and /api/auth/)
+      if (path.startsWith('/auth/') || path.startsWith('/api/auth/')) {
         const response = await handleAuthRoutes(request, env);
         return addCorsHeaders(response, request);
       }

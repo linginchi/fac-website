@@ -1,9 +1,6 @@
 /**
  * FAC Platform V5.1 - LinkedIn OAuth Callback Handler
  * 处理LinkedIn授权回调，获取用户资料并存储到个人保险柜
- * 
- * 注意：由于安全原因，access_token交换应该通过后端API完成
- * 这里为了MVP演示，使用前端直接交换（生产环境应改为后端代理）
  */
 
 import { useEffect, useState } from 'react';
@@ -24,6 +21,7 @@ export default function LinkedInCallback() {
   const [message, setMessage] = useState('正在处理LinkedIn授权...');
   const [profile, setProfile] = useState<LinkedInProfile | null>(null);
   const [progress, setProgress] = useState<string[]>([]);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const addProgress = (msg: string) => {
     setProgress(prev => [...prev, msg]);
@@ -50,138 +48,136 @@ export default function LinkedInCallback() {
         }
 
         addProgress('✓ 获取授权码成功');
-        addProgress('→ 正在通过后端API交换令牌...');
+        addProgress('→ 正在连接后端API...');
 
-        // 通过后端API交换code获取token和用户信息
-        // 注意：这是为了安全，client_secret保存在后端
+        // 尝试调用后端API
         const apiUrl = 'https://api-fac-platform.mark-377.workers.dev/api/auth/linkedin/callback';
         
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          
           const response = await fetch(`${apiUrl}?code=${encodeURIComponent(code)}`, {
             method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-            },
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal,
           });
-
-          if (!response.ok) {
-            // 如果后端API不可用，使用模拟数据进行演示
-            console.warn('Backend API unavailable, using demo mode');
-            addProgress('⚠ 后端API暂不可用，使用演示模式');
-            
-            // 模拟成功（演示模式）
-            const mockProfile: LinkedInProfile = {
-              sub: 'linkedin_demo_' + Date.now(),
-              name: '演示用户',
-              email: `demo_${Date.now()}@example.com`,
-              picture: undefined,
-            };
-            
-            setProfile(mockProfile);
-            
-            // 存储到localStorage
-            const userId = `user_${Date.now()}`;
-            const userProfile = {
-              id: userId,
-              displayName: mockProfile.name,
-              email: mockProfile.email,
-              avatarUrl: null,
-              linkedinId: mockProfile.sub,
-              linkedinSyncedAt: new Date().toISOString(),
-              userRole: 'neutral',
-              membershipTier: 'basic',
-              facBalance: 80,
-              facLifetimeEarned: 80,
-              facLifetimeSpent: 0,
-              createdAt: new Date().toISOString(),
-              vault: {
-                linkedinRaw: mockProfile,
-                importedAt: new Date().toISOString(),
-              }
-            };
-
-            localStorage.setItem('fac_user_id', userId);
-            localStorage.setItem('fac_user_profile', JSON.stringify(userProfile));
-            localStorage.setItem('fac_user_logged_in', '1');
-            localStorage.setItem('fac_linkedin_connected', '1');
-            localStorage.setItem(`fac_vault_${userId}_linkedin`, JSON.stringify({
-              profile: mockProfile,
-              importedAt: new Date().toISOString(),
-            }));
-
-            // 发放奖励
-            const now = new Date().toISOString().slice(0, 10);
-            const txs = JSON.parse(localStorage.getItem('fac_wallet_transactions') || '[]');
-            txs.unshift({ date: now, label: 'LinkedIn 授權註冊 (演示模式)', amount: 80 });
-            localStorage.setItem('fac_wallet_transactions', JSON.stringify(txs));
-            
-            const currentBalance = parseInt(localStorage.getItem('fac_wallet_balance') || '0');
-            localStorage.setItem('fac_wallet_balance', String(currentBalance + 80));
-
-            addProgress('✓ 演示模式：用户档案创建完成');
-            addProgress('✓ +80 $FAC 奖励已发放');
-
-            setStatus('success');
-            setMessage('演示模式：授权成功！您的资料已存储');
-            
-            setTimeout(() => {
-              window.location.href = '/register';
-            }, 2000);
-            return;
-          }
-
-          const data = await response.json();
           
-          if (!data.success) {
-            throw new Error(data.error?.message || '后端处理失败');
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+              // 使用后端返回的真实数据
+              const { user, token } = result.data;
+              setProfile(user);
+
+              addProgress(`✓ 欢迎, ${user.displayName}`);
+              addProgress('→ 正在创建您的智慧保险柜...');
+
+              localStorage.setItem('fac_auth_token', token);
+              localStorage.setItem('fac_user_id', user.id);
+              localStorage.setItem('fac_user_profile', JSON.stringify(user));
+              localStorage.setItem('fac_user_logged_in', '1');
+              localStorage.setItem('fac_linkedin_connected', '1');
+              
+              localStorage.setItem(`fac_vault_${user.id}_linkedin`, JSON.stringify({
+                profile: user,
+                importedAt: new Date().toISOString(),
+              }));
+
+              // 发放奖励
+              const now = new Date().toISOString().slice(0, 10);
+              const txs = JSON.parse(localStorage.getItem('fac_wallet_transactions') || '[]');
+              txs.unshift({ 
+                date: now, 
+                label: 'LinkedIn 授權註冊', 
+                amount: 80,
+                metadata: { linkedinId: user.linkedinId }
+              });
+              localStorage.setItem('fac_wallet_transactions', JSON.stringify(txs));
+              
+              const currentBalance = parseInt(localStorage.getItem('fac_wallet_balance') || '0');
+              localStorage.setItem('fac_wallet_balance', String(currentBalance + 80));
+
+              addProgress('✓ 智慧保险柜创建完成');
+              addProgress('✓ +80 $FAC 奖励已发放');
+
+              setStatus('success');
+              setMessage('LinkedIn授权成功！您的职业资料已安全存入保险柜');
+              
+              setTimeout(() => {
+                window.location.href = '/register';
+              }, 2000);
+              return;
+            }
           }
+          
+          // API返回错误或不可用，使用演示模式
+          throw new Error('API not available');
+          
+        } catch (apiError: any) {
+          console.warn('Backend API unavailable, using demo mode:', apiError);
+          setIsDemoMode(true);
+          addProgress('⚠ 后端API暂不可用，使用演示模式');
+          
+          // 演示模式：使用模拟数据
+          const mockProfile: LinkedInProfile = {
+            sub: 'linkedin_demo_' + Date.now(),
+            name: 'Mark Lin',
+            email: 'mark@hkfac.com',
+            picture: undefined,
+          };
+          
+          setProfile(mockProfile);
+          
+          const userId = `user_${Date.now()}`;
+          const userProfile = {
+            id: userId,
+            displayName: mockProfile.name,
+            email: mockProfile.email,
+            avatarUrl: null,
+            linkedinId: mockProfile.sub,
+            linkedinSyncedAt: new Date().toISOString(),
+            userRole: 'neutral',
+            membershipTier: 'basic',
+            facBalance: 80,
+            facLifetimeEarned: 80,
+            facLifetimeSpent: 0,
+            createdAt: new Date().toISOString(),
+            vault: {
+              linkedinRaw: mockProfile,
+              importedAt: new Date().toISOString(),
+            }
+          };
 
-          const { user, token } = data;
-          setProfile(user);
-
-          addProgress(`✓ 欢迎, ${user.name}`);
-          addProgress('→ 正在创建您的智慧保险柜...');
-
-          // 存储用户信息
-          localStorage.setItem('fac_auth_token', token);
-          localStorage.setItem('fac_user_id', user.id);
-          localStorage.setItem('fac_user_profile', JSON.stringify(user));
+          localStorage.setItem('fac_user_id', userId);
+          localStorage.setItem('fac_user_profile', JSON.stringify(userProfile));
           localStorage.setItem('fac_user_logged_in', '1');
           localStorage.setItem('fac_linkedin_connected', '1');
-          
-          // 存储LinkedIn资料到保险柜
-          localStorage.setItem(`fac_vault_${user.id}_linkedin`, JSON.stringify({
-            profile: user,
+          localStorage.setItem(`fac_vault_${userId}_linkedin`, JSON.stringify({
+            profile: mockProfile,
             importedAt: new Date().toISOString(),
           }));
 
-          // 发放奖励
           const now = new Date().toISOString().slice(0, 10);
           const txs = JSON.parse(localStorage.getItem('fac_wallet_transactions') || '[]');
-          txs.unshift({ 
-            date: now, 
-            label: 'LinkedIn 授權註冊', 
-            amount: 80,
-            metadata: { linkedinId: user.linkedinId }
-          });
+          txs.unshift({ date: now, label: 'LinkedIn 授權註冊 (演示模式)', amount: 80 });
           localStorage.setItem('fac_wallet_transactions', JSON.stringify(txs));
           
           const currentBalance = parseInt(localStorage.getItem('fac_wallet_balance') || '0');
           localStorage.setItem('fac_wallet_balance', String(currentBalance + 80));
 
-          addProgress('✓ 智慧保险柜创建完成');
+          addProgress('✓ 演示模式：用户档案创建完成');
           addProgress('✓ +80 $FAC 奖励已发放');
 
           setStatus('success');
-          setMessage('LinkedIn授权成功！您的职业资料已安全存入保险柜');
-
+          setMessage('演示模式：授权成功！（后端API部署后将使用真实LinkedIn数据）');
+          
           setTimeout(() => {
             window.location.href = '/register';
-          }, 2000);
-
-        } catch (apiError: any) {
-          console.error('API error:', apiError);
-          throw new Error('连接后端API失败：' + apiError.message);
+          }, 3000);
         }
 
       } catch (error: any) {
@@ -222,12 +218,9 @@ export default function LinkedInCallback() {
             <h1 className="text-xl font-bold text-white mb-2">正在处理LinkedIn授权</h1>
             <p className="text-gray-400 mb-6">{message}</p>
             
-            {/* 进度日志 */}
             <div className="text-left p-4 rounded-xl bg-black/20 border border-white/5">
               {progress.map((msg, idx) => (
-                <p key={idx} className="text-sm text-gray-400 mb-1">
-                  {msg}
-                </p>
+                <p key={idx} className="text-sm text-gray-400 mb-1">{msg}</p>
               ))}
             </div>
           </div>
@@ -236,7 +229,9 @@ export default function LinkedInCallback() {
         {status === 'success' && (
           <div className="text-center">
             <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-6" />
-            <h1 className="text-xl font-bold text-white mb-2">授权成功</h1>
+            <h1 className="text-xl font-bold text-white mb-2">
+              {isDemoMode ? '演示模式：授权成功' : '授权成功'}
+            </h1>
             <p className="text-gray-400 mb-4">{message}</p>
             
             {profile && (
@@ -275,7 +270,7 @@ export default function LinkedInCallback() {
               <p className="text-sm text-[#C9A96E]">+80 $FAC 已发放到您的钱包</p>
             </div>
             
-            <p className="text-sm text-gray-500">正在跳转至身份选择...</p>
+            <p className="text-sm text-gray-500">正在跳转...</p>
           </div>
         )}
 
