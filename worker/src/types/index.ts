@@ -46,6 +46,7 @@ export interface User {
   membership_tier: MembershipTier;
   membership_expires_at: string | null;
   phone: string | null;
+  password_hash: string | null;
   location: string | null;
   bio: string | null;
   hourly_rate: number | null;

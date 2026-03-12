@@ -34,21 +34,28 @@ export class Database {
     return result;
   }
   
+  async getUserByPhone(phone: string): Promise<User | null> {
+    const result = await this.db.prepare('SELECT * FROM users WHERE phone = ?')
+      .bind(phone)
+      .first<User>();
+    return result;
+  }
+  
   async createUser(user: Omit<User, 'created_at' | 'updated_at'>): Promise<void> {
     const now = new Date().toISOString();
     await this.db.prepare(`
       INSERT INTO users (
         id, email, display_name, avatar_url, linkedin_id, linkedin_profile_url,
         linkedin_headline, linkedin_synced_at, user_role, membership_tier,
-        membership_expires_at, phone, location, bio, hourly_rate, years_experience,
+        membership_expires_at, phone, password_hash, location, bio, hourly_rate, years_experience,
         availability, company_name, company_size, industry, cv_url, wallet_address,
         wallet_created_at, referral_code, referred_by, fac_balance, fac_lifetime_earned,
         fac_lifetime_spent, created_at, updated_at, last_login_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       user.id, user.email, user.display_name, user.avatar_url, user.linkedin_id,
       user.linkedin_profile_url, user.linkedin_headline, user.linkedin_synced_at,
-      user.user_role, user.membership_tier, user.membership_expires_at, user.phone,
+      user.user_role, user.membership_tier, user.membership_expires_at, user.phone, user.password_hash,
       user.location, user.bio, user.hourly_rate, user.years_experience, user.availability,
       user.company_name, user.company_size, user.industry, user.cv_url, user.wallet_address,
       user.wallet_created_at, user.referral_code, user.referred_by, user.fac_balance,

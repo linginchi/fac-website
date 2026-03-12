@@ -8,6 +8,7 @@ import { handleUserRoutes } from './routes/user';
 import { handleReferralRoutes } from './routes/referral';
 import { handleBuybackRoutes } from './routes/buyback';
 import { handleParseRoutes } from './routes/parse';
+import { handleAuthV2Routes } from './routes/authV2';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -56,6 +57,12 @@ export default {
       // AI Parse routes
       if (path.startsWith('/api/parse/')) {
         const response = await handleParseRoutes(request, env);
+        return addCorsHeaders(response, request);
+      }
+      
+      // Auth V2 routes (phone + password)
+      if (path.startsWith('/api/v2/auth/')) {
+        const response = await handleAuthV2Routes(request, env);
         return addCorsHeaders(response, request);
       }
       
