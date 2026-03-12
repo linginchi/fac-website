@@ -11,8 +11,19 @@ export default function UserRegister({ onBack }: UserRegisterProps) {
   const { addTransaction } = useWallet();
 
   const handleLinkedInLogin = () => {
-    // 預留：實際接 LinkedIn OAuth
-    window.open('https://www.linkedin.com/oauth/v2/authorization', '_blank', 'noopener,noreferrer');
+    // V5.1 DEMO: 模拟 LinkedIn 登录（无需实际 OAuth）
+    // 实际生产环境需要配置 LinkedIn App 的 client_id
+    const now = new Date().toISOString().slice(0, 10);
+    addTransaction({ date: now, label: 'LinkedIn 註冊獎勵', amount: 80 });
+    try {
+      localStorage.setItem('fac_user_logged_in', '1');
+      if (!localStorage.getItem('fac_user_id')) {
+        localStorage.setItem('fac_user_id', 'user_' + Date.now());
+      }
+      localStorage.setItem('fac_linkedin_connected', '1');
+    } catch (_) {}
+    setLinkedInSynced(true);
+    alert('演示模式：LinkedIn 登录成功！已获得 80 $FAC');
   };
 
   const handleSyncLinkedIn = () => {
@@ -82,6 +93,14 @@ export default function UserRegister({ onBack }: UserRegisterProps) {
           <p className="text-center text-sm mb-6" style={{ color: 'rgba(237,232,223,0.6)' }}>
             使用 LinkedIn 一鍵註冊，即領 80 $FAC
           </p>
+
+          {/* Demo Mode Notice */}
+          <div 
+            className="mb-4 py-2 px-3 rounded-lg text-xs text-center"
+            style={{ background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.3)', color: '#FFC107' }}
+          >
+            演示模式：點擊即可模擬 LinkedIn 登錄（無需實際授權）
+          </div>
 
           {/* LinkedIn 登入 — 最醒目 */}
           <button
