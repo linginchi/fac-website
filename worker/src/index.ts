@@ -7,6 +7,7 @@ import { handleAuthRoutes } from './routes/auth';
 import { handleUserRoutes } from './routes/user';
 import { handleReferralRoutes } from './routes/referral';
 import { handleBuybackRoutes } from './routes/buyback';
+import { handleParseRoutes } from './routes/parse';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -43,6 +44,12 @@ export default {
       // Auth routes (includes /auth/ and /api/auth/)
       if (path.startsWith('/auth/') || path.startsWith('/api/auth/')) {
         const response = await handleAuthRoutes(request, env);
+        return addCorsHeaders(response, request);
+      }
+      
+      // AI Parse routes
+      if (path.startsWith('/api/parse/')) {
+        const response = await handleParseRoutes(request, env);
         return addCorsHeaders(response, request);
       }
       
