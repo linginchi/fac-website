@@ -3,8 +3,8 @@
  * 处理LinkedIn授权回调，获取用户资料并存储到个人保险柜
  */
 
-import { useEffect, useState } from 'react';
-import { Loader2, CheckCircle, XCircle, Download, Shield } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Loader2, CheckCircle, XCircle, Download, Shield, FileText } from 'lucide-react';
 
 interface LinkedInProfile {
   sub: string;
@@ -22,6 +22,9 @@ export default function LinkedInCallback() {
   const [profile, setProfile] = useState<LinkedInProfile | null>(null);
   const [progress, setProgress] = useState<string[]>([]);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const addProgress = (msg: string) => {
     setProgress(prev => [...prev, msg]);
@@ -107,9 +110,8 @@ export default function LinkedInCallback() {
               setStatus('success');
               setMessage('LinkedIn授权成功！您的职业资料已安全存入保险柜');
               
-              setTimeout(() => {
-                window.location.href = '/register';
-              }, 2000);
+              // 10秒倒计时后跳转
+              startCountdown(10, '/register');
               return;
             }
           }
@@ -175,9 +177,8 @@ export default function LinkedInCallback() {
           setStatus('success');
           setMessage('演示模式：授权成功！（后端API部署后将使用真实LinkedIn数据）');
           
-          setTimeout(() => {
-            window.location.href = '/register';
-          }, 3000);
+          // 10秒倒计时后跳转
+          startCountdown(10, '/register');
         }
 
       } catch (error: any) {
@@ -188,25 +189,257 @@ export default function LinkedInCallback() {
     };
 
     processCallback();
+    
+    // 清理定时器
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    };
   }, []);
 
-  const handleDownloadProfile = () => {
+  // 倒计时函数
+  const startCountdown = (seconds: number, targetUrl: string) => {
+    setCountdown(seconds);
+    
+    countdownTimerRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    redirectTimerRef.current = setTimeout(() => {
+      window.location.href = targetUrl;
+    }, seconds * 1000);
+  };
+
+  // 手动跳转
+  const handleManualRedirect = () => {
+    if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    window.location.href = '/register';
+  };
+
+  // 生成并下载PDF
+  const handleDownloadPDF = () => {
     if (!profile) return;
     
     const userId = localStorage.getItem('fac_user_id');
     const vaultData = localStorage.getItem(`fac_vault_${userId}_linkedin`);
+    const parsedData = vaultData ? JSON.parse(vaultData) : null;
     
-    if (vaultData) {
-      const blob = new Blob([vaultData], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `linkedin-profile-${profile.name.replace(/\s+/g, '-')}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    // 创建PDF内容（使用HTML格式）
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('请允许弹出窗口以下载PDF');
+      return;
     }
+    
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>LinkedIn Profile Backup - ${profile.name}</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      line-height: 1.6; 
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+    .header { 
+      text-align: center; 
+      border-bottom: 3px solid #0A66C2; 
+      padding-bottom: 20px; 
+      margin-bottom: 30px;
+    }
+    .logo { 
+      font-size: 24px; 
+      font-weight: bold; 
+      color: #0A66C2;
+      margin-bottom: 10px;
+    }
+    .title { 
+      font-size: 20px; 
+      color: #666;
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #999;
+    }
+    .section { 
+      margin-bottom: 25px; 
+      page-break-inside: avoid;
+    }
+    .section-title { 
+      font-size: 14px; 
+      font-weight: bold; 
+      color: #0A66C2;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      border-left: 4px solid #0A66C2;
+      padding-left: 10px;
+    }
+    .info-row { 
+      display: flex; 
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .info-label { 
+      width: 150px; 
+      color: #666;
+      font-weight: 500;
+    }
+    .info-value { 
+      flex: 1;
+      color: #333;
+      word-break: break-all;
+    }
+    .badge {
+      display: inline-block;
+      background: #0A66C2;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      font-size: 10px;
+      color: #999;
+      text-align: center;
+    }
+    .security-notice {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    .security-notice h4 {
+      margin: 0 0 10px 0;
+      color: #0A66C2;
+      font-size: 13px;
+    }
+    .security-notice p {
+      margin: 0;
+      font-size: 11px;
+      color: #666;
+    }
+    @media print {
+      body { padding: 0; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">FAC Platform</div>
+    <div class="title">LinkedIn Profile Data Export</div>
+    <div class="subtitle">智慧保險箱資料備份</div>
+    <span class="badge">CONFIDENTIAL</span>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Profile Information</div>
+    <div class="info-row">
+      <div class="info-label">Name:</div>
+      <div class="info-value">${profile.name}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Email:</div>
+      <div class="info-value">${profile.email}</div>
+    </div>
+    ${profile.given_name ? `
+    <div class="info-row">
+      <div class="info-label">First Name:</div>
+      <div class="info-value">${profile.given_name}</div>
+    </div>` : ''}
+    ${profile.family_name ? `
+    <div class="info-row">
+      <div class="info-label">Last Name:</div>
+      <div class="info-value">${profile.family_name}</div>
+    </div>` : ''}
+    ${profile.locale ? `
+    <div class="info-row">
+      <div class="info-label">Locale:</div>
+      <div class="info-value">${profile.locale}</div>
+    </div>` : ''}
+  </div>
+
+  <div class="section">
+    <div class="section-title">Account Details</div>
+    <div class="info-row">
+      <div class="info-label">LinkedIn ID:</div>
+      <div class="info-value">${profile.sub}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Export Date:</div>
+      <div class="info-value">${new Date().toLocaleString('zh-HK')}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">User ID:</div>
+      <div class="info-value">${userId || 'N/A'}</div>
+    </div>
+    ${parsedData?.importedAt ? `
+    <div class="info-row">
+      <div class="info-label">Imported At:</div>
+      <div class="info-value">${new Date(parsedData.importedAt).toLocaleString('zh-HK')}</div>
+    </div>` : ''}
+  </div>
+
+  <div class="security-notice">
+    <h4>🔒 Security Notice</h4>
+    <p>This document contains personal information exported from your LinkedIn profile via FAC Platform. 
+    Please keep this document secure and do not share it with unauthorized parties. 
+    Your data is encrypted and stored securely in your personal vault on the FAC Platform.</p>
+  </div>
+
+  <div class="footer">
+    <p>FAC Platform V5.1 | 國科綠色發展國際實驗室（香港）</p>
+    <p>Generated on ${new Date().toISOString()} | Page 1 of 1</p>
+  </div>
+
+  <div class="no-print" style="margin-top: 30px; text-align: center;">
+    <button onclick="window.print()" style="
+      background: #0A66C2;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: bold;
+    ">🖨️ Print / Save as PDF</button>
+    <p style="font-size: 11px; color: #999; margin-top: 10px;">
+      Click the button above to save this document as PDF
+    </p>
+  </div>
+
+  <script>
+    // Auto-trigger print dialog after a short delay
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  </script>
+</body>
+</html>`;
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   return (
@@ -252,11 +485,11 @@ export default function LinkedInCallback() {
                 
                 <div className="flex gap-2">
                   <button
-                    onClick={handleDownloadProfile}
+                    onClick={handleDownloadPDF}
                     className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm bg-white/5 text-gray-400 hover:bg-white/10 transition-colors"
                   >
-                    <Download className="w-4 h-4" />
-                    下载资料备份
+                    <FileText className="w-4 h-4" />
+                    下载 PDF 备份
                   </button>
                   <div className="flex items-center gap-1 text-xs text-green-400">
                     <Shield className="w-3 h-3" />
@@ -270,7 +503,17 @@ export default function LinkedInCallback() {
               <p className="text-sm text-[#C9A96E]">+80 $FAC 已发放到您的钱包</p>
             </div>
             
-            <p className="text-sm text-gray-500">正在跳转...</p>
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500">
+                {countdown > 0 ? `${countdown} 秒后自动跳转...` : '正在跳转...'}
+              </p>
+              <button
+                onClick={handleManualRedirect}
+                className="text-sm text-[#C9A96E] hover:underline"
+              >
+                立即进入注册页面 →
+              </button>
+            </div>
           </div>
         )}
 
