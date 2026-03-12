@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useIdentity } from '../contexts/IdentityContext';
 import OmniBox from '../components/OmniBox';
 import VoiceUniversalBox from '../components/VoiceUniversalBox';
+import MarketTicker from '../components/MarketTicker';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const DECODE_COST = 10;
@@ -425,6 +426,11 @@ export default function Hero() {
             >
               <Mic className="w-5 h-5 text-[#0A1628]" />
             </button>
+          </div>
+          
+          {/* 市场信息走马灯 */}
+          <div className="w-full mt-4" style={{ maxWidth: '740px' }}>
+            <MarketTicker />
           </div>
           {/* Placeholder for removed Agent Bubble - keep ref to avoid GSAP issues */}
           {false && (
