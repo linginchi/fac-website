@@ -21,12 +21,18 @@ export default {
     const rateLimitResponse = await rateLimitMiddleware(request, 100, 60000);
     if (rateLimitResponse) return rateLimitResponse;
     
-    // Apply auth middleware
-    const authResponse = await authMiddleware(request, env);
-    if (authResponse) return authResponse;
-    
     // Route handling
     const path = url.pathname;
+    
+    // Skip auth for public routes
+    const publicRoutes = ['/health', '/api/parse/', '/api/public/'];
+    const isPublicRoute = publicRoutes.some(route => path.startsWith(route) || path === route);
+    
+    if (!isPublicRoute) {
+      // Apply auth middleware
+      const authResponse = await authMiddleware(request, env);
+      if (authResponse) return authResponse;
+    }
     
     try {
       // Health check
