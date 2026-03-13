@@ -19,8 +19,6 @@ const corsHeaders = {
 // Email 發送服務 - Resend API
 // ============================================
 async function sendEmailVerificationCode(email: string, code: string, env: Env): Promise<boolean> {
-  console.log(`[Email OTP] Sending code ${code} to ${email}`);
-  
   // 郵件內容（HTML）
   const htmlContent = `
 <!DOCTYPE html>
@@ -68,46 +66,40 @@ async function sendEmailVerificationCode(email: string, code: string, env: Env):
 </body>
 </html>`;
 
-  // 嘗試使用 Resend API 發送
-  if (env.RESEND_API_KEY) {
-    try {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: env.FROM_EMAIL || 'FAC Platform <noreply@hkfac.com>',
-          to: email,
-          subject: '您的 FAC Platform 驗證碼',
-          html: htmlContent,
-        }),
-      });
+  // 儲存驗證碼到 KV（5分鐘過期）- 無論郵件是否發送成功都存儲
+  if (env.KV) {
+    await env.KV.put(`email_otp:${email}`, code, { expirationTtl: 300 });
+  }
 
-      if (response.ok) {
-        console.log(`[Email OTP] Sent via Resend to ${email}`);
-      } else {
-        const error = await response.text();
-        console.error(`[Email OTP] Resend failed:`, error);
-        // 如果 Resend 失敗，嘗試使用 Cloudflare Workers Email
-        if (!env.CLOUDFLARE_WORKERS_EMAIL) {
-          throw new Error('Email service unavailable');
-        }
-      }
-    } catch (error) {
-      console.error(`[Email OTP] Resend error:`, error);
-      // Resend 失敗，繼續嘗試其他方式
+  // 使用 Resend API 發送郵件
+  if (env.RESEND_API_KEY) {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: env.FROM_EMAIL || 'FAC Platform <noreply@resend.dev>',
+        to: email,
+        subject: '您的 FAC Platform 驗證碼',
+        html: htmlContent,
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log(`[Email OTP] Sent successfully, id: ${result.id}`);
+      return true;
+    } else {
+      const error = await response.text();
+      console.error(`[Email OTP] Resend API error:`, error);
+      throw new Error(`Failed to send email: ${error}`);
     }
   }
   
-  // 儲存驗證碼到 KV（5分鐘過期）
-  if (env.KV) {
-    await env.KV.put(`email_otp:${email}`, code, { expirationTtl: 300 });
-    console.log(`[Email OTP] Code stored in KV for ${email}`);
-  }
-  
-  return true;
+  // 如果沒有配置 RESEND_API_KEY，拋出錯誤
+  throw new Error('Email service not configured');
 }
 
 // 驗證 Email 驗證碼
@@ -165,8 +157,6 @@ export async function handleAuthV2Routes(request: Request, env: Env): Promise<Re
       return new Response(JSON.stringify({
         success: true,
         message: 'Verification code sent to email',
-        // 測試環境返回驗證碼，生產環境移除
-        code: env.NODE_ENV === 'production' ? undefined : code,
       }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
       
     } catch (error: any) {

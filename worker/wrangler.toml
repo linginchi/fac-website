@@ -15,6 +15,8 @@ LINKEDIN_CLIENT_ID = "86rh0n847vlmx9"
 LINKEDIN_REDIRECT_URI = "https://www.hkfac.com/auth/linkedin/callback"
 FAC_TOKEN_ISSUER = "fac-platform"
 FAC_TOKEN_AUDIENCE = "fac-api"
+NODE_ENV = "production"
+FROM_EMAIL = "FAC Platform <noreply@resend.dev>"
 
 # KV Namespace for OTP codes and session data
 [[kv_namespaces]]
@@ -30,10 +32,6 @@ id = "aad85b6180ee49cebff894c8acac2499"
 # DOUBAO_API_KEY
 # DOUBAO_ENDPOINT_ID
 # RESEND_API_KEY (邮件服务)
-
-[vars]
-NODE_ENV = "production"
-FROM_EMAIL = "FAC Platform <noreply@hkfac.com>"
 
 [env.staging]
 name = "fac-platform-api-staging"
