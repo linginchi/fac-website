@@ -1,7 +1,7 @@
 /**
  * FAC Platform V5.1 - Email 優先認證系統
  * 支持 Email + 密碼註冊，電話可選
- * 郵件驗證：Resend API / Cloudflare Workers 直接發信
+ * 郵件驗證：SendGrid API (Cloudflare 生態兼容，免費額度每日100封，無收件人限制)
  */
 
 import type { Env } from '../types';
@@ -16,12 +16,11 @@ const corsHeaders = {
 };
 
 // ============================================
-// Email 發送服務 - Resend API
+// Email 發送服務 - SendGrid API
+// Cloudflare 生態兼容，免費額度每日100封，可發送至任意郵箱
 // ============================================
 async function sendEmailVerificationCode(email: string, code: string, env: Env): Promise<boolean> {
-  // 郵件內容（HTML）
-  const htmlContent = `
-<!DOCTYPE html>
+  const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -29,33 +28,23 @@ async function sendEmailVerificationCode(email: string, code: string, env: Env):
 </head>
 <body style="font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; background: #f5f5f5; padding: 40px 20px;">
   <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-    <!-- Header -->
     <div style="background: linear-gradient(135deg, #0A1628 0%, #1a2a3a 100%); padding: 32px 24px; text-align: center;">
       <h1 style="color: #C9A96E; font-size: 24px; margin: 0; font-weight: 600; letter-spacing: 2px;">FAC</h1>
       <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 8px 0 0 0;">智慧沈澱，在此相遇</p>
     </div>
-    
-    <!-- Body -->
     <div style="padding: 32px 24px;">
       <h2 style="color: #0A1628; font-size: 18px; margin: 0 0 16px 0; font-weight: 600;">您的驗證碼</h2>
       <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
         感謝您註冊 FAC Platform。請使用以下驗證碼完成帳號驗證：
       </p>
-      
-      <!-- Verification Code -->
       <div style="background: #f8f9fa; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px; border: 1px dashed #C9A96E;">
-        <div style="font-size: 32px; font-weight: 700; color: #0A1628; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-          ${code}
-        </div>
+        <div style="font-size: 32px; font-weight: 700; color: #0A1628; letter-spacing: 8px; font-family: 'Courier New', monospace;">${code}</div>
         <p style="color: #999; font-size: 12px; margin: 12px 0 0 0;">有效期 5 分鐘</p>
       </div>
-      
       <p style="color: #999; font-size: 12px; line-height: 1.5; margin: 0;">
         如果您沒有請求此驗證碼，請忽略此郵件。您的帳號安全不會受到影響。
       </p>
     </div>
-    
-    <!-- Footer -->
     <div style="background: #f8f9fa; padding: 20px 24px; text-align: center; border-top: 1px solid #eee;">
       <p style="color: #999; font-size: 11px; margin: 0;">
         國科綠色發展國際實驗室（香港）有限公司<br>
@@ -66,39 +55,45 @@ async function sendEmailVerificationCode(email: string, code: string, env: Env):
 </body>
 </html>`;
 
-  // 儲存驗證碼到 KV（5分鐘過期）- 無論郵件是否發送成功都存儲
+  // 儲存驗證碼到 KV（5分鐘過期）
   if (env.KV) {
     await env.KV.put(`email_otp:${email}`, code, { expirationTtl: 300 });
   }
 
-  // 使用 Resend API 發送郵件
-  if (env.RESEND_API_KEY) {
-    const response = await fetch('https://api.resend.com/emails', {
+  // 使用 SendGrid API 發送郵件（Cloudflare 生態兼容，免費每日100封）
+  if (env.SENDGRID_API_KEY) {
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+        'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: env.FROM_EMAIL || 'FAC Platform <noreply@resend.dev>',
-        to: email,
+        personalizations: [{
+          to: [{ email }],
+        }],
+        from: {
+          email: env.FROM_EMAIL || 'noreply@hkfac.com',
+          name: 'FAC Platform',
+        },
         subject: '您的 FAC Platform 驗證碼',
-        html: htmlContent,
+        content: [{
+          type: 'text/html',
+          value: htmlContent,
+        }],
       }),
     });
 
-    if (response.ok) {
-      const result = await response.json();
-      console.log(`[Email OTP] Sent successfully, id: ${result.id}`);
+    if (response.ok || response.status === 202) {
+      console.log(`[Email OTP] Sent via SendGrid to ${email}`);
       return true;
     } else {
       const error = await response.text();
-      console.error(`[Email OTP] Resend API error:`, error);
+      console.error(`[Email OTP] SendGrid API error:`, error);
       throw new Error(`Failed to send email: ${error}`);
     }
   }
   
-  // 如果沒有配置 RESEND_API_KEY，拋出錯誤
   throw new Error('Email service not configured');
 }
 

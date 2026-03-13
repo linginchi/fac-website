@@ -16,8 +16,8 @@ export interface Env {
   DEEPSEEK_API_KEY?: string;
   DOUBAO_API_KEY?: string;
   DOUBAO_ENDPOINT_ID?: string;
-  // Email Service (Resend API)
-  RESEND_API_KEY?: string;
+  // Email Service (SendGrid API - Cloudflare 生態兼容，免費每日100封)
+  SENDGRID_API_KEY?: string;
   FROM_EMAIL?: string;
 }
 
