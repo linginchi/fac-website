@@ -126,11 +126,15 @@ export async function handleAuthV2Routes(request: Request, env: Env): Promise<Re
   // ============================================
   if (path === '/api/v2/auth/send-email-code' && request.method === 'POST') {
     try {
-      const { email } = await request.json() as { email: string };
+      const body = await request.json() as { email?: string };
+      const email = body?.email?.trim();
+      
+      console.log('[SendEmailCode] Received request for:', email);
       
       // 驗證 Email 格式
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!email || !emailRegex.test(email)) {
+        console.log('[SendEmailCode] Invalid email:', email);
         return new Response(JSON.stringify({
           success: false,
           error: { code: 'INVALID_EMAIL', message: 'Invalid email format' }
@@ -138,6 +142,7 @@ export async function handleAuthV2Routes(request: Request, env: Env): Promise<Re
       }
       
       // 檢查 Email 是否已註冊
+      console.log('[SendEmailCode] Checking if email exists:', email);
       const existingUser = await db.getUserByEmail(email);
       if (existingUser) {
         return new Response(JSON.stringify({

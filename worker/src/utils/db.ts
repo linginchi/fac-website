@@ -14,6 +14,7 @@ export class Database {
   }
   
   async getUserByEmail(email: string): Promise<User | null> {
+    if (!email) return null;
     const result = await this.db.prepare('SELECT * FROM users WHERE email = ?')
       .bind(email)
       .first<User>();
