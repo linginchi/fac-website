@@ -45,37 +45,46 @@ async function apiRequest(
   return data;
 }
 
-// ============ 認證 API ============
+// ============ 認證 API (Email 優先) ============
 
-export async function sendVerificationCode(phone: string): Promise<any> {
-  return apiRequest('/api/v2/auth/send-code', 'POST', { phone });
+// Email 驗證碼發送
+export async function sendEmailVerificationCode(email: string): Promise<any> {
+  return apiRequest('/api/v2/auth/send-email-code', 'POST', { email });
 }
 
+// 註冊 (Email 主鍵，電話可選)
 export async function registerUser(data: {
-  phone: string;
+  email: string;
   password: string;
-  email?: string;
   code: string;
-  displayName: string;
+  phone?: string;
+  displayName?: string;
 }): Promise<any> {
   return apiRequest('/api/v2/auth/register', 'POST', data);
 }
 
-export async function loginUser(phone: string, password: string): Promise<any> {
-  return apiRequest('/api/v2/auth/login', 'POST', { phone, password });
+// 登入 (支持 Email 或 Phone)
+export async function loginUser(emailOrPhone: string, password: string): Promise<any> {
+  const isEmail = emailOrPhone.includes('@');
+  return apiRequest('/api/v2/auth/login', 'POST', { 
+    [isEmail ? 'email' : 'phone']: emailOrPhone, 
+    password 
+  });
 }
 
-export async function forgotPassword(phone: string): Promise<any> {
-  return apiRequest('/api/v2/auth/forgot-password', 'POST', { phone });
+// 忘記密碼 (Email)
+export async function forgotPassword(email: string): Promise<any> {
+  return apiRequest('/api/v2/auth/forgot-password', 'POST', { email });
 }
 
+// 重設密碼 (Email)
 export async function resetPassword(
-  phone: string,
+  email: string,
   code: string,
   newPassword: string
 ): Promise<any> {
   return apiRequest('/api/v2/auth/reset-password', 'POST', {
-    phone,
+    email,
     code,
     newPassword,
   });

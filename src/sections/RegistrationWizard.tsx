@@ -1,7 +1,7 @@
 /**
- * FAC Platform V5.1-ALPHA - Registration Wizard
- * Architecture: Auth → Upload → AI Refine → Complete
- * Privacy-First: Data encrypted in user's wallet, platform cannot view without authorization
+ * FAC Platform V5.1-ALPHA - Registration Wizard (Email 優先版)
+ * Architecture: Auth(Email) → Upload → AI Refine → Complete
+ * Privacy-First: Email 僅用於帳號登入，CV 數據加密保存於用戶錢包
  */
 
 import { useState, useRef, useEffect, memo } from 'react';
@@ -14,7 +14,7 @@ import {
   AlertTriangle, Fingerprint
 } from 'lucide-react';
 import { 
-  sendVerificationCode, 
+  sendEmailVerificationCode, 
   registerUser, 
   loginUser,
   parseFile,
@@ -40,15 +40,15 @@ const SKILL_OPTIONS = [
 ];
 
 // ============================================
-// Phase 1: 基礎註冊 (Auth) - 電話/密碼/電郵
+// Phase 1: 基礎註冊 (Email 優先，電話可選)
 // ============================================
 interface StepAuthProps {
-  phone: string;
-  setPhone: (v: string) => void;
-  password: string;
-  setPassword: (v: string) => void;
   email: string;
   setEmail: (v: string) => void;
+  password: string;
+  setPassword: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
   verificationCode: string;
   setVerificationCode: (v: string) => void;
   isSendingCode: boolean;
@@ -60,7 +60,7 @@ interface StepAuthProps {
 }
 
 const StepAuth = memo(function StepAuth({
-  phone, setPhone, password, setPassword, email, setEmail,
+  email, setEmail, password, setPassword, phone, setPhone,
   verificationCode, setVerificationCode, isSendingCode, isRegistering,
   countDown, onSendCode, onRegister, error
 }: StepAuthProps) {
@@ -71,18 +71,18 @@ const StepAuth = memo(function StepAuth({
     if (/^[+]?[\d\s]*$/.test(value)) setPhone(value);
   };
 
-  const isPhoneValid = phone.replace(/\s/g, '').length >= 8;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 8;
-  const canRegister = isPhoneValid && isPasswordValid && verificationCode.length === 6;
+  const canRegister = isEmailValid && isPasswordValid && verificationCode.length === 6;
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <div className="w-16 h-16 mx-auto rounded-2xl bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center mb-4">
-          <Fingerprint className="w-8 h-8 text-[#C9A96E]" />
+          <Mail className="w-8 h-8 text-[#C9A96E]" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">創建您的帳號</h2>
-        <p className="text-sm text-gray-400">基礎註冊後方可建立能力檔案</p>
+        <p className="text-sm text-gray-400">Email 優先註冊，安全便捷</p>
       </div>
 
       {error && (
@@ -92,23 +92,23 @@ const StepAuth = memo(function StepAuth({
       )}
 
       <div className="space-y-4">
-        {/* 電話 */}
+        {/* Email - 核心入口（置頂） */}
         <div>
           <label className="block text-xs text-gray-400 mb-2">
-            <Phone className="w-3 h-3 inline mr-1" />
-            手機號碼 *
+            <Mail className="w-3 h-3 inline mr-1" />
+            電子郵件 * (帳號標識)
           </label>
           <div className="flex gap-2">
             <input
-              type="text"
-              value={phone}
-              onChange={handlePhoneChange}
-              placeholder="+852 9123 4567"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
               className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50"
             />
             <button
               onClick={onSendCode}
-              disabled={!isPhoneValid || countDown > 0 || isSendingCode}
+              disabled={!isEmailValid || countDown > 0 || isSendingCode}
               className="px-4 py-3 rounded-xl text-sm font-medium bg-white/5 border border-[#C9A96E]/30 text-[#C9A96E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#C9A96E]/10 transition-colors whitespace-nowrap"
             >
               {isSendingCode ? '發送中...' : countDown > 0 ? `${countDown}s` : '獲取驗證碼'}
@@ -118,7 +118,7 @@ const StepAuth = memo(function StepAuth({
 
         {/* 驗證碼 */}
         <div>
-          <label className="block text-xs text-gray-400 mb-2">短信驗證碼 *</label>
+          <label className="block text-xs text-gray-400 mb-2">郵箱驗證碼 *</label>
           <input
             type="text"
             value={verificationCode}
@@ -151,30 +151,33 @@ const StepAuth = memo(function StepAuth({
           </div>
         </div>
 
-        {/* 電郵 (可選) */}
+        {/* 電話 - 可選（後續驗證使用） */}
         <div>
-          <label className="block text-xs text-gray-400 mb-2">
-            <Mail className="w-3 h-3 inline mr-1" />
-            電郵地址 (可選)
+          <label className="block text-xs text-gray-400 mb-2 flex items-center justify-between">
+            <span>
+              <Phone className="w-3 h-3 inline mr-1" />
+              手機號碼
+            </span>
+            <span className="text-xs text-gray-500">(可選，後續驗證使用)</span>
           </label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
+            type="text"
+            value={phone}
+            onChange={handlePhoneChange}
+            placeholder="+852 9123 4567"
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A96E]/50"
           />
         </div>
       </div>
 
-      {/* 隱私聲明預告 */}
+      {/* 隱私聲明 - 更新版 */}
       <div className="p-4 rounded-xl bg-[#C9A96E]/5 border border-[#C9A96E]/20">
         <div className="flex items-start gap-3">
           <Shield className="w-5 h-5 text-[#C9A96E] flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm text-gray-300 mb-1">數據主權承諾</p>
             <p className="text-xs text-gray-500">
-              註冊僅創建基礎帳號。您的專業資料將在下一階段加密保存於您的私人保險箱，平台無法查看。
+              您的 Email 僅用於帳號登入。專業資料（CV）解析後將加密保存於您的電子錢包，平台無法查看。
             </p>
           </div>
         </div>
@@ -222,7 +225,7 @@ const StepUpload = memo(function StepUpload({
         <p className="text-sm text-gray-400">上傳 CV 建立您的專業檔案</p>
       </div>
 
-      {/* 身份選擇 */}
+      {/* 身份選擇 - 甲方/乙方術語 */}
       <div className="space-y-3">
         <label className="block text-xs text-gray-400">選擇您的身份 *</label>
         
@@ -277,14 +280,14 @@ const StepUpload = memo(function StepUpload({
         </button>
       </div>
 
-      {/* 隱私提示 - 白皮書要求 */}
+      {/* 隱私提示 - 更新版（白皮書要求） */}
       <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
         <div className="flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm text-amber-300 font-medium mb-1">數據主權聲明</p>
             <p className="text-xs text-amber-400/80 leading-relaxed">
-              您的專業資料將僅加密保存於您的電子錢包/區塊鏈上，平台無法查看，除非您後續授權揭露。
+              您的專業資料（CV）解析後將僅加密保存於您的電子錢包/區塊鏈上，平台無法查看，除非您後續授權揭露。
             </p>
           </div>
         </div>
@@ -371,7 +374,7 @@ const StepRefine = memo(function StepRefine({
     if (/^[+]?[\d\s]*$/.test(value)) setPhone(value);
   };
 
-  // 修復：確保 bio 正確顯示，優先使用 transcript
+  // 修復：確保 bio 正確顯示
   const displayBio = bio || transcript || '';
 
   return (
@@ -439,7 +442,7 @@ const StepRefine = memo(function StepRefine({
           </div>
         </div>
 
-        {/* 個人簡介 - 修復：正確綁定 value */}
+        {/* 個人簡介 - 修復版 */}
         <div>
           <label className="block text-xs text-gray-400 mb-2 flex items-center justify-between">
             <span>{userRole === 'B' ? '乙方簡介' : '甲方簡介'}</span>
@@ -635,7 +638,7 @@ const StepComplete = memo(function StepComplete({
           <span className="text-4xl font-bold text-[#C9A96E]">+100</span>
           <span className="text-lg text-gray-400 ml-2">$FAC</span>
         </div>
-        <p className="text-center text-sm text-gray-400">註冊獎勵已發放至您的帳戶</p>
+        <p className="text-center text-sm text-gray-400">Email 註冊獎勵已發放</p>
       </div>
 
       {!walletAddress ? (
@@ -679,22 +682,21 @@ const StepComplete = memo(function StepComplete({
 });
 
 // ============================================
-// 主組件 - 三階段流程: Auth → Upload → Refine → Complete
+// 主組件 - 四階段流程: Auth → Upload → Refine → Complete
 // ============================================
 export default function RegistrationWizard({ onComplete, onBack }: RegistrationWizardProps) {
-  // 流程階段: 'auth' | 'upload' | 'refine' | 'complete'
+  // 流程階段
   const [phase, setPhase] = useState<'auth' | 'upload' | 'refine' | 'complete'>('auth');
   
-  // Phase 1: Auth 狀態
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
+  // Phase 1: Auth 狀態 (Email 優先)
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState(''); // 可選
   const [verificationCode, setVerificationCode] = useState('');
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [countDown, setCountDown] = useState(0);
   const [authError, setAuthError] = useState('');
-  const [registeredUserId, setRegisteredUserId] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   
   // Phase 2 & 3: 資料狀態
@@ -722,7 +724,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
   // Phase 4: 錢包
   const [isGeneratingWallet, setIsGeneratingWallet] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -735,15 +736,15 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     }
   }, [countDown]);
 
-  // Phase 1: 發送驗證碼
+  // Phase 1: 發送 Email 驗證碼
   const handleSendCode = async () => {
-    if (!phone || countDown > 0) return;
+    if (!email || countDown > 0) return;
     
     setIsSendingCode(true);
     setAuthError('');
     
     try {
-      await sendVerificationCode(phone);
+      await sendEmailVerificationCode(email);
       setCountDown(60);
     } catch (error: any) {
       setAuthError(error.message || '發送驗證碼失敗');
@@ -752,25 +753,23 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     }
   };
 
-  // Phase 1: 註冊
+  // Phase 1: 註冊 (Email 主鍵)
   const handleRegister = async () => {
-    if (!phone || !password || !verificationCode) return;
+    if (!email || !password || !verificationCode) return;
     
     setIsRegistering(true);
     setAuthError('');
     
     try {
-      // 使用臨時名稱註冊，後續再更新
       const result = await registerUser({
-        phone,
+        email,
         password,
-        email: email || undefined,
         code: verificationCode,
+        phone: phone || undefined, // 可選
         displayName: '新用戶'
       });
       
       if (result.success) {
-        setRegisteredUserId(result.data.user.id);
         setAuthToken(result.data.token);
         localStorage.setItem('fac_auth_token', result.data.token);
         localStorage.setItem('fac_user_id', result.data.user.id);
@@ -806,7 +805,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         const info = result.data.extractedInfo;
         setParsedData(result.data);
         
-        // AI 回填
+        // AI 回填 - 修復版
         if (info.name && typeof info.name === 'string') {
           setDisplayName(info.name.trim());
         }
@@ -816,7 +815,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         if (info.location && typeof info.location === 'string') {
           setLocation(info.location.trim());
         }
-        // 修復：同時處理 bio 和 summary
+        // 修復：同時處理 bio/summary/profile/description
         const bioText = info.bio || info.summary || info.profile || info.description;
         if (bioText && typeof bioText === 'string') {
           setBio(bioText.trim());
@@ -839,7 +838,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     } catch (error: any) {
       console.error('Parse error:', error);
       setParseError(error.message || 'AI解析失敗，請手動填寫');
-      // 即使解析失敗也允許進入 refine 手動填寫
       setTimeout(() => setPhase('refine'), 1500);
     } finally {
       setIsParsing(false);
@@ -885,7 +883,7 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     );
   };
 
-  // Phase 3: 確認保存 - 數據主權確認後才保存
+  // Phase 3: 確認保存
   const handleConfirmSave = async () => {
     if (!authToken) {
       setAuthError('登入狀態已過期，請重新註冊');
@@ -895,7 +893,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
     setIsSavingProfile(true);
     
     try {
-      // 更新用戶資料
       await updateUserProfile({
         displayName,
         phone,
@@ -926,7 +923,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         }
       }
 
-      // 進入 Phase 4
       setPhase('complete');
     } catch (error: any) {
       setAuthError(error.message || '保存失敗');
@@ -944,7 +940,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
       ).join('');
       setWalletAddress(address);
       
-      // 本地存儲
       localStorage.setItem('fac_wallet_address', address);
       localStorage.setItem('fac_user_logged_in', '1');
       localStorage.setItem('fac_user_role', userRole || 'neutral');
@@ -1009,7 +1004,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
         <PhaseIndicator />
 
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-          {/* 隱藏的文件輸入 */}
           <input
             ref={fileInputRef}
             type="file"
@@ -1018,15 +1012,14 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
             className="hidden"
           />
 
-          {/* Phase 1: 基礎註冊 */}
           {phase === 'auth' && (
             <StepAuth
-              phone={phone}
-              setPhone={setPhone}
-              password={password}
-              setPassword={setPassword}
               email={email}
               setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              phone={phone}
+              setPhone={setPhone}
               verificationCode={verificationCode}
               setVerificationCode={setVerificationCode}
               isSendingCode={isSendingCode}
@@ -1038,7 +1031,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
             />
           )}
 
-          {/* Phase 2: 能力導入 */}
           {phase === 'upload' && (
             <StepUpload
               userRole={userRole}
@@ -1051,7 +1043,6 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
             />
           )}
 
-          {/* Phase 3: 數據回填與主權確認 */}
           {phase === 'refine' && userRole && (
             <StepRefine
               userRole={userRole}
@@ -1085,12 +1076,10 @@ export default function RegistrationWizard({ onComplete, onBack }: RegistrationW
             />
           )}
 
-          {/* Phase 4: 完成 */}
           {phase === 'complete' && (
             <StepComplete
               walletAddress={walletAddress}
               isGenerating={isGeneratingWallet}
-              
               onGenerate={handleGenerateWallet}
               onEnter={handleComplete}
             />

@@ -29,6 +29,11 @@ id = "aad85b6180ee49cebff894c8acac2499"
 # DEEPSEEK_API_KEY
 # DOUBAO_API_KEY
 # DOUBAO_ENDPOINT_ID
+# RESEND_API_KEY (邮件服务)
+
+[vars]
+NODE_ENV = "production"
+FROM_EMAIL = "FAC Platform <noreply@hkfac.com>"
 
 [env.staging]
 name = "fac-platform-api-staging"

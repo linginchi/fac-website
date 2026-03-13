@@ -2,6 +2,7 @@
 
 export interface Env {
   DB: D1Database;
+  KV: KVNamespace;
   LINKEDIN_CLIENT_ID: string;
   LINKEDIN_CLIENT_SECRET: string;
   LINKEDIN_REDIRECT_URI: string;
@@ -9,11 +10,15 @@ export interface Env {
   ENCRYPTION_KEY: string;
   FAC_TOKEN_ISSUER: string;
   FAC_TOKEN_AUDIENCE: string;
+  NODE_ENV?: string;
   // AI Model API Keys
   QWEN_API_KEY?: string;
   DEEPSEEK_API_KEY?: string;
   DOUBAO_API_KEY?: string;
   DOUBAO_ENDPOINT_ID?: string;
+  // Email Service (Resend API)
+  RESEND_API_KEY?: string;
+  FROM_EMAIL?: string;
 }
 
 // User types
