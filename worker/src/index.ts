@@ -9,6 +9,7 @@ import { handleReferralRoutes } from './routes/referral';
 import { handleBuybackRoutes } from './routes/buyback';
 import { handleParseRoutes } from './routes/parse';
 import { handleAuthV2Routes } from './routes/authV2';
+import { handleWalletRoutes } from './routes/wallet';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -63,6 +64,12 @@ export default {
       // Auth V2 routes (phone + password)
       if (path.startsWith('/api/v2/auth/')) {
         const response = await handleAuthV2Routes(request, env);
+        return addCorsHeaders(response, request);
+      }
+      
+      // Wallet & User routes
+      if (path.startsWith('/api/v2/user/') || path.startsWith('/api/v2/wallet/')) {
+        const response = await handleWalletRoutes(request, env);
         return addCorsHeaders(response, request);
       }
       

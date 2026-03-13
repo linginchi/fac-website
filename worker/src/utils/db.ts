@@ -153,6 +153,12 @@ export class Database {
     return result.results || [];
   }
   
+  async removeUserSkill(skillId: string): Promise<void> {
+    await this.db.prepare(`
+      DELETE FROM user_skills WHERE id = ?
+    `).bind(skillId).run();
+  }
+  
   // Buyback operations
   async getBuybackHistory(): Promise<BuybackRecord[]> {
     const result = await this.db.prepare(`
